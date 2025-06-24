@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using ArtNet;
 using Klak.Spout;
+using TMPro;
 using UnityEngine;
 
 public class TextureWriter : MonoBehaviour
@@ -13,6 +16,10 @@ public class TextureWriter : MonoBehaviour
     public SpoutSender spoutSender;
     public int count = 1;
 
+    List<IDMXSerializer> serializers;
+    public TMP_Dropdown serializerDropdown;
+    private IDMXSerializer currentSerializer;
+
     void Start()
     {
         texture = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false);
@@ -20,6 +27,48 @@ public class TextureWriter : MonoBehaviour
         texture.wrapMode = TextureWrapMode.Clamp;
 
         spoutSender.sourceTexture = texture;
+
+        //load in all the serializers
+        var type = typeof(IDMXSerializer);
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(p => type.IsAssignableFrom(p));
+
+        serializers = types
+            .Where(t => !t.IsInterface && !t.IsAbstract)
+            .Select(t => (IDMXSerializer)Activator.CreateInstance(t))
+            .ToList();
+
+        Debug.Log($"Loaded {serializers.Count} serializers");
+
+        //populate the dropdown
+        serializerDropdown.ClearOptions();
+        List<string> options = new List<string>();
+        foreach (var typei in serializers)
+        {
+            options.Add(typei.GetType().Name);
+        }
+
+        serializerDropdown.AddOptions(options);
+
+        serializerDropdown.onValueChanged.AddListener((s) =>
+        {
+            currentSerializer = serializers[s];
+            Debug.Log($"Selected serializer: {currentSerializer.GetType().Name}");
+        });
+
+        //select the first serializer by default
+        if (serializers.Count > 0)
+        {
+            currentSerializer = serializers[0];
+            serializerDropdown.value = 0;
+            serializerDropdown.RefreshShownValue();
+            Debug.Log($"Default serializer: {currentSerializer.GetType().Name}");
+        }
+        else
+        {
+            Debug.LogError("No serializers found!");
+        }
     }
 
     // Update is called once per frame
@@ -52,7 +101,7 @@ public class TextureWriter : MonoBehaviour
                 continue;
             } */
 
-            ColorBinary.MapChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
+            currentSerializer.MapChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
         }
 
         texture.SetPixels32(pixels);

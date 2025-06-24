@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ColorBinary : IDMXSerializer
 {
-    public static void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
+    public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
         //convert the channel to x y
         const int blockSize = 4; // 10x10 pixels per channel block
