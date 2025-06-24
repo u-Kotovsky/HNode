@@ -17,6 +17,7 @@ public class VRSL : IDMXSerializer
         int x = (channelInUniverse / blocksPerCol) * blockSize;
         int y = (channelInUniverse % blocksPerCol) * blockSize;
 
+        //stupid universe bullshit in VRSL
         int universeOffset = universe * (512 / blocksPerCol * blockSize) + (universe * blockSize);
 
         //convert the x y to pixel index
