@@ -8,11 +8,14 @@ public class TextureWriter : MonoBehaviour
 {
     public DmxManager dmxManager;
     public Texture2D texture;
+    public const int TextureWidth = 1920;
+    public const int TextureHeight = 1080;
     public SpoutSender spoutSender;
+    public int count = 1;
 
     void Start()
     {
-        texture = new Texture2D(1920, 1080, TextureFormat.RGBA32, false);
+        texture = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false);
         texture.filterMode = FilterMode.Point;
         texture.wrapMode = TextureWrapMode.Clamp;
 
@@ -22,9 +25,7 @@ public class TextureWriter : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //TODO: Turn this into a interface system where different scripts define their screen mapping, and we just output
-
-        Color32[] pixels = new Color32[1920 * 1080];
+        Color32[] pixels = new Color32[TextureWidth * TextureHeight];
 
         //fill with transparent
         for (int i = 0; i < pixels.Length; i++)
@@ -46,65 +47,26 @@ public class TextureWriter : MonoBehaviour
         for (int i = 0; i < mergedDmxValues.Count; i++)
         {
             /*
-            if (i > 50)
+            if (i > count)
             {
                 continue;
-            }
-            */
-            MapChannel(ref pixels, mergedDmxValues[i], i);
-        }
+            } */
 
-        //MakeColorBlock(ref pixels, 0, 0, new Color32(255, 0, 0, 255), 10); // Clear the top-left corner
+            ColorBinary.MapChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
+        }
 
         texture.SetPixels32(pixels);
         texture.Apply();
     }
 
-    private int PixelToIndex(int x, int y)
+    public static int PixelToIndex(int x, int y)
     {
         //make sure y is flipped
-        y = texture.height - 1 - y;
-        return y * texture.width + x;
+        y = TextureHeight - 1 - y;
+        return y * TextureWidth + x;
     }
 
-    private void MapChannel(ref Color32[] pixels, byte channelValue, int channel)
-    {
-        //convert the channel to x y
-        //x is channel % 24
-        //y is channel / 24
-        const int blockSize = 4; // 10x10 pixels per channel block
-        const int blocksPerCol = 16; // 10 channels per column
-                                       //split the value into 8 bits
-        var bits = new BitArray(new byte[] { channelValue });
-        List<bool> bitsList = new List<bool>();
-        for (int i = 0; i < bits.Length; i++)
-        {
-            bitsList.Add(bits[i]);
-        }
-        bitsList.Add(false); // Add a dummy bit to make it 9 bits, needed for easy interlacing
-
-        for (int i = 0; i < bitsList.Count; i += 3)
-        {
-            int newChannel = (channel * 3) + i / 3; //3 because we interlace with color
-            int x = (newChannel / blocksPerCol) * blockSize;
-            int y = (newChannel % blocksPerCol) * blockSize;
-            if (x >= texture.width || y >= texture.height)
-            {
-                continue; // Skip if the calculated pixel is out of bounds
-            }
-            //convert the x y to pixel index
-            //return 4x4 area
-            var color = new Color32(
-                (byte)(bitsList[i] ? 255 : 0),
-                (byte)(bitsList[i + 1] ? 255 : 0),
-                (byte)(bitsList[i + 2] ? 255 : 0),
-                255
-            );
-            MakeColorBlock(ref pixels, x, y, color, blockSize);
-        }
-    }
-
-    private void MakeColorBlock(ref Color32[] pixels, int x, int y, Color32 color, int size)
+    public static void MakeColorBlock(ref Color32[] pixels, int x, int y, Color32 color, int size)
     {
         for (int i = 0; i < size; i++)
         {
