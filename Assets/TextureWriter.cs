@@ -13,6 +13,7 @@ public class TextureWriter : MonoBehaviour
     public Texture2D texture;
     public const int TextureWidth = 1920;
     public const int TextureHeight = 1080;
+    private const string indexKey = "SelectedSerializer";
     public SpoutSender spoutSender;
     public int count = 1;
 
@@ -55,13 +56,27 @@ public class TextureWriter : MonoBehaviour
         {
             currentSerializer = serializers[s];
             Debug.Log($"Selected serializer: {currentSerializer.GetType().Name}");
+            PlayerPrefs.SetString(indexKey, currentSerializer.GetType().Name);
         });
 
         //select the first serializer by default
         if (serializers.Count > 0)
         {
-            currentSerializer = serializers[0];
-            serializerDropdown.value = 0;
+            string prefSavedName = PlayerPrefs.GetString(indexKey, "0");
+            int prefSavedIndex = 0;
+            //check if a type exists with the name
+            if (serializers.Any(s => s.GetType().Name == prefSavedName))
+            {
+                prefSavedIndex = serializers.FindIndex(s => s.GetType().Name == prefSavedName);
+                Debug.Log($"Found saved serializer: {prefSavedName} at index {prefSavedIndex}");
+            }
+            else
+            {
+                Debug.LogWarning($"No serializer found with name {prefSavedName}, using index 0 instead.");
+            }
+
+            currentSerializer = serializers[prefSavedIndex];
+            serializerDropdown.value = prefSavedIndex;
             serializerDropdown.RefreshShownValue();
             Debug.Log($"Default serializer: {currentSerializer.GetType().Name}");
         }
