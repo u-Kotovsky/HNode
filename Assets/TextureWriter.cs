@@ -21,6 +21,7 @@ public class TextureWriter : MonoBehaviour
     public TMP_Dropdown serializerDropdown;
     private IDMXSerializer currentSerializer;
     public ChannelRemapper channelRemapper;
+    public UVRemapper uvRemapper;
 
     void Start()
     {
@@ -123,8 +124,11 @@ public class TextureWriter : MonoBehaviour
             currentSerializer.MapChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
         }
 
+        //send to the UV Remapper
+
         texture.SetPixels32(pixels);
         texture.Apply();
+        uvRemapper.RemapUVs(ref texture);
     }
 
     public static int PixelToIndex(int x, int y)
