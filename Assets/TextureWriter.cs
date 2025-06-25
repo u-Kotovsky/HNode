@@ -20,6 +20,7 @@ public class TextureWriter : MonoBehaviour
     List<IDMXSerializer> serializers;
     public TMP_Dropdown serializerDropdown;
     private IDMXSerializer currentSerializer;
+    public ChannelRemapper channelRemapper;
 
     void Start()
     {
@@ -106,6 +107,9 @@ public class TextureWriter : MonoBehaviour
             byte[] dmxValues = dmxManager.DmxValues(universes[u]);
             mergedDmxValues.AddRange(dmxValues);
         }
+
+        //remap channels
+        channelRemapper.RemapChannels(ref mergedDmxValues);
 
         //for (int i = 0; i < mergedDmxValues.Count; i++)
         for (int i = 0; i < mergedDmxValues.Count; i++)
