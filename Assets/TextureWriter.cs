@@ -152,4 +152,44 @@ public class TextureWriter : MonoBehaviour
             }
         }
     }
+
+    public static void MixColorBlock(ref Color32[] pixels, int x, int y, byte channelValue, ColorChannel channel, int size)
+    {
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                int index = PixelToIndex(x + i, y + j);
+                if (index >= 0 && index < pixels.Length)
+                {
+                    //get the pixel color
+                    Color32 pixelColor = pixels[index];
+
+                    //assign just to the channel
+                    switch (channel)
+                    {
+                        case ColorChannel.Red:
+                            pixelColor.r = channelValue;
+                            break;
+                        case ColorChannel.Green:
+                            pixelColor.g = channelValue;
+                            break;
+                        case ColorChannel.Blue:
+                            pixelColor.b = channelValue;
+                            break;
+                    }
+                    //force alpha to 255
+                    pixelColor.a = 255;
+                    pixels[index] = pixelColor;
+                }
+            }
+        }
+    }
+
+    public enum ColorChannel
+    {
+        Red,
+        Green,
+        Blue
+    }
 }

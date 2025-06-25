@@ -11,7 +11,7 @@ public class UVRemapper : MonoBehaviour
         LoadPrefs();
         //debug remapping
         //sample mapping copying top left 20 pixel block to another space on screen
-        mappings.Add(new UVMapping(new Vector4(0, 0, 100, 100), new Vector2(500, 500))); // Example mapping: Copy from (0,0) to (100,100) with size (20,20)
+        //mappings.Add(new UVMapping(new Vector4(0, 0, 100, 100), new Vector2(500, 500))); // Example mapping: Copy from (0,0) to (100,100) with size (20,20)
     }
 
     private void SavePrefs()
