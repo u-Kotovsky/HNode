@@ -5,12 +5,12 @@ using UnityEngine;
 
 public class ChannelRemapper : MonoBehaviour
 {
-    public List<ChannelMapping> mappings;
+    public List<ChannelMapping> mappings = new List<ChannelMapping>();
     private const string MappingsKey = "ChannelMappings";
 
     void Start()
     {
-        LoadPrefs();
+        //LoadPrefs();
         //debug remapping
         //mappings.Add(new ChannelMapping(0, 512*5, 13)); // Example mapping: Copy from channel 0 to channel 1 and 2
     }

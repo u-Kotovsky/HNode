@@ -3,12 +3,12 @@ using UnityEngine;
 
 public class UVRemapper : MonoBehaviour
 {
-    public List<UVMapping> mappings;
+    public List<UVMapping> mappings = new List<UVMapping>();
     private const string MappingsKey = "UVMappings";
 
     void Start()
     {
-        LoadPrefs();
+        //LoadPrefs();
         //debug remapping
         //sample mapping copying top left 20 pixel block to another space on screen
         //mappings.Add(new UVMapping(new Vector4(0, 0, 100, 100), new Vector2(500, 500))); // Example mapping: Copy from (0,0) to (100,100) with size (20,20)
