@@ -28,9 +28,9 @@ public class TextureWriter : MonoBehaviour
 
     void Start()
     {
-        maskedChannels.AddRange(Enumerable.Range(0, 25));
-        maskedChannels.Add(52);
-        maskedChannels.Add(102);
+        //maskedChannels.AddRange(Enumerable.Range(0, 25));
+        //maskedChannels.Add(52);
+        //maskedChannels.Add(102);
 
         texture = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false);
         texture.filterMode = FilterMode.Point;
