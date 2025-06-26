@@ -15,7 +15,7 @@ public class TextureWriter : MonoBehaviour
     public const int TextureHeight = 1080;
     private const string indexKey = "SelectedSerializer";
     public SpoutSender spoutSender;
-    public int count = 1;
+    public int count = 10;
 
     List<IDMXSerializer> serializers;
     public TMP_Dropdown serializerDropdown;
@@ -112,14 +112,14 @@ public class TextureWriter : MonoBehaviour
         //remap channels
         channelRemapper.RemapChannels(ref mergedDmxValues);
 
-        //for (int i = 0; i < mergedDmxValues.Count; i++)
         for (int i = 0; i < mergedDmxValues.Count; i++)
         {
             /*
             if (i > count)
             {
                 continue;
-            } */
+            }
+            */
 
             currentSerializer.MapChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
         }
@@ -133,6 +133,12 @@ public class TextureWriter : MonoBehaviour
 
     public static int PixelToIndex(int x, int y)
     {
+        //check if its in bounds, and return -1 if not
+        if (x < 0 || x >= TextureWidth || y < 0 || y >= TextureHeight)
+        {
+            return -1;
+        }
+
         //make sure y is flipped
         y = TextureHeight - 1 - y;
         return y * TextureWidth + x;
@@ -145,6 +151,7 @@ public class TextureWriter : MonoBehaviour
             for (int j = 0; j < size; j++)
             {
                 int index = PixelToIndex(x + i, y + j);
+                if (index == -1) return;
                 if (index >= 0 && index < pixels.Length)
                 {
                     pixels[index] = color;
@@ -160,6 +167,7 @@ public class TextureWriter : MonoBehaviour
             for (int j = 0; j < size; j++)
             {
                 int index = PixelToIndex(x + i, y + j);
+                if (index == -1) return;
                 if (index >= 0 && index < pixels.Length)
                 {
                     //get the pixel color
