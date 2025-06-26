@@ -25,6 +25,8 @@ public class TextureWriter : MonoBehaviour
 
     public List<int> maskedChannels = new List<int>();
     public bool invertMask = false;
+    private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
+    public TextMeshProUGUI frameTime;
 
     void Start()
     {
@@ -98,6 +100,9 @@ public class TextureWriter : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //start a profiler timer
+        timer.Restart();
+
         Color32[] pixels = new Color32[TextureWidth * TextureHeight];
 
         //fill with transparent
@@ -144,6 +149,10 @@ public class TextureWriter : MonoBehaviour
         texture.SetPixels32(pixels);
         texture.Apply();
         uvRemapper.RemapUVs(ref texture);
+
+        timer.Stop();
+
+        frameTime.text = $"Frame Time: {timer.ElapsedMilliseconds} ms, FPS: {Mathf.RoundToInt(1000f / timer.ElapsedMilliseconds)}";
     }
 
     public static int PixelToIndex(int x, int y)
