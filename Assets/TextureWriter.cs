@@ -23,8 +23,15 @@ public class TextureWriter : MonoBehaviour
     public ChannelRemapper channelRemapper;
     public UVRemapper uvRemapper;
 
+    public List<int> maskedChannels = new List<int>();
+    public bool invertMask = false;
+
     void Start()
     {
+        maskedChannels.AddRange(Enumerable.Range(0, 25));
+        maskedChannels.Add(52);
+        maskedChannels.Add(102);
+
         texture = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false);
         texture.filterMode = FilterMode.Point;
         texture.wrapMode = TextureWrapMode.Clamp;
@@ -112,6 +119,8 @@ public class TextureWriter : MonoBehaviour
         //remap channels
         channelRemapper.RemapChannels(ref mergedDmxValues);
 
+        currentSerializer.InitFrame();
+
         for (int i = 0; i < mergedDmxValues.Count; i++)
         {
             /*
@@ -120,6 +129,12 @@ public class TextureWriter : MonoBehaviour
                 continue;
             }
             */
+
+            //skip the channel if its masked
+            if (maskedChannels.Contains(i) ^ invertMask)
+            {
+                continue;
+            }
 
             currentSerializer.MapChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
         }

@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class VRSL : IDMXSerializer
 {
+    public void InitFrame() { }
+
     public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
         //convert the channel to x y

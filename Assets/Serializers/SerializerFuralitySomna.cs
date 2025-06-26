@@ -18,13 +18,10 @@ public class FuralitySomna : IDMXSerializer
         {9 + (13 * 2), ColorChannel.Blue},
     };
     int cumulativeOFfset = 0;
+
+    public void InitFrame() { cumulativeOFfset = 0; }
     public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
-        if (channel == 0)
-        {
-            cumulativeOFfset = 0;
-        }
-
         //convert the channel to x y
         const int blockSize = 16; // 10x10 pixels per channel block
         const int blocksPerCol = 13; // channels per column
