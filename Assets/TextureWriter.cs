@@ -99,13 +99,13 @@ public class TextureWriter : MonoBehaviour
             pixels[i] = new Color32(0, 0, 0, 0);
         }
 
-        var universes = dmxManager.Universes();
+        var universeCount = dmxManager.Universes().Length;
 
         //merge all universes into one byte array
         List<byte> mergedDmxValues = new List<byte>();
-        for (int u = 0; u < universes.Length; u++)
+        for (ushort u = 0; u < universeCount; u++)
         {
-            byte[] dmxValues = dmxManager.DmxValues(universes[u]);
+            byte[] dmxValues = dmxManager.DmxValues(u);
             mergedDmxValues.AddRange(dmxValues);
         }
 
