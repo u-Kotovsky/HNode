@@ -5,33 +5,36 @@ using static TextureWriter;
 
 public class FuralitySomna : IDMXSerializer
 {
-    static List<int> mergedChannels = new List<int>()
+    Dictionary<int, ColorChannel> mergedChannels = new Dictionary<int, ColorChannel>()
     {
-        0, 1, 2
-
+        {7, ColorChannel.Red},
+        {8, ColorChannel.Green},
+        {9, ColorChannel.Blue},
+        {7 + 13, ColorChannel.Red},
+        {8 + 13, ColorChannel.Green},
+        {9 + 13, ColorChannel.Blue},
+        {7 + (13 * 2), ColorChannel.Red},
+        {8 + (13 * 2), ColorChannel.Green},
+        {9 + (13 * 2), ColorChannel.Blue},
     };
+    int cumulativeOFfset = 0;
     public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
+        if (channel == 0)
+        {
+            cumulativeOFfset = 0;
+        }
+
         //convert the channel to x y
         const int blockSize = 16; // 10x10 pixels per channel block
         const int blocksPerCol = 13; // channels per column
 
-        int cumulativeOFfset = 0;
-        //we want to build up to how many pixels we have already done based on our channel count
-        foreach (int channelI in mergedChannels)
-        {
-            if (channelI < channel)
-            {
-                cumulativeOFfset--;
-            }
-        }
-
         int x = ((channel - cumulativeOFfset) / blocksPerCol) * blockSize;
         int y = ((channel - cumulativeOFfset) % blocksPerCol) * blockSize;
 
-        if (mergedChannels.Contains(channel))
+        if (mergedChannels.ContainsKey(channel))
         {
-            ColorChannel channelType = (ColorChannel)mergedChannels.IndexOf(channel % 3);
+            ColorChannel channelType = mergedChannels[channel];
             TextureWriter.MixColorBlock(ref pixels, x, y, channelValue, channelType, blockSize);
         }
         else
@@ -43,6 +46,16 @@ public class FuralitySomna : IDMXSerializer
                 255
             );
             TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
+        }
+
+        if (mergedChannels.ContainsKey(channel))
+        {
+            //if its blue, dont increment the offset
+            if (mergedChannels[channel] == ColorChannel.Blue)
+            {
+                return;
+            }
+            cumulativeOFfset++;
         }
     }
 }
