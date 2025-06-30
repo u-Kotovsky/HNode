@@ -13,4 +13,11 @@ public class ShowConfiguration
     //these features are specifically limited to show configurations since it would be a utter pita to define these via UI alone
     public List<ChannelMapping> mappingsChannels { get; set; }
     public List<UVMapping> mappingsUV { get; set; }
+
+    //initializer
+    public ShowConfiguration()
+    {
+        mappingsChannels = new List<ChannelMapping>();
+        mappingsUV = new List<UVMapping>();
+    }
 }

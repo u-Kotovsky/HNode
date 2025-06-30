@@ -21,16 +21,16 @@ public class UVRemapper : MonoBehaviour
         foreach (var mapping in mappings)
         {
             Color[] source = tex.GetPixels(
-                (int)mapping.SourceUV.x,
-                tex.height - (int)mapping.SourceUV.y - (int)mapping.SourceUV.w, // Invert Y coordinate for Unity's texture coordinate system
-                (int)mapping.SourceUV.z,
-                (int)mapping.SourceUV.w);
+                mapping.SourceX,
+                tex.height - mapping.SourceY - mapping.SourceHeight, // Invert Y coordinate for Unity's texture coordinate system
+                mapping.SourceWidth,
+                mapping.SourceHeight);
 
             tex.SetPixels(
-                (int)mapping.TargetUV.x,
-                tex.height - (int)mapping.TargetUV.y - (int)mapping.SourceUV.w, // Invert Y coordinate for Unity's texture coordinate system
-                (int)mapping.SourceUV.z,
-                (int)mapping.SourceUV.w,
+                mapping.TargetX,
+                tex.height - mapping.TargetY - mapping.SourceHeight, // Invert Y coordinate for Unity's texture coordinate system
+                mapping.SourceWidth,
+                mapping.SourceHeight,
                 source);
         }
 
@@ -40,13 +40,21 @@ public class UVRemapper : MonoBehaviour
 
     public struct UVMapping
     {
-        public Vector4 SourceUV; //x y is top left, z w is width height
-        public Vector2 TargetUV; //x y is top left
+        public int SourceX;
+        public int SourceY;
+        public int SourceWidth;
+        public int SourceHeight;
+        public int TargetX;
+        public int TargetY;
 
-        public UVMapping(Vector4 sourceUV, Vector2 targetUV)
+        public UVMapping(int sourceX, int sourceY, int sourceWidth, int sourceHeight, int targetX, int targetY)
         {
-            SourceUV = sourceUV;
-            TargetUV = targetUV;
+            SourceX = sourceX;
+            SourceY = sourceY;
+            SourceWidth = sourceWidth;
+            SourceHeight = sourceHeight;
+            TargetX = targetX;
+            TargetY = targetY;
         }
     }
 }
