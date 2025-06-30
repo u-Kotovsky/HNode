@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class UVRemapper : MonoBehaviour
 {
@@ -37,6 +38,7 @@ public class UVRemapper : MonoBehaviour
 
     public void RemapUVs(ref Texture2D tex)
     {
+        Profiler.BeginSample("UV Remap");
         //create a internal copy of the colors to avoid modifying the original array
         foreach (var mapping in mappings)
         {
@@ -55,6 +57,7 @@ public class UVRemapper : MonoBehaviour
         }
 
         tex.Apply();
+        Profiler.EndSample();
     }
 
     public struct UVMapping

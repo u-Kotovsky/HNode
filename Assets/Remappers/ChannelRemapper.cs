@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class ChannelRemapper : MonoBehaviour
 {
@@ -38,6 +39,7 @@ public class ChannelRemapper : MonoBehaviour
 
     public void RemapChannels(ref List<byte> channels)
     {
+        Profiler.BeginSample("Channel Remap");
         int maximumNewChannel = channels.Count;
         foreach (var mapping in mappings)
         {
@@ -73,6 +75,7 @@ public class ChannelRemapper : MonoBehaviour
 
         // Replace the original channels with the remapped ones
         channels = remappedChannels;
+        Profiler.EndSample();
     }
 
     public struct ChannelMapping

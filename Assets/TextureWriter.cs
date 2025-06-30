@@ -6,6 +6,7 @@ using ArtNet;
 using Klak.Spout;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class TextureWriter : MonoBehaviour
 {
@@ -30,6 +31,10 @@ public class TextureWriter : MonoBehaviour
 
     void Start()
     {
+        //set a target framerate to 60
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 60;
+
         //maskedChannels.AddRange(Enumerable.Range(0, 25));
         //maskedChannels.Add(52);
         //maskedChannels.Add(102);
@@ -105,12 +110,13 @@ public class TextureWriter : MonoBehaviour
 
         Color32[] pixels = new Color32[TextureWidth * TextureHeight];
 
+        Profiler.BeginSample("Texture Clear");
         //fill with transparent
-        for (int i = 0; i < pixels.Length; i++)
-        {
-            pixels[i] = new Color32(0, 0, 0, 0);
-        }
+        var color = new Color32(0,0,0,0);
+        Array.Fill(pixels, color);
+        Profiler.EndSample();
 
+        Profiler.BeginSample("DMX Merge");
         var universeCount = dmxManager.Universes().Length;
 
         //merge all universes into one byte array
@@ -120,12 +126,14 @@ public class TextureWriter : MonoBehaviour
             byte[] dmxValues = dmxManager.DmxValues(u);
             mergedDmxValues.AddRange(dmxValues);
         }
+        Profiler.EndSample();
 
         //remap channels
         channelRemapper.RemapChannels(ref mergedDmxValues);
 
         currentSerializer.InitFrame();
 
+        Profiler.BeginSample("Serializer Loop");
         for (int i = 0; i < mergedDmxValues.Count; i++)
         {
             /*
@@ -141,18 +149,23 @@ public class TextureWriter : MonoBehaviour
                 continue;
             }
 
+            Profiler.BeginSample("Individual Channel Serialization");
             currentSerializer.MapChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
+            Profiler.EndSample();
         }
+        Profiler.EndSample();
 
         //send to the UV Remapper
 
+        Profiler.BeginSample("Texture Write");
         texture.SetPixels32(pixels);
         texture.Apply();
+        Profiler.EndSample();
         uvRemapper.RemapUVs(ref texture);
 
         timer.Stop();
 
-        frameTime.text = $"Frame Time: {timer.ElapsedMilliseconds} ms, FPS: {Mathf.RoundToInt(1000f / timer.ElapsedMilliseconds)}";
+        frameTime.text = $"Serialization Time: {timer.ElapsedMilliseconds} ms";
     }
 
     public static int PixelToIndex(int x, int y)
