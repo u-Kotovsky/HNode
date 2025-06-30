@@ -27,8 +27,8 @@ public class Loader : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        showconf.mappingsChannels.Add(new ChannelRemapper.ChannelMapping(0, 50, 10));
-        showconf.mappingsUV.Add(new UVRemapper.UVMapping(0, 0, 100, 100, 500, 500));
+        //showconf.mappingsChannels.Add(new ChannelRemapper.ChannelMapping(0, 50, 10));
+        //showconf.mappingsUV.Add(new UVRemapper.UVMapping(0, 0, 100, 100, 500, 500));
 
         //load in all the serializers
         var type = typeof(IDMXSerializer);
