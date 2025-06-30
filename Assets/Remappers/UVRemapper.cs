@@ -4,9 +4,7 @@ using UnityEngine.Profiling;
 
 public class UVRemapper : MonoBehaviour
 {
-    public List<UVMapping> mappings = new List<UVMapping>();
-    private const string MappingsKey = "UVMappings";
-
+    public Loader loader;
     void Start()
     {
         //LoadPrefs();
@@ -15,30 +13,10 @@ public class UVRemapper : MonoBehaviour
         //mappings.Add(new UVMapping(new Vector4(0, 0, 100, 100), new Vector2(500, 500))); // Example mapping: Copy from (0,0) to (100,100) with size (20,20)
     }
 
-    private void SavePrefs()
-    {
-        if (mappings != null)
-        {
-            PlayerPrefs.SetString(MappingsKey, JsonUtility.ToJson(mappings));
-        }
-    }
-
-    private void LoadPrefs()
-    {
-        string json = PlayerPrefs.GetString(MappingsKey, null);
-        if (!string.IsNullOrEmpty(json))
-        {
-            mappings = JsonUtility.FromJson<List<UVMapping>>(json);
-        }
-        else
-        {
-            mappings = new List<UVMapping>();
-        }
-    }
-
     public void RemapUVs(ref Texture2D tex)
     {
         Profiler.BeginSample("UV Remap");
+        var mappings = loader.showconf.mappingsUV;
         //create a internal copy of the colors to avoid modifying the original array
         foreach (var mapping in mappings)
         {

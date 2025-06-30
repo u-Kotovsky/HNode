@@ -1945,6 +1945,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae389fa98c20304458104db2b1adbce9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  loader: {fileID: 1753726295}
 --- !u!4 &976527992
 Transform:
   m_ObjectHideFlags: 0
@@ -3906,6 +3907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 369b114355f1c8e49bc3f31b819932e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  loader: {fileID: 1753726295}
 --- !u!4 &2087092462
 Transform:
   m_ObjectHideFlags: 0

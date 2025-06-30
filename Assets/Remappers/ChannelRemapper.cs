@@ -6,9 +6,7 @@ using UnityEngine.Profiling;
 
 public class ChannelRemapper : MonoBehaviour
 {
-    public List<ChannelMapping> mappings = new List<ChannelMapping>();
-    private const string MappingsKey = "ChannelMappings";
-
+    public Loader loader;
     void Start()
     {
         //LoadPrefs();
@@ -16,30 +14,10 @@ public class ChannelRemapper : MonoBehaviour
         //mappings.Add(new ChannelMapping(0, 512*5, 13)); // Example mapping: Copy from channel 0 to channel 1 and 2
     }
 
-    private void SavePrefs()
-    {
-        if (mappings != null)
-        {
-            PlayerPrefs.SetString(MappingsKey, JsonUtility.ToJson(mappings));
-        }
-    }
-
-    private void LoadPrefs()
-    {
-        string json = PlayerPrefs.GetString(MappingsKey, null);
-        if (!string.IsNullOrEmpty(json))
-        {
-            mappings = JsonUtility.FromJson<List<ChannelMapping>>(json);
-        }
-        else
-        {
-            mappings = new List<ChannelMapping>();
-        }
-    }
-
     public void RemapChannels(ref List<byte> channels)
     {
         Profiler.BeginSample("Channel Remap");
+        var mappings = loader.showconf.mappingsChannels;
         int maximumNewChannel = channels.Count;
         foreach (var mapping in mappings)
         {
