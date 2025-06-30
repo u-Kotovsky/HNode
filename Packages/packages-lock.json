@@ -204,13 +204,12 @@
       "url": "https://packages.unity.com"
     },
     "jp.keijiro.klak.spout": {
-      "version": "2.0.3",
+      "version": "file:jp.keijiro.klak.spout@3be27c34696f",
       "depth": 0,
-      "source": "registry",
+      "source": "embedded",
       "dependencies": {
         "com.unity.modules.screencapture": "1.0.0"
-      },
-      "url": "https://registry.npmjs.com"
+      }
     },
     "net.naoyakohda.artnet-unity": {
       "version": "https://github.com/nasshu2916/ArtNet-Unity.git?path=/Assets/ArtNet#master",
