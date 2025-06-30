@@ -2904,9 +2904,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dmxManager: {fileID: 134366298}
   reader: {fileID: 1542235916}
-  Transcode: 1
-  transcodeKey: Transcode
-  transcodeToggle: {fileID: 1029818155}
   texture: {fileID: 0}
   spoutSender: {fileID: 1268372051}
   channelRemapper: {fileID: 2087092461}
@@ -3568,6 +3565,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   serializerDropdown: {fileID: 2093307133}
   deserializerDropdown: {fileID: 1164366877}
+  transcodeToggle: {fileID: 1029818155}
+  Transcode: 1
+  transcodeKey: Transcode
 --- !u!4 &1753726296
 Transform:
   m_ObjectHideFlags: 0

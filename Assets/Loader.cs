@@ -3,16 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Loader : MonoBehaviour
 {
     List<IDMXSerializer> serializers;
     public TMP_Dropdown serializerDropdown;
     public TMP_Dropdown deserializerDropdown;
+    public Toggle transcodeToggle;
     public IDMXSerializer currentSerializer;
     public IDMXSerializer currentDeserializer;
+    
+    public bool Transcode = true;
     private const string serializerIndexKey = "SelectedSerializer";
     private const string deserializerIndexKey = "SelectedDeserializer";
+    public string transcodeKey = "Transcode";
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -75,6 +80,17 @@ public class Loader : MonoBehaviour
         {
             Debug.LogError("No serializers found!");
         }
+
+        bool transcodeValue = PlayerPrefs.GetInt(transcodeKey, 0) == 1;
+        transcodeToggle.isOn = transcodeValue;
+        Transcode = transcodeValue;
+
+        //setup callback
+        transcodeToggle.onValueChanged.AddListener((value) =>
+        {
+            Transcode = value;
+            PlayerPrefs.SetInt(transcodeKey, value ? 1 : 0);
+        });
     }
 
     private int loadPlayerPref(string key)

@@ -41,5 +41,5 @@ public class ColorBinary : IDMXSerializer
         }
     }
     
-    public void DeserializeChannel(Color[] pixels, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
+    public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
 }

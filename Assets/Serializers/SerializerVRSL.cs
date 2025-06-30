@@ -32,7 +32,7 @@ public class VRSL : IDMXSerializer
         TextureWriter.MakeColorBlock(ref pixels, x + universeOffset, y, color, blockSize);
     }
 
-    public void DeserializeChannel(Color[] pixels, ref byte channelValue, int channel, int textureWidth, int textureHeight)
+    public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight)
     {
         int universe = channel / 512; // Assuming 512 channels per universe
         int channelInUniverse = channel % 512; // Channel within the universe
@@ -48,7 +48,7 @@ public class VRSL : IDMXSerializer
         y += blockSize / 2;
 
         // Get the color block from the texture
-        Color32 color = TextureReader.GetColor(pixels, x + universeOffset, y);
+        Color32 color = TextureReader.GetColor(tex, x + universeOffset, y);
 
         // Convert the color block to a channel value
         channelValue = color.g;
