@@ -8,8 +8,11 @@ public class Loader : MonoBehaviour
 {
     List<IDMXSerializer> serializers;
     public TMP_Dropdown serializerDropdown;
+    public TMP_Dropdown deserializerDropdown;
     public IDMXSerializer currentSerializer;
-    private const string indexKey = "SelectedSerializer";
+    public IDMXSerializer currentDeserializer;
+    private const string serializerIndexKey = "SelectedSerializer";
+    private const string deserializerIndexKey = "SelectedDeserializer";
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -29,6 +32,7 @@ public class Loader : MonoBehaviour
 
         //populate the dropdown
         serializerDropdown.ClearOptions();
+        deserializerDropdown.ClearOptions();
         List<string> options = new List<string>();
         foreach (var typei in serializers)
         {
@@ -36,38 +40,58 @@ public class Loader : MonoBehaviour
         }
 
         serializerDropdown.AddOptions(options);
+        deserializerDropdown.AddOptions(options);
 
         serializerDropdown.onValueChanged.AddListener((s) =>
         {
             currentSerializer = serializers[s];
             Debug.Log($"Selected serializer: {currentSerializer.GetType().Name}");
-            PlayerPrefs.SetString(indexKey, currentSerializer.GetType().Name);
+            PlayerPrefs.SetString(serializerIndexKey, currentSerializer.GetType().Name);
+        });
+
+        deserializerDropdown.onValueChanged.AddListener((s) =>
+        {
+            currentDeserializer = serializers[s];
+            Debug.Log($"Selected deserializer: {serializers[s].GetType().Name}");
+            PlayerPrefs.SetString(deserializerIndexKey, serializers[s].GetType().Name);
         });
 
         //select the first serializer by default
         if (serializers.Count > 0)
         {
-            string prefSavedName = PlayerPrefs.GetString(indexKey, "0");
-            int prefSavedIndex = 0;
-            //check if a type exists with the name
-            if (serializers.Any(s => s.GetType().Name == prefSavedName))
-            {
-                prefSavedIndex = serializers.FindIndex(s => s.GetType().Name == prefSavedName);
-                Debug.Log($"Found saved serializer: {prefSavedName} at index {prefSavedIndex}");
-            }
-            else
-            {
-                Debug.LogWarning($"No serializer found with name {prefSavedName}, using index 0 instead.");
-            }
+            int prefSavedIndexSerializer = loadPlayerPref(serializerIndexKey);
+            int prefSavedIndexDeserializer = loadPlayerPref(deserializerIndexKey);
 
-            currentSerializer = serializers[prefSavedIndex];
-            serializerDropdown.value = prefSavedIndex;
+            currentSerializer = serializers[prefSavedIndexSerializer];
+            serializerDropdown.value = prefSavedIndexSerializer;
             serializerDropdown.RefreshShownValue();
+            currentDeserializer = serializers[prefSavedIndexDeserializer];
+            deserializerDropdown.value = prefSavedIndexDeserializer;
+            deserializerDropdown.RefreshShownValue();
             Debug.Log($"Default serializer: {currentSerializer.GetType().Name}");
+            Debug.Log($"Default deserializer: {currentDeserializer.GetType().Name}");
         }
         else
         {
             Debug.LogError("No serializers found!");
         }
+    }
+
+    private int loadPlayerPref(string key)
+    {
+        string prefSavedName = PlayerPrefs.GetString(key, "0");
+        int prefSavedIndex = 0;
+        //check if a type exists with the name
+        if (serializers.Any(s => s.GetType().Name == prefSavedName))
+        {
+            prefSavedIndex = serializers.FindIndex(s => s.GetType().Name == prefSavedName);
+            Debug.Log($"Found saved serializer: {prefSavedName} at index {prefSavedIndex}");
+        }
+        else
+        {
+            Debug.LogWarning($"No serializer found with name {prefSavedName}, using index 0 instead.");
+        }
+
+        return prefSavedIndex;
     }
 }

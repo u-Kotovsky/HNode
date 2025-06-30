@@ -11,11 +11,12 @@ using UnityEngine.Profiling;
 public class TextureWriter : MonoBehaviour
 {
     public DmxManager dmxManager;
+    public TextureReader reader;
+    public bool Transcode = true;
     public Texture2D texture;
     public const int TextureWidth = 1920;
     public const int TextureHeight = 1080;
     public SpoutSender spoutSender;
-    public int count = 10;
 
     public ChannelRemapper channelRemapper;
     public UVRemapper uvRemapper;
@@ -58,14 +59,21 @@ public class TextureWriter : MonoBehaviour
         Profiler.EndSample();
 
         Profiler.BeginSample("DMX Merge");
-        var universeCount = dmxManager.Universes().Length;
-
-        //merge all universes into one byte array
         List<byte> mergedDmxValues = new List<byte>();
-        for (ushort u = 0; u < universeCount; u++)
+        if (Transcode)
         {
-            byte[] dmxValues = dmxManager.DmxValues(u);
-            mergedDmxValues.AddRange(dmxValues);
+            mergedDmxValues = reader.dmxData.ToList();
+        }
+        else
+        {
+            var universeCount = dmxManager.Universes().Length;
+
+            //merge all universes into one byte array
+            for (ushort u = 0; u < universeCount; u++)
+            {
+                byte[] dmxValues = dmxManager.DmxValues(u);
+                mergedDmxValues.AddRange(dmxValues);
+            }
         }
         Profiler.EndSample();
 
@@ -77,13 +85,6 @@ public class TextureWriter : MonoBehaviour
         Profiler.BeginSample("Serializer Loop");
         for (int i = 0; i < mergedDmxValues.Count; i++)
         {
-            /*
-            if (i > count)
-            {
-                continue;
-            }
-            */
-
             //skip the channel if its masked
             if (maskedChannels.Contains(i) ^ invertMask)
             {
