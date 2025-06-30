@@ -7,12 +7,15 @@ using Klak.Spout;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.UI;
 
 public class TextureWriter : MonoBehaviour
 {
     public DmxManager dmxManager;
     public TextureReader reader;
     public bool Transcode = true;
+    public string transcodeKey = "Transcode";
+    public Toggle transcodeToggle;
     public Texture2D texture;
     public const int TextureWidth = 1920;
     public const int TextureHeight = 1080;
@@ -42,6 +45,17 @@ public class TextureWriter : MonoBehaviour
         texture.wrapMode = TextureWrapMode.Clamp;
 
         spoutSender.sourceTexture = texture;
+
+        bool transcodeValue = PlayerPrefs.GetInt(transcodeKey, 0) == 1;
+        transcodeToggle.isOn = transcodeValue;
+        Transcode = transcodeValue;
+
+        //setup callback
+        transcodeToggle.onValueChanged.AddListener((value) =>
+        {
+            Transcode = value;
+            PlayerPrefs.SetInt(transcodeKey, value ? 1 : 0);
+        });
     }
 
     // Update is called once per frame
