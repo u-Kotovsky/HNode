@@ -1,18 +1,17 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class VRSL : IDMXSerializer
 {
+    const int blockSize = 16; // 10x10 pixels per channel block
+    const int blocksPerCol = 13; // channels per column
+
     public void InitFrame() { }
 
-    public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
+    public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
-        //convert the channel to x y
-        const int blockSize = 16; // 10x10 pixels per channel block
-        const int blocksPerCol = 13; // channels per column
-
-
         int universe = channel / 512; // Assuming 512 channels per universe
         int channelInUniverse = channel % 512; // Channel within the universe
 
@@ -32,4 +31,6 @@ public class VRSL : IDMXSerializer
         );
         TextureWriter.MakeColorBlock(ref pixels, x + universeOffset, y, color, blockSize);
     }
+
+    public void DeserializeChannel(Color32[] pixels, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
 }

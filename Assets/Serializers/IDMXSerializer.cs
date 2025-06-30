@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
 
-interface IDMXSerializer
+public interface IDMXSerializer
 {
-    void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight);
-
+    void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight);
+    void DeserializeChannel(Color32[] pixels, ref byte channelValue, int channel, int textureWidth, int textureHeight);
     void InitFrame();
 }

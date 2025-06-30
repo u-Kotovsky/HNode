@@ -1,17 +1,16 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Binary : IDMXSerializer
 {
+    const int blockSize = 4; // 10x10 pixels per channel block
+    const int blocksPerCol = 52; // channels per column
     public void InitFrame() { }
-    
-    public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
-    {
-        //convert the channel to x y
-        const int blockSize = 4; // 10x10 pixels per channel block
-        const int blocksPerCol = 52; // channels per column
 
+    public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
+    {
         //split the value into 8 bits
         var bits = new BitArray(new byte[] { channelValue });
 
@@ -35,4 +34,6 @@ public class Binary : IDMXSerializer
             TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
         }
     }
+    
+    public void DeserializeChannel(Color32[] pixels, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
 }

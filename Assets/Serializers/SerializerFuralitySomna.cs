@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,6 +6,8 @@ using static TextureWriter;
 
 public class FuralitySomna : IDMXSerializer
 {
+    const int blockSize = 16; // 10x10 pixels per channel block
+    const int blocksPerCol = 13; // channels per column
     Dictionary<int, ColorChannel> mergedChannels = new Dictionary<int, ColorChannel>()
     {
         {7, ColorChannel.Red},
@@ -20,12 +23,8 @@ public class FuralitySomna : IDMXSerializer
     int cumulativeOFfset = 0;
 
     public void InitFrame() { cumulativeOFfset = 0; }
-    public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
+    public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
-        //convert the channel to x y
-        const int blockSize = 16; // 10x10 pixels per channel block
-        const int blocksPerCol = 13; // channels per column
-
         int x = ((channel - cumulativeOFfset) / blocksPerCol) * blockSize;
         int y = ((channel - cumulativeOFfset) % blocksPerCol) * blockSize;
 
@@ -55,4 +54,6 @@ public class FuralitySomna : IDMXSerializer
             cumulativeOFfset++;
         }
     }
+
+    public void DeserializeChannel(Color32[] pixels, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
 }

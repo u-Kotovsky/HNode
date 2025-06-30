@@ -1,9 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Spiral : IDMXSerializer
 {
+    const int blockSize = 8; // 10x10 pixels per channel block
     int x = 0;
     int y = 0;
     int state = 0;
@@ -16,11 +18,8 @@ public class Spiral : IDMXSerializer
         state = 0;
     }
 
-    public void MapChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
+    public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
-        //convert the channel to x y
-        const int blockSize = 8; // 10x10 pixels per channel block
-
         int scaledWidth = textureWidth / blockSize;
         int scaledHeight = textureHeight / blockSize;
 
@@ -55,7 +54,7 @@ public class Spiral : IDMXSerializer
         }
 
         visited.Add(new Vector2Int(x, y));
-        
+
         x = nextX;
         y = nextY;
     }
@@ -81,4 +80,6 @@ public class Spiral : IDMXSerializer
                 break;
         }
     }
+    
+    public void DeserializeChannel(Color32[] pixels, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
 }
