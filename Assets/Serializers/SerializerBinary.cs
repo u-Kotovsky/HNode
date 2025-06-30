@@ -34,6 +34,37 @@ public class Binary : IDMXSerializer
             TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
         }
     }
-    
-    public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
+
+    public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight)
+    {
+        var bits = new BitArray(8);
+        for (int i = 0; i < bits.Length; i++)
+        {
+            int newChannel = (channel * 8) + i;
+            int x = (newChannel / blocksPerCol) * blockSize;
+            int y = (newChannel % blocksPerCol) * blockSize;
+            //add on a offset
+            x += 1;
+            y += 1;
+            if (x >= textureWidth || y >= textureHeight)
+            {
+                continue; // Skip if the calculated pixel is out of bounds
+            }
+            // Read the 4x4 area and combine it into a single byte
+            bits[i] = TextureReader.GetColor(tex, x, y).r > 0.5f;
+        }
+        // Convert the BitArray back to a byte
+        channelValue = ConvertToByte(bits);
+    }
+
+    byte ConvertToByte(BitArray bits)
+    {
+        if (bits.Count != 8)
+        {
+            throw new ArgumentException("bits");
+        }
+        byte[] bytes = new byte[1];
+        bits.CopyTo(bytes, 0);
+        return bytes[0];
+    }
 }
