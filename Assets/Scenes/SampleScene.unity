@@ -3480,7 +3480,7 @@ MonoBehaviour:
   maskedChannels: 
   invertMask: 0
   frameTime: {fileID: 417104673}
-  img: {fileID: 1697935158}
+  mat: {fileID: 2100000, guid: 0b600d7402c616247beb0193a4587d37, type: 2}
 --- !u!4 &1454724575
 Transform:
   m_ObjectHideFlags: 0
