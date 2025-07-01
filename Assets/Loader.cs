@@ -170,6 +170,10 @@ public class Loader : MonoBehaviour
             {
                 new UVMapping(0, 0, 100, 100, 500, 500),
                 new UVMapping(100, 100, 200, 200, 500, 500),
+            },
+            maskedChannels = new List<int>()
+            {
+                0, 1, 2
             }
         };
 
