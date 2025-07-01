@@ -16,9 +16,7 @@ public class Binary : IDMXSerializer
 
         for (int i = 0; i < bits.Length; i++)
         {
-            int newChannel = (channel * 8) + i;
-            int x = (newChannel / blocksPerCol) * blockSize;
-            int y = (newChannel % blocksPerCol) * blockSize;
+            GetPositionData(channel, i, out int x, out int y);
             if (x >= textureWidth || y >= textureHeight)
             {
                 continue; // Skip if the calculated pixel is out of bounds
@@ -40,9 +38,7 @@ public class Binary : IDMXSerializer
         var bits = new BitArray(8);
         for (int i = 0; i < bits.Length; i++)
         {
-            int newChannel = (channel * 8) + i;
-            int x = (newChannel / blocksPerCol) * blockSize;
-            int y = (newChannel % blocksPerCol) * blockSize;
+            GetPositionData(channel, i, out int x, out int y);
             //add on a offset
             x += 1;
             y += 1;
@@ -55,6 +51,13 @@ public class Binary : IDMXSerializer
         }
         // Convert the BitArray back to a byte
         channelValue = ConvertToByte(bits);
+    }
+
+    private static void GetPositionData(int channel, int i, out int x, out int y)
+    {
+        int newChannel = (channel * 8) + i;
+        x = (newChannel / blocksPerCol) * blockSize;
+        y = (newChannel % blocksPerCol) * blockSize;
     }
 
     byte ConvertToByte(BitArray bits)

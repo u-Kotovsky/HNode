@@ -12,14 +12,7 @@ public class VRSL : IDMXSerializer
 
     public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
-        int universe = channel / 512; // Assuming 512 channels per universe
-        int channelInUniverse = channel % 512; // Channel within the universe
-
-        int x = (channelInUniverse / blocksPerCol) * blockSize;
-        int y = (channelInUniverse % blocksPerCol) * blockSize;
-
-        //stupid universe bullshit in VRSL
-        int universeOffset = universe * (512 / blocksPerCol * blockSize) + (universe * blockSize);
+        GetPositionData(channel, out int x, out int y, out int universeOffset);
 
         //convert the x y to pixel index
         //return 4x4 area
@@ -34,14 +27,7 @@ public class VRSL : IDMXSerializer
 
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight)
     {
-        int universe = channel / 512; // Assuming 512 channels per universe
-        int channelInUniverse = channel % 512; // Channel within the universe
-
-        int x = (channelInUniverse / blocksPerCol) * blockSize;
-        int y = (channelInUniverse % blocksPerCol) * blockSize;
-
-        //stupid universe bullshit in VRSL
-        int universeOffset = universe * (512 / blocksPerCol * blockSize) + (universe * blockSize);
+        GetPositionData(channel, out int x, out int y, out int universeOffset);
 
         //add a half offset to get the center
         x += blockSize / 2;
@@ -52,5 +38,17 @@ public class VRSL : IDMXSerializer
 
         // Convert the color block to a channel value
         channelValue = color.g;
+    }
+
+    private static void GetPositionData(int channel, out int x, out int y, out int universeOffset)
+    {
+        int universe = channel / 512; // Assuming 512 channels per universe
+        int channelInUniverse = channel % 512; // Channel within the universe
+
+        x = (channelInUniverse / blocksPerCol) * blockSize;
+        y = (channelInUniverse % blocksPerCol) * blockSize;
+
+        //stupid universe bullshit in VRSL
+        universeOffset = universe * (512 / blocksPerCol * blockSize) + (universe * blockSize);
     }
 }
