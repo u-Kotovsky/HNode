@@ -11,6 +11,7 @@ public class TextureReader : MonoBehaviour
     public Loader loader;
     public RenderTexture texture;
     public Texture2D texture2D;
+    public SpoutReceiver spoutReceiver;
 
     void Start()
     {
@@ -19,7 +20,15 @@ public class TextureReader : MonoBehaviour
 
     void Update()
     {
-        if(!loader.Transcode) return;
+        if (!loader.Transcode)
+        {
+            //disable receiver
+            spoutReceiver.enabled = false;
+            return;
+        }
+
+        //enable receiver
+        spoutReceiver.enabled = true;
 
         dmxData = new byte[universesToRead * 512];
 

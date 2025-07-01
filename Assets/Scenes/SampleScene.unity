@@ -3408,6 +3408,7 @@ MonoBehaviour:
   loader: {fileID: 1753726295}
   texture: {fileID: 8400000, guid: a2a584025b22c274c85c8c53fad8508e, type: 2}
   texture2D: {fileID: 0}
+  spoutReceiver: {fileID: 1752437177}
 --- !u!4 &1542235917
 Transform:
   m_ObjectHideFlags: 0
@@ -3843,8 +3844,6 @@ MonoBehaviour:
   saveButton: {fileID: 1952707472}
   loadButton: {fileID: 1842672644}
   transcodeToggle: {fileID: 1029818155}
-  Transcode: 1
-  transcodeKey: Transcode
 --- !u!4 &1753726296
 Transform:
   m_ObjectHideFlags: 0
