@@ -78,6 +78,7 @@ public class Loader : MonoBehaviour
         showconf.Serializer = vrsl;
         showconf.Deserializer = vrsl;
         showconf.Transcode = false;
+        showconf.TranscodeUniverseCount = 3;
 
         //select the first serializer by default
         InvalidateDropdownsAndToggles();
