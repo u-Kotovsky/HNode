@@ -26,6 +26,7 @@ public class TextureWriter : MonoBehaviour
     public bool invertMask = false;
     private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public TextMeshProUGUI frameTime;
+    public Image img;
 
     void Start()
     {
@@ -42,6 +43,7 @@ public class TextureWriter : MonoBehaviour
         texture.wrapMode = TextureWrapMode.Clamp;
 
         spoutSender.sourceTexture = texture;
+        img.material.mainTexture = texture;
     }
 
     // Update is called once per frame
