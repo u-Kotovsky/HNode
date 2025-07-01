@@ -9,6 +9,7 @@ public class ShowConfiguration
     public IDMXSerializer Serializer { get; set; }
     public IDMXSerializer Deserializer { get; set; }
     public bool Transcode { get; set; }
+    public int TranscodeUniverseCount { get; set; }
 
     //these features are specifically limited to show configurations since it would be a utter pita to define these via UI alone
     public List<ChannelMapping> mappingsChannels { get; set; }

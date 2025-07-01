@@ -17,6 +17,7 @@ public class Loader : MonoBehaviour
     List<IDMXSerializer> serializers;
     public TMP_Dropdown serializerDropdown;
     public TMP_Dropdown deserializerDropdown;
+    public TMP_InputField transcodeUniverseInput;
     public Button saveButton;
     public Button loadButton;
     public Toggle transcodeToggle;
@@ -85,6 +86,18 @@ public class Loader : MonoBehaviour
         transcodeToggle.onValueChanged.AddListener((value) =>
         {
             showconf.Transcode = value;
+        });
+
+        transcodeUniverseInput.onValueChanged.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int universeCount))
+            {
+                showconf.TranscodeUniverseCount = universeCount;
+            }
+            else
+            {
+                Debug.LogWarning($"Invalid universe count: {value}");
+            }
         });
 
         //setup save load buttons
@@ -266,5 +279,6 @@ public class Loader : MonoBehaviour
         }
 
         transcodeToggle.isOn = showconf.Transcode;
+        transcodeUniverseInput.text = showconf.TranscodeUniverseCount.ToString();
     }
 }

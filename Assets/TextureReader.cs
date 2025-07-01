@@ -7,7 +7,6 @@ public class TextureReader : MonoBehaviour
     public const int TextureWidth = 1920;
     public const int TextureHeight = 1080;
     public byte[] dmxData;
-    public int universesToRead = 1;
     public Loader loader;
     public RenderTexture texture;
     public Texture2D texture2D;
@@ -30,14 +29,14 @@ public class TextureReader : MonoBehaviour
         //enable receiver
         spoutReceiver.enabled = true;
 
-        dmxData = new byte[universesToRead * 512];
+        dmxData = new byte[loader.showconf.TranscodeUniverseCount * 512];
 
         //set RT active
         RenderTexture.active = texture;
         texture2D.ReadPixels(new Rect(0, 0, TextureWidth, TextureHeight), 0, 0);
         RenderTexture.active = null;
 
-        for (int i = 0; i < universesToRead * 512; i++)
+        for (int i = 0; i < loader.showconf.TranscodeUniverseCount * 512; i++)
         {
             loader.currentDeserializer.DeserializeChannel(texture2D, ref dmxData[i], i, TextureWidth, TextureHeight);
         }
