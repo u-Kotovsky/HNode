@@ -15,6 +15,7 @@ public class ShowConfiguration
     public List<ChannelMapping> mappingsChannels { get; set; }
     public List<UVMapping> mappingsUV { get; set; }
     public List<int> maskedChannels { get; set; }
+    public bool invertMask { get; set; }
 
     //initializer
     public ShowConfiguration()

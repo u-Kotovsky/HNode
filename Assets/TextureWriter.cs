@@ -22,7 +22,6 @@ public class TextureWriter : MonoBehaviour
     public UVRemapper uvRemapper;
     public Loader loader;
 
-    public bool invertMask = false;
     private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public TextMeshProUGUI frameTime;
     public Material mat;
@@ -87,7 +86,7 @@ public class TextureWriter : MonoBehaviour
         for (int i = 0; i < mergedDmxValues.Count; i++)
         {
             //skip the channel if its masked
-            if (loader.showconf.maskedChannels.Contains(i) ^ invertMask)
+            if (loader.showconf.maskedChannels.Contains(i) ^ loader.showconf.invertMask)
             {
                 continue;
             }
