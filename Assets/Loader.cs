@@ -8,6 +8,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using static ChannelRemapper;
+using static TextureWriter;
+using static UVRemapper;
 
 public class Loader : MonoBehaviour
 {
@@ -41,6 +44,9 @@ public class Loader : MonoBehaviour
             .Select(t => (IDMXSerializer)Activator.CreateInstance(t))
             .ToList();
 
+        //find the VRSL one
+        VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
+
         Debug.Log($"Loaded {serializers.Count} serializers");
 
         //populate the dropdown
@@ -67,40 +73,13 @@ public class Loader : MonoBehaviour
             Debug.Log($"Selected deserializer: {serializers[s].GetType().Name}");
         });
 
+        //default the serializers to VRSL and have transcode off
+        showconf.Serializer = vrsl;
+        showconf.Deserializer = vrsl;
+        showconf.Transcode = false;
+
         //select the first serializer by default
-        if (serializers.Count > 0)
-        {
-            if (showconf.Serializer != null)
-            {
-                serializerDropdown.value = serializerDropdown.options.FindIndex(o => o.text == showconf.Serializer.GetType().Name);
-            }
-            else
-            {
-                serializerDropdown.value = 0;
-                showconf.Serializer = serializers[0];
-            }
-            serializerDropdown.RefreshShownValue();
-
-            if (showconf.Deserializer != null)
-            {
-                deserializerDropdown.value = deserializerDropdown.options.FindIndex(o => o.text == showconf.Deserializer.GetType().Name);
-            }
-            else
-            {
-                deserializerDropdown.value = 0;
-                //set it into the current serializer
-                showconf.Deserializer = serializers[0];
-            }
-            deserializerDropdown.RefreshShownValue();
-            Debug.Log($"Default serializer: {currentSerializer.GetType().Name}");
-            Debug.Log($"Default deserializer: {currentDeserializer.GetType().Name}");
-        }
-        else
-        {
-            Debug.LogError("No serializers found!");
-        }
-
-        transcodeToggle.isOn = showconf.Transcode;
+        InvalidateDropdownsAndToggles();
 
         //setup callback
         transcodeToggle.onValueChanged.AddListener((value) =>
@@ -147,6 +126,47 @@ public class Loader : MonoBehaviour
         var finished = serializer.Build();
         var yaml = finished.Serialize(showconf);
 
+        #region Example ShowConfiguration
+        //make a new debugging showconf for a helper comment at the top of the file
+        var debugShowconf = new ShowConfiguration()
+        {
+            Serializer = new FuralitySomna()
+            {
+                mergedChannels = new Dictionary<int, ColorChannel>()
+                {
+                    {7, ColorChannel.Red},
+                    {8, ColorChannel.Green},
+                    {9, ColorChannel.Blue},
+                    {7 + 13, ColorChannel.Red},
+                    {8 + 13, ColorChannel.Green},
+                    {9 + 13, ColorChannel.Blue},
+                    {7 + (13 * 2), ColorChannel.Red},
+                    {8 + (13 * 2), ColorChannel.Green},
+                    {9 + (13 * 2), ColorChannel.Blue},
+                }
+            },
+            Deserializer = new VRSL(),
+            Transcode = showconf.Transcode,
+            mappingsChannels = new List<ChannelMapping>()
+            {
+                new ChannelMapping(0, 255, 1),
+                new ChannelMapping(0, 255, 10),
+            },
+            mappingsUV = new List<UVMapping>()
+            {
+                new UVMapping(0, 0, 100, 100, 500, 500),
+                new UVMapping(100, 100, 200, 200, 500, 500),
+            }
+        };
+
+        var debugyaml = finished.Serialize(debugShowconf);
+        //comment it by adding "# " to the start of each line
+        var commentedDebugYaml = string.Join("\n", debugyaml.Split('\n').Select(line => "# " + line));
+        commentedDebugYaml = "# Example ShowConfiguration:\n" + commentedDebugYaml + "\n# End Example\n\n";
+
+        yaml = commentedDebugYaml + "\n\n\n" + yaml;
+        #endregion
+
         //open save file dialog
         var extensionList = new[] {
             new ExtensionFilter("Show Configurations", "shwcfg"),
@@ -178,7 +198,7 @@ public class Loader : MonoBehaviour
         }
 
         //read from the first path
-            var content = System.IO.File.ReadAllText(paths[0]);
+        var content = System.IO.File.ReadAllText(paths[0]);
 
         if (string.IsNullOrEmpty(content))
         {
@@ -205,7 +225,46 @@ public class Loader : MonoBehaviour
             Debug.LogError("Failed to load ShowConfiguration");
             return;
         }
-        
+
         showconf = tempshowconf;
+
+        //invalidate the dropdowns and toggles
+        InvalidateDropdownsAndToggles();
+    }
+
+    private void InvalidateDropdownsAndToggles()
+    {
+        //invalidate the dropdowns and toggles to match the loaded showconf
+        if (showconf.Serializer != null)
+        {
+            int serializerIndex = serializerDropdown.options.FindIndex(o => o.text == showconf.Serializer.GetType().Name);
+            if (serializerIndex >= 0)
+            {
+                serializerDropdown.value = serializerIndex;
+                serializerDropdown.RefreshShownValue();
+                Debug.Log($"Loaded serializer: {showconf.Serializer.GetType().Name}");
+            }
+            else
+            {
+                Debug.LogWarning($"Loaded serializer {showconf.Serializer.GetType().Name} not found in dropdown options.");
+            }
+        }
+
+        if (showconf.Deserializer != null)
+        {
+            int deserializerIndex = deserializerDropdown.options.FindIndex(o => o.text == showconf.Deserializer.GetType().Name);
+            if (deserializerIndex >= 0)
+            {
+                deserializerDropdown.value = deserializerIndex;
+                deserializerDropdown.RefreshShownValue();
+                Debug.Log($"Loaded deserializer: {showconf.Deserializer.GetType().Name}");
+            }
+            else
+            {
+                Debug.LogWarning($"Loaded deserializer {showconf.Deserializer.GetType().Name} not found in dropdown options.");
+            }
+        }
+
+        transcodeToggle.isOn = showconf.Transcode;
     }
 }

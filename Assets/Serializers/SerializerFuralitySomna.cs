@@ -8,18 +8,8 @@ public class FuralitySomna : IDMXSerializer
 {
     const int blockSize = 16; // 10x10 pixels per channel block
     const int blocksPerCol = 13; // channels per column
-    Dictionary<int, ColorChannel> mergedChannels = new Dictionary<int, ColorChannel>()
-    {
-        {7, ColorChannel.Red},
-        {8, ColorChannel.Green},
-        {9, ColorChannel.Blue},
-        {7 + 13, ColorChannel.Red},
-        {8 + 13, ColorChannel.Green},
-        {9 + 13, ColorChannel.Blue},
-        {7 + (13 * 2), ColorChannel.Red},
-        {8 + (13 * 2), ColorChannel.Green},
-        {9 + (13 * 2), ColorChannel.Blue},
-    };
+    public Dictionary<int, ColorChannel> mergedChannels = new Dictionary<int, ColorChannel>();
+    
     int cumulativeOFfset = 0;
 
     public void InitFrame() { cumulativeOFfset = 0; }
