@@ -30,7 +30,7 @@ public class TextureWriter : MonoBehaviour
     {
         //set a target framerate to 60
         QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = 45; //45 because thats the maximum according to the DMX spec
 
         //maskedChannels.AddRange(Enumerable.Range(0, 25));
         //maskedChannels.Add(52);
