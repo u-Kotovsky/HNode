@@ -2,6 +2,7 @@ using ArtNet;
 using Klak.Spout;
 using UnityEngine;
 
+//this should really be turned into a IDMXGenerator
 public class TextureReader : MonoBehaviour
 {
     public const int TextureWidth = 1920;

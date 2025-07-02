@@ -8,6 +8,7 @@ public class ShowConfiguration
     //these are both saved as part of a show configuration, and as part of player prefs
     public IDMXSerializer Serializer { get; set; }
     public IDMXSerializer Deserializer { get; set; }
+    public List<IDMXGenerator> Generators { get; set; }
     public bool Transcode { get; set; }
     public int TranscodeUniverseCount { get; set; }
 
@@ -23,5 +24,6 @@ public class ShowConfiguration
         mappingsChannels = new List<ChannelMapping>();
         mappingsUV = new List<UVMapping>();
         maskedChannels = new List<int>();
+        Generators = new List<IDMXGenerator>();
     }
 }

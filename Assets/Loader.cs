@@ -15,6 +15,9 @@ using static UVRemapper;
 public class Loader : MonoBehaviour
 {
     List<IDMXSerializer> serializers;
+    
+    //dmx generator source
+    List<IDMXGenerator> generators;
     public TMP_Dropdown serializerDropdown;
     public TMP_Dropdown deserializerDropdown;
     public TMP_InputField transcodeUniverseInput;
@@ -35,15 +38,8 @@ public class Loader : MonoBehaviour
         //showconf.mappingsUV.Add(new UVRemapper.UVMapping(0, 0, 100, 100, 500, 500));
 
         //load in all the serializers
-        var type = typeof(IDMXSerializer);
-        var types = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(s => s.GetTypes())
-            .Where(p => type.IsAssignableFrom(p));
-
-        serializers = types
-            .Where(t => !t.IsInterface && !t.IsAbstract)
-            .Select(t => (IDMXSerializer)Activator.CreateInstance(t))
-            .ToList();
+        serializers = GetAllInterfaceImplementations<IDMXSerializer>();
+        generators = GetAllInterfaceImplementations<IDMXGenerator>();
 
         //find the VRSL one
         VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
@@ -80,6 +76,13 @@ public class Loader : MonoBehaviour
         showconf.Transcode = false;
         showconf.TranscodeUniverseCount = 3;
 
+        //TODO: REMOVE THIS LATER AFTER TESTING
+        /* showconf.Generators.Add(new Text()
+        {
+            text = "Hello World",
+            channelStart = 50
+        }); */
+
         //select the first serializer by default
         InvalidateDropdownsAndToggles();
 
@@ -104,6 +107,19 @@ public class Loader : MonoBehaviour
         //setup save load buttons
         saveButton.onClick.AddListener(SaveShowConfiguration);
         loadButton.onClick.AddListener(LoadShowConfiguration);
+    }
+
+    private List<T> GetAllInterfaceImplementations<T>()
+    {
+        var type = typeof(T);
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(p => type.IsAssignableFrom(p));
+
+        return types
+            .Where(t => !t.IsInterface && !t.IsAbstract)
+            .Select(t => (T)Activator.CreateInstance(t))
+            .ToList();
     }
 
     private int loadPlayerPref(string key)
@@ -160,6 +176,14 @@ public class Loader : MonoBehaviour
                 }
             },
             Deserializer = new VRSL(),
+            Generators = new List<IDMXGenerator>()
+            {
+                new Text()
+                {
+                    text = "Hello World",
+                    channelStart = 0
+                }
+            },
             Transcode = showconf.Transcode,
             mappingsChannels = new List<ChannelMapping>()
             {

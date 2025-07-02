@@ -75,6 +75,12 @@ public class TextureWriter : MonoBehaviour
                 mergedDmxValues.AddRange(dmxValues);
             }
         }
+
+        //now run the generators in order
+        foreach (var generator in loader.showconf.Generators)
+        {
+            generator.GenerateDMX(ref mergedDmxValues);
+        }
         Profiler.EndSample();
 
         //remap channels
