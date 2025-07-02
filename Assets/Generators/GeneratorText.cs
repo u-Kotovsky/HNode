@@ -6,10 +6,30 @@ using UnityEngine;
 public class Text : IDMXGenerator
 {
     public string text = "Hello World";
+    /// <summary>
+    /// The channel to start writing the text to. The text will be written starting at this channel and continuing until the text is fully written or <see cref="maxCharacters"/> is reached if <see cref="limitLength"/> is true.
+    /// </summary>
     public int channelStart = 0;
-    public bool unicode = false; //unicode support
+    /// <summary>
+    /// If true, the text will be encoded as UTF-16 (Unicode). If false, the text will be encoded as UTF-8.
+    /// </summary>
+    public bool unicode = false;
+    /// <summary>
+    /// If true, the text will be limited to <see cref="maxCharacters"/> channels. If false, the text will be written until it is fully written.
+    /// </summary>
+    public bool limitLength = false;
+    /// <summary>
+    /// The maximum length of the text. Any additional channels that would be written will be ignored if <see cref="limitLength"/> is true.
+    /// </summary>
+    public int maxCharacters = 32;
     public void GenerateDMX(ref List<byte> dmxData)
     {
+        //trim to max characters if the control is present
+        if (limitLength && text.Length > maxCharacters)
+        {
+            text = text.Substring(0, maxCharacters);
+        }
+
         //convert text to DMX data
         byte[] textBytes = new byte[0];
         if (unicode)
