@@ -25,6 +25,7 @@ public class TextureWriter : MonoBehaviour
     private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public TextMeshProUGUI frameTime;
     public Material mat;
+    private Color32[] pixels;
 
     void Start()
     {
@@ -42,6 +43,8 @@ public class TextureWriter : MonoBehaviour
 
         spoutSender.sourceTexture = texture;
         mat.mainTexture = texture;
+
+        pixels = new Color32[TextureWidth * TextureHeight];
     }
 
     // Update is called once per frame
@@ -49,8 +52,6 @@ public class TextureWriter : MonoBehaviour
     {
         //start a profiler timer
         timer.Restart();
-
-        Color32[] pixels = new Color32[TextureWidth * TextureHeight];
 
         Profiler.BeginSample("Texture Clear");
         //fill with transparent
