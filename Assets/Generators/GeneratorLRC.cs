@@ -44,12 +44,20 @@ public class LRC : Text
                     }
                     break;
                 case Mode.PlayTrigger:
-                    if (lastTriggerValue != dmxData[triggerChannel])
+                    if (dmxData[triggerChannel] < 127)
                     {
                         //start playback
-                        lastTriggerValue = dmxData[triggerChannel];
                         timeAtLoad = DateTime.Now.TimeOfDay;
                         currentEvent = 0;
+                    }
+                    else
+                    {
+                        //move to the next event if the current one has passed
+                        if (DateTime.Now.TimeOfDay > timeAtLoad + events[currentEvent].timestamp)
+                        {
+                            currentEvent++;
+                            Debug.Log(events[currentEvent].text);
+                        }
                     }
                     break;
             }
