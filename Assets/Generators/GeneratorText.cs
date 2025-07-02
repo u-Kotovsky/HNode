@@ -12,6 +12,7 @@ public class Text : IDMXGenerator
         //convert text to DMX data
         byte[] textBytes = System.Text.Encoding.UTF8.GetBytes(text);
 
+        //TODO: Move this to a extension method on the list class
         if (dmxData.Count < channelStart + textBytes.Length)
         {
             //expand it by the proper amount
