@@ -152,6 +152,12 @@ public class Loader : MonoBehaviour
             serializer.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
         }
 
+        foreach (var generatorType in generators)
+        {
+            //needed to tag each generator type
+            serializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
+        }
+
         //build it
         var finished = serializer.Build();
         var yaml = finished.Serialize(showconf);
@@ -256,6 +262,12 @@ public class Loader : MonoBehaviour
         {
             //needed to tag each serializer type
             deserializer.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
+        }
+
+        foreach (var generatorType in generators)
+        {
+            //needed to tag each generator type
+            deserializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
         }
 
         //build it

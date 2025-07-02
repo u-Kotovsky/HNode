@@ -7,10 +7,21 @@ public class Text : IDMXGenerator
 {
     public string text = "Hello World";
     public int channelStart = 0;
+    public bool unicode = false; //unicode support
     public void GenerateDMX(ref List<byte> dmxData)
     {
         //convert text to DMX data
-        byte[] textBytes = System.Text.Encoding.UTF8.GetBytes(text);
+        byte[] textBytes = new byte[0];
+        if (unicode)
+        {
+            //unicode implementation
+            textBytes = System.Text.Encoding.Unicode.GetBytes(text);
+        }
+        else
+        {
+            //utf8 implementation
+            textBytes = System.Text.Encoding.UTF8.GetBytes(text);
+        }
 
         //TODO: Move this to a extension method on the list class
         if (dmxData.Count < channelStart + textBytes.Length)
