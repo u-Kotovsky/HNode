@@ -33,13 +33,23 @@ public class LRC : Text
                     if (DateTime.Now.TimeOfDay > timeAtLoad + events[currentEvent].timestamp)
                     {
                         currentEvent++;
+                        Debug.Log(events[currentEvent].text);
                     }
                     break;
-                case Mode.Trigger:
+                case Mode.StrobeTrigger:
                     if (lastTriggerValue != dmxData[triggerChannel])
                     {
                         lastTriggerValue = dmxData[triggerChannel];
                         currentEvent++;
+                    }
+                    break;
+                case Mode.PlayTrigger:
+                    if (lastTriggerValue != dmxData[triggerChannel])
+                    {
+                        //start playback
+                        lastTriggerValue = dmxData[triggerChannel];
+                        timeAtLoad = DateTime.Now.TimeOfDay;
+                        currentEvent = 0;
                     }
                     break;
             }
@@ -115,7 +125,11 @@ public class LRC : Text
         /// <summary>
         /// Will wait for a trigger channel to go to the next lyric event
         /// </summary>
-        Trigger,
+        StrobeTrigger,
+        /// <summary>
+        /// Will wait for a trigger channel to start timecoded playback
+        /// </summary>
+        PlayTrigger,
         /// <summary>
         /// Will play the LRC file using timestamps the second the config is loaded
         /// </summary>
