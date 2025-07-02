@@ -5,4 +5,5 @@ using UnityEngine;
 public interface IDMXGenerator
 {
     void GenerateDMX(ref List<byte> dmxData);
+    void Construct();
 }

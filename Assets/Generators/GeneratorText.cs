@@ -22,6 +22,9 @@ public class Text : IDMXGenerator
     /// The maximum length of the text. Any additional channels that would be written will be ignored if <see cref="limitLength"/> is true.
     /// </summary>
     public int maxCharacters = 32;
+
+    public virtual void Construct() { }
+
     public virtual void GenerateDMX(ref List<byte> dmxData)
     {
         //trim to max characters if the control is present

@@ -188,7 +188,9 @@ public class Loader : MonoBehaviour
                 {
                     text = "Hello World",
                     channelStart = 0
-                }
+                },
+                new Time(),
+                new LRC()
             },
             Transcode = showconf.Transcode,
             mappingsChannels = new List<ChannelMapping>()
@@ -281,6 +283,12 @@ public class Loader : MonoBehaviour
         }
 
         showconf = tempshowconf;
+
+        //run initialization on all generators
+        foreach (var generator in showconf.Generators)
+        {
+            generator.Construct();
+        }
 
         //invalidate the dropdowns and toggles
         InvalidateDropdownsAndToggles();
