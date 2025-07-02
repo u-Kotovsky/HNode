@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Text : IDMXGenerator
 {
-    public string text = "Hello World";
+    public string text = "";
     /// <summary>
     /// The channel to start writing the text to. The text will be written starting at this channel and continuing until the text is fully written or <see cref="maxCharacters"/> is reached if <see cref="limitLength"/> is true.
     /// </summary>
@@ -22,7 +22,7 @@ public class Text : IDMXGenerator
     /// The maximum length of the text. Any additional channels that would be written will be ignored if <see cref="limitLength"/> is true.
     /// </summary>
     public int maxCharacters = 32;
-    public void GenerateDMX(ref List<byte> dmxData)
+    public virtual void GenerateDMX(ref List<byte> dmxData)
     {
         //trim to max characters if the control is present
         if (limitLength && text.Length > maxCharacters)
