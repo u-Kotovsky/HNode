@@ -43,14 +43,7 @@ public class Text : IDMXGenerator
             textBytes = System.Text.Encoding.UTF8.GetBytes(text);
         }
 
-        //TODO: Move this to a extension method on the list class
-        if (dmxData.Count < channelStart + textBytes.Length)
-        {
-            //expand it by the proper amount
-            int newSize = channelStart + textBytes.Length;
-            int difference = newSize - dmxData.Count;
-            dmxData.AddRange(new byte[difference]);
-        }
+        dmxData.EnsureCapacity(channelStart + textBytes.Length);
 
         //we need to write to the dmx data list directly
         for (int i = channelStart; i < channelStart + textBytes.Length; i++)
