@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Profiling;
 
+//TODO: This probably can just be moved to a IDMXGenerator instead of being its own thing
 public class ChannelRemapper : MonoBehaviour
 {
     public Loader loader;
@@ -61,7 +62,7 @@ public class ChannelRemapper : MonoBehaviour
         public int SourceChannelStart { get; set; }
         public int SourceChannelLength { get; set; }
         public int TargetChannel { get; set; }
-        
+
         public ChannelMapping(int sourceChannelStart, int targetChannel, int sourceChannelLength = 1)
         {
             SourceChannelStart = sourceChannelStart;
