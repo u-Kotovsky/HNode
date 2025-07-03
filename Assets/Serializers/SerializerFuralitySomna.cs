@@ -15,10 +15,11 @@ public class FuralitySomna : IDMXSerializer
     int cumulativeOFfset = 0;
 
     public void Construct()
-    {;
+    {
         //convert the strings to integers by trying to parse them as a equation
         _mergedChannels.Clear();
 
+        //TODO: Just make this whole thing a custom expression type that can be constructed from a string
         foreach (var channel in mergedChannels.Keys)
         {
             //this is dirty as fuck but whatever
