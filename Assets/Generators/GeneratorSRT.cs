@@ -70,8 +70,11 @@ public class SRT : Text
             lyricsraw = "";
         }
 
+        //add some new lines to make sure the regex works correctly
+        lyricsraw += "\n\n\n";
+
         //find all of them using regex
-        const string pattern = @"(?m)^\d+\n*((\d{2}):(\d{2}):(\d{2}),(\d{3})) --> ((\d{2}):(\d{2}):(\d{2}),(\d{3}))\n*(.*?)$";
+        const string pattern = @"(?m)^\d+\n*((\d{2}):(\d{2}):(\d{2}),(\d{3})) --> ((\d{2}):(\d{2}):(\d{2}),(\d{3}))\n*([\S\s]*?(?=\n\n))";
         System.Text.RegularExpressions.MatchCollection matches = System.Text.RegularExpressions.Regex.Matches(lyricsraw, pattern);
 
         if (matches.Count > 0)
