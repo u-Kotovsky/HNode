@@ -61,7 +61,7 @@ public class TextureWriter : MonoBehaviour
 
         Profiler.BeginSample("DMX Merge");
         List<byte> mergedDmxValues = new List<byte>();
-        if (loader.Transcode)
+        if (loader.showconf.Transcode)
         {
             mergedDmxValues = reader.dmxData.ToList();
         }
@@ -87,7 +87,7 @@ public class TextureWriter : MonoBehaviour
         //remap channels
         channelRemapper.RemapChannels(ref mergedDmxValues);
 
-        loader.currentSerializer.InitFrame();
+        loader.showconf.Serializer.InitFrame();
 
         Profiler.BeginSample("Serializer Loop");
         for (int i = 0; i < mergedDmxValues.Count; i++)
@@ -99,7 +99,7 @@ public class TextureWriter : MonoBehaviour
             }
 
             Profiler.BeginSample("Individual Channel Serialization");
-            loader.currentSerializer.SerializeChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
+            loader.showconf.Serializer.SerializeChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
             Profiler.EndSample();
         }
         Profiler.EndSample();

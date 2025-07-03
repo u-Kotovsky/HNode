@@ -20,7 +20,7 @@ public class TextureReader : MonoBehaviour
 
     void Update()
     {
-        if (!loader.Transcode)
+        if (!loader.showconf.Transcode)
         {
             //disable receiver
             spoutReceiver.enabled = false;
@@ -39,7 +39,7 @@ public class TextureReader : MonoBehaviour
 
         for (int i = 0; i < loader.showconf.TranscodeUniverseCount * 512; i++)
         {
-            loader.currentDeserializer.DeserializeChannel(texture2D, ref dmxData[i], i, TextureWidth, TextureHeight);
+            loader.showconf.Deserializer.DeserializeChannel(texture2D, ref dmxData[i], i, TextureWidth, TextureHeight);
         }
     }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using SFB;
@@ -15,7 +16,7 @@ using static UVRemapper;
 public class Loader : MonoBehaviour
 {
     List<IDMXSerializer> serializers;
-    
+
     //dmx generator source
     List<IDMXGenerator> generators;
     public TMP_Dropdown serializerDropdown;
@@ -24,12 +25,11 @@ public class Loader : MonoBehaviour
     public Button saveButton;
     public Button loadButton;
     public Toggle transcodeToggle;
-    public IDMXSerializer currentSerializer => showconf.Serializer;
-    public IDMXSerializer currentDeserializer => showconf.Deserializer;
-
-    public bool Transcode => showconf.Transcode;
 
     public ShowConfiguration showconf = new ShowConfiguration();
+
+    IDeserializer ymldeserializer;
+    ISerializer ymlserializer;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -61,13 +61,13 @@ public class Loader : MonoBehaviour
         serializerDropdown.onValueChanged.AddListener((s) =>
         {
             showconf.Serializer = serializers[s];
-            Debug.Log($"Selected serializer: {currentSerializer.GetType().Name}");
+            Debug.Log($"Selected serializer: {showconf.Serializer.GetType().Name}");
         });
 
         deserializerDropdown.onValueChanged.AddListener((s) =>
         {
             showconf.Deserializer = serializers[s];
-            Debug.Log($"Selected deserializer: {serializers[s].GetType().Name}");
+            Debug.Log($"Selected deserializer: {showconf.Deserializer.GetType().Name}");
         });
 
         //default the serializers to VRSL and have transcode off
@@ -107,41 +107,7 @@ public class Loader : MonoBehaviour
         //setup save load buttons
         saveButton.onClick.AddListener(SaveShowConfiguration);
         loadButton.onClick.AddListener(LoadShowConfiguration);
-    }
 
-    private List<T> GetAllInterfaceImplementations<T>()
-    {
-        var type = typeof(T);
-        var types = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(s => s.GetTypes())
-            .Where(p => type.IsAssignableFrom(p));
-
-        return types
-            .Where(t => !t.IsInterface && !t.IsAbstract)
-            .Select(t => (T)Activator.CreateInstance(t))
-            .ToList();
-    }
-
-    private int loadPlayerPref(string key)
-    {
-        string prefSavedName = PlayerPrefs.GetString(key, "0");
-        int prefSavedIndex = 0;
-        //check if a type exists with the name
-        if (serializers.Any(s => s.GetType().Name == prefSavedName))
-        {
-            prefSavedIndex = serializers.FindIndex(s => s.GetType().Name == prefSavedName);
-            Debug.Log($"Found saved serializer: {prefSavedName} at index {prefSavedIndex}");
-        }
-        else
-        {
-            Debug.LogWarning($"No serializer found with name {prefSavedName}, using index 0 instead.");
-        }
-
-        return prefSavedIndex;
-    }
-
-    public void SaveShowConfiguration()
-    {
         //serialize to a yml string
         var serializer = new SerializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance);
@@ -159,8 +125,45 @@ public class Loader : MonoBehaviour
         }
 
         //build it
-        var finished = serializer.Build();
-        var yaml = finished.Serialize(showconf);
+        ymlserializer = serializer.Build();
+
+
+        //load from a yml string
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance);
+
+        foreach (var serializerType in serializers)
+        {
+            //needed to tag each serializer type
+            deserializer.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
+        }
+
+        foreach (var generatorType in generators)
+        {
+            //needed to tag each generator type
+            deserializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
+        }
+
+        //build it
+        ymldeserializer = deserializer.Build();
+    }
+
+    private List<T> GetAllInterfaceImplementations<T>()
+    {
+        var type = typeof(T);
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(p => type.IsAssignableFrom(p));
+
+        return types
+            .Where(t => !t.IsInterface && !t.IsAbstract)
+            .Select(t => (T)Activator.CreateInstance(t))
+            .ToList();
+    }
+
+    public void SaveShowConfiguration()
+    {
+        var yaml = ymlserializer.Serialize(showconf);
 
         #region Example ShowConfiguration
         //make a new debugging showconf for a helper comment at the top of the file
@@ -168,17 +171,17 @@ public class Loader : MonoBehaviour
         {
             Serializer = new FuralitySomna()
             {
-                mergedChannels = new Dictionary<int, ColorChannel>()
+                mergedChannels = new Dictionary<string, ColorChannel>()
                 {
-                    {7, ColorChannel.Red},
-                    {8, ColorChannel.Green},
-                    {9, ColorChannel.Blue},
-                    {7 + 13, ColorChannel.Red},
-                    {8 + 13, ColorChannel.Green},
-                    {9 + 13, ColorChannel.Blue},
-                    {7 + (13 * 2), ColorChannel.Red},
-                    {8 + (13 * 2), ColorChannel.Green},
-                    {9 + (13 * 2), ColorChannel.Blue},
+                    {"7", ColorChannel.Red},
+                    {"8", ColorChannel.Green},
+                    {"9", ColorChannel.Blue},
+                    {"7 + 13", ColorChannel.Red},
+                    {"8 + 13", ColorChannel.Green},
+                    {"9 + 13", ColorChannel.Blue},
+                    {"7 + (13 * 2)", ColorChannel.Red},
+                    {"8 + (13 * 2)", ColorChannel.Green},
+                    {"9 + (13 * 2)", ColorChannel.Blue},
                 }
             },
             Deserializer = new VRSL(),
@@ -209,7 +212,7 @@ public class Loader : MonoBehaviour
             }
         };
 
-        var debugyaml = finished.Serialize(debugShowconf);
+        var debugyaml = ymlserializer.Serialize(debugShowconf);
         //comment it by adding "# " to the start of each line
         var commentedDebugYaml = string.Join("\n", debugyaml.Split('\n').Select(line => "# " + line));
         commentedDebugYaml = "# Example ShowConfiguration:\n" + commentedDebugYaml + "\n# End Example\n\n";
@@ -232,6 +235,8 @@ public class Loader : MonoBehaviour
         //write the yaml to the file
         System.IO.File.WriteAllText(path, yaml);
     }
+
+    private string importedconf;
 
     public void LoadShowConfiguration()
     {
@@ -256,33 +261,24 @@ public class Loader : MonoBehaviour
             return;
         }
 
-        //load from a yml string
-        var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance);
+        showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
+        importedconf = content;
 
-        foreach (var serializerType in serializers)
-        {
-            //needed to tag each serializer type
-            deserializer.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
-        }
+        //invalidate the dropdowns and toggles
+        InvalidateDropdownsAndToggles();
 
-        foreach (var generatorType in generators)
-        {
-            //needed to tag each generator type
-            deserializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
-        }
+        //start coroutine
+        //this is stupid dumb shit but this YML library is being weird and this fixes the issue
+        StartCoroutine(DeferredLoad());
+    }
 
-        //build it
-        var finished = deserializer.Build();
-        var tempshowconf = finished.Deserialize<ShowConfiguration>(content);
+    IEnumerator DeferredLoad()
+    {
+        //returning 0 will make it wait 1 frame
+        yield return new WaitForEndOfFrame();
 
-        if (tempshowconf == null)
-        {
-            Debug.LogError("Failed to load ShowConfiguration");
-            return;
-        }
-
-        showconf = tempshowconf;
+        //yayyyyy double load to fix dumb race condition bullshit
+        showconf = ymldeserializer.Deserialize<ShowConfiguration>(importedconf);
 
         //run initialization on all generators
         foreach (var generator in showconf.Generators)
@@ -290,8 +286,8 @@ public class Loader : MonoBehaviour
             generator.Construct();
         }
 
-        //invalidate the dropdowns and toggles
-        InvalidateDropdownsAndToggles();
+        showconf.Serializer.Construct();
+        showconf.Deserializer.Construct();
     }
 
     private void InvalidateDropdownsAndToggles()
@@ -303,7 +299,7 @@ public class Loader : MonoBehaviour
             if (serializerIndex >= 0)
             {
                 serializerDropdown.value = serializerIndex;
-                serializerDropdown.RefreshShownValue();
+                //serializerDropdown.RefreshShownValue();
                 Debug.Log($"Loaded serializer: {showconf.Serializer.GetType().Name}");
             }
             else
@@ -318,7 +314,7 @@ public class Loader : MonoBehaviour
             if (deserializerIndex >= 0)
             {
                 deserializerDropdown.value = deserializerIndex;
-                deserializerDropdown.RefreshShownValue();
+                //deserializerDropdown.RefreshShownValue();
                 Debug.Log($"Loaded deserializer: {showconf.Deserializer.GetType().Name}");
             }
             else
