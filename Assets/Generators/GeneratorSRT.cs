@@ -7,13 +7,10 @@ public class SRT : Text
 {
     //file path to SRT file
     public string filePath = "";
+    public bool generateSubtitlePercentage= false;
+    public int subtitlePercentChannel = 0;
 
     public Mode mode = Mode.OnConfigLoad;
-    /// <summary>
-    /// When this channel changes value, the next lyric event will be triggered
-    /// </summary>
-    public int triggerChannel = 0;
-    private byte lastTriggerValue = 0;
     private TimeSpan timeAtLoad = TimeSpan.Zero;
 
     private List<SRTEvent> events = new List<SRTEvent>();
@@ -26,6 +23,23 @@ public class SRT : Text
 
         if (events.Count != 0 && currentEvent < events.Count)
         {
+            //figure out the percentage of the current event
+            float percentage = 0f;
+            if (events[currentEvent].end != events[currentEvent].start)
+            {
+                percentage = (float)(DateTime.Now.TimeOfDay - timeAtLoad - events[currentEvent].start).TotalMilliseconds /
+                             (float)(events[currentEvent].end - events[currentEvent].start).TotalMilliseconds;
+            }
+            //convert to a value between 0 and 255
+            int percentageValue = Mathf.Clamp(Mathf.RoundToInt(percentage * 255f), 0, 255);
+            //set the percentage channel
+            if (generateSubtitlePercentage)
+            {
+                //make sure we can write to that by expanding it first
+                dmxData.EnsureCapacity(subtitlePercentChannel + 1);
+                dmxData[subtitlePercentChannel] = (byte)percentageValue;
+            }
+
             //try to move to the next event if needed
             switch (mode)
             {
