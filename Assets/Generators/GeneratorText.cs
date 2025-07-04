@@ -74,6 +74,7 @@ public class Text : IDMXGenerator
         { '–', "-" },
         { '—', "-" },
         { '​', " " },
+        { ' ', " " },
         //{ new Rune((char)55357, (char)56898), ":)" }, // :)
         //{ new Rune((char)55357, (char)56870), ":(" }, // :)
     };
