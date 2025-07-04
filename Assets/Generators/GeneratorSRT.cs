@@ -35,11 +35,11 @@ public class SRT : Text
                         DateTime.Now.TimeOfDay < timeAtLoad + events[currentEvent].end)
                     {
                         text = events[currentEvent].text;
-                        Debug.Log(events[currentEvent].text);
                     }
 
                     if (DateTime.Now.TimeOfDay > timeAtLoad + events[currentEvent].end)
                     {
+                        Debug.Log(events[currentEvent]);
                         //keep going till we find a fresh one, since there might be multiple events with the same times
                         while (currentEvent < events.Count - 1 && DateTime.Now.TimeOfDay > timeAtLoad + events[currentEvent + 1].start)
                         {
@@ -85,11 +85,13 @@ public class SRT : Text
                 int hoursStart = int.Parse(match.Groups[2].Value);
                 int minutesStart = int.Parse(match.Groups[3].Value);
                 int secondsStart = int.Parse(match.Groups[4].Value);
-                int millisecondsStart = match.Groups[5].Success ? int.Parse(match.Groups[3].Value) : 0;
+                int millisecondsStart = int.Parse(match.Groups[5].Value);
                 int hoursEnd = int.Parse(match.Groups[7].Value);
                 int minutesEnd = int.Parse(match.Groups[8].Value);
                 int secondsEnd = int.Parse(match.Groups[9].Value);
-                int millisecondsEnd = match.Groups[10].Success ? int.Parse(match.Groups[9].Value) : 0;
+                int millisecondsEnd = int.Parse(match.Groups[10].Value);
+
+                //Debug.Log($"Found SRT event: {hoursStart}:{minutesStart}:{secondsStart}.{millisecondsStart} --> {hoursEnd}:{minutesEnd}:{secondsEnd}.{millisecondsEnd} - {match.Groups[11].Value.Trim()}");
 
                 //create a new LRC event
                 SRTEvent lrcEvent = new SRTEvent
@@ -136,5 +138,10 @@ public class SRT : Text
         public TimeSpan start;
         public TimeSpan end;
         public string text;
+
+        public override string ToString()
+        {
+            return $"{start} --> {end}: {text}";
+        }
     }
 }
