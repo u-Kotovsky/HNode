@@ -7,6 +7,11 @@ public class VRSL : IDMXSerializer
 {
     const int blockSize = 16; // 10x10 pixels per channel block
     const int blocksPerCol = 13; // channels per column
+    
+    /// <summary>
+    /// Automatically mask channels that are set to zero.
+    /// </summary>
+    public bool autoMaskOnZero { get; set; }
 
     public void Construct() { }
     public void InitFrame() { }
@@ -21,7 +26,7 @@ public class VRSL : IDMXSerializer
             channelValue,
             channelValue,
             channelValue,
-            255
+            autoMaskOnZero && channelValue == 0 ? (byte)0 : (byte)255 // if autoMaskOnZero is true and channelValue is 0, set alpha to 0
         );
         TextureWriter.MakeColorBlock(ref pixels, x + universeOffset, y, color, blockSize);
     }

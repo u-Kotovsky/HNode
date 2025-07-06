@@ -108,7 +108,7 @@ public class SRT : Text
                 //Debug.Log($"Found SRT event: {hoursStart}:{minutesStart}:{secondsStart}.{millisecondsStart} --> {hoursEnd}:{minutesEnd}:{secondsEnd}.{millisecondsEnd} - {match.Groups[11].Value.Trim()}");
 
                 //create a new LRC event
-                SRTEvent lrcEvent = new SRTEvent
+                SRTEvent srtEvent = new SRTEvent
                 {
                     start = new TimeSpan(0, hoursStart, minutesStart, secondsStart, millisecondsStart),
                     end = new TimeSpan(0, hoursEnd, minutesEnd, secondsEnd, millisecondsEnd),
@@ -116,7 +116,7 @@ public class SRT : Text
                 };
 
                 //add it to the list
-                events.Add(lrcEvent);
+                events.Add(srtEvent);
             }
         }
 
@@ -133,17 +133,6 @@ public class SRT : Text
 
     public enum Mode
     {
-        /// <summary>
-        /// Will wait for a trigger channel to go to the next lyric event
-        /// </summary>
-        StrobeTrigger,
-        /// <summary>
-        /// Will wait for a trigger channel to start timecoded playback
-        /// </summary>
-        PlayTrigger,
-        /// <summary>
-        /// Will play the LRC file using timestamps the second the config is loaded
-        /// </summary>
         OnConfigLoad
     }
 

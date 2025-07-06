@@ -20,7 +20,7 @@ public class TextureWriter : MonoBehaviour
 
     public ChannelRemapper channelRemapper;
     public UVRemapper uvRemapper;
-    public Loader loader;
+    public static Loader loader;
 
     private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public TextMeshProUGUI frameTime;
@@ -29,6 +29,9 @@ public class TextureWriter : MonoBehaviour
 
     void Start()
     {
+        //find the loader
+        loader = FindAnyObjectByType<Loader>();
+
         //set a target framerate to 60
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 45; //45 because thats the maximum according to the DMX spec
@@ -172,7 +175,6 @@ public class TextureWriter : MonoBehaviour
                             pixelColor.b = channelValue;
                             break;
                     }
-                    //force alpha to 255
                     pixelColor.a = 255;
                     pixels[index] = pixelColor;
                 }
