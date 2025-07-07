@@ -20,4 +20,17 @@ public static class Extensions
         }
         return list;
     }
+
+    public static string ToNewlineString<T>(this List<T> list)
+    {
+        if (list == null || list.Count == 0)
+            return "EMPTY LIST";
+
+        var result = new System.Text.StringBuilder();
+        for (int i = 0; i < list.Count; i++)
+        {
+            result.Append(list[i] + "\n");
+        }
+        return result.ToString();
+    }
 }
