@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 
 public static class Extensions
@@ -32,5 +33,15 @@ public static class Extensions
             result.Append(list[i] + "\n");
         }
         return result.ToString();
+    }
+
+    public static string ToDMXString(this Color col)
+    {
+        //get the byte representation of the color
+        byte r = (byte)(col.r * 255);
+        byte g = (byte)(col.g * 255);
+        byte b = (byte)(col.b * 255);
+        byte a = (byte)(col.a * 255);
+        return (char)r + "" + (char)g + "" + (char)b + "" + (char)a;
     }
 }

@@ -35,13 +35,21 @@ public class ASS : Text
 
             //divider for style vs text
             text += "@";
+            int textStart = text.Length;
 
             foreach (ASSEvent e in activeEvs)
             {
                 text += e.ToEncodedString() + "^";
             }
 
-            Debug.Log(text);
+            //print, stripping out anything between {}
+            //Debug.Log(text.Substring(textStart));
+            //Debug.Log(text[textStart + 1]);
+            string strippedText = text.Substring(textStart + 1);
+            strippedText = "?" + strippedText;
+            strippedText = System.Text.RegularExpressions.Regex.Replace(strippedText, @"{[\s\S]*?}", "(???)");
+            //strippedText = System.Text.RegularExpressions.Regex.Replace(strippedText, @"^[\s\S]|", "?|");
+            Debug.Log($"{text.Length} Bytes, Text: {strippedText}");
         }
 
         //call base now that we have filled the text
@@ -215,7 +223,8 @@ public class ASS : Text
         {
             //return only the neccesary info, deliminated by |
             //we dont need time as we are handling that ourselves
-            return $"{styleIndex}|{MarginL}|{MarginR}|{MarginV}|{text}";
+            //margin is excluded because its not commonly used
+            return $"{(char)styleIndex}|{text}";
         }
 
         public override string ToString()
@@ -282,7 +291,7 @@ public class ASS : Text
                 byte g = byte.Parse(match.Groups[3].Value, System.Globalization.NumberStyles.HexNumber);
                 byte r = byte.Parse(match.Groups[4].Value, System.Globalization.NumberStyles.HexNumber);
                 Color color = new Color32(r, g, b, a);
-                return "{" + color.ToHexString() + "}";
+                return "{" + color.ToDMXString() + "}";
             });
 
             //do the same with color patterns, assuming 255 alpha
@@ -292,7 +301,7 @@ public class ASS : Text
                 byte g = byte.Parse(match.Groups[2].Value, System.Globalization.NumberStyles.HexNumber);
                 byte r = byte.Parse(match.Groups[3].Value, System.Globalization.NumberStyles.HexNumber);
                 Color color = new Color32(r, g, b, 255); //assume fully opaque
-                return "{" + color.ToHexString() + "}";
+                return "{" + color.ToDMXString() + "}";
             });
         }
     }
@@ -346,7 +355,7 @@ public class ASS : Text
             if (italic) flags |= 0b00000010;
             if (underline) flags |= 0b00000100;
             if (strikeout) flags |= 0b00001000;
-            return $"{styleIndex}|{fontname}|{fontSize}|{PrimaryColour.ToHexString()}|{SecondaryColour.ToHexString()}|{OutlineColour.ToHexString()}|{BackColour.ToHexString()}|{flags}|{scaleX}|{scaleY}|{spacing}|{angle}|{borderStyle}|{outline}|{shadow}|{(int)alignment}|{marginL}|{marginR}|{marginV}|{encoding}";
+            return $"{(char)styleIndex}|{fontname}|{fontSize}|{PrimaryColour.ToDMXString()}|{SecondaryColour.ToDMXString()}|{OutlineColour.ToDMXString()}|{BackColour.ToDMXString()}|{(char)flags}|{scaleX}|{scaleY}|{spacing}|{angle}|{borderStyle}|{outline}|{shadow}|{(char)alignment}";
         }
 
         public override string ToString()
