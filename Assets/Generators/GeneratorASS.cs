@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class ASS : Text
@@ -24,13 +25,16 @@ public class ASS : Text
         if (file.ActiveEvents(timeIn, out List<ASSEvent> activeEvs))
         {
             //get the active styles on this frame
-            List<Style> styleList = file.GetActiveStyles(timeAtLoad);
+            List<Style> styleList = file.GetActiveStyles(timeIn);
 
             //serialize to string deliminated by ^
             foreach (Style style in styleList)
             {
                 text += style.ToEncodedString() + "^";
             }
+
+            //divider for style vs text
+            text += "@";
 
             foreach (ASSEvent e in activeEvs)
             {
@@ -156,21 +160,26 @@ public class ASS : Text
             //theoretically, we should have all the styles and events now
         }
 
-        public bool ActiveEvents(TimeSpan currentTime, out List<ASSEvent> events)
+        public bool ActiveEvents(TimeSpan currentTime, out List<ASSEvent> eventsOut)
         {
             //Debug.Log("Checking for active events at " + currentTime);
-            events = new List<ASSEvent>();
-            //find the first event that is active
-            for (int i = 0; i < events.Count; i++)
+            eventsOut = new List<ASSEvent>();
+
+            if (events == null)
             {
-                if (events[i].IsActive(currentTime))
-                {
-                    Debug.Log("TEST");
-                    events.Add(events[i]);
-                }
+                return false;
             }
 
-            return events.Count > 0;
+            //find the first event that is active
+                for (int i = 0; i < events.Count; i++)
+                {
+                    if (events[i].IsActive(currentTime))
+                    {
+                        eventsOut.Add(events[i]);
+                    }
+                }
+
+            return eventsOut.Count > 0;
         }
 
         public List<Style> GetActiveStyles(TimeSpan currentTime)
@@ -257,6 +266,34 @@ public class ASS : Text
                     text = ""; //if there is no comma, just clear the text
                 }
             }
+
+            //cleanup any color codes in the text
+            const string alphaPattern = @"{\\alpha&H(..)&\\c&H(..)(..)(..)&}";
+            const string colorPattern = @"{.?\\c&H(..)(..)(..)&}";
+
+            //detect alpha patterns first
+            text = System.Text.RegularExpressions.Regex.Replace(text, alphaPattern, match =>
+            {
+                //replace with the color code with alfa merged into it
+                byte a = byte.Parse(match.Groups[1].Value, System.Globalization.NumberStyles.HexNumber);
+                //invert A
+                a = (byte)(255 - a); //invert alpha, since 00 is opaque and FF is transparent
+                byte b = byte.Parse(match.Groups[2].Value, System.Globalization.NumberStyles.HexNumber);
+                byte g = byte.Parse(match.Groups[3].Value, System.Globalization.NumberStyles.HexNumber);
+                byte r = byte.Parse(match.Groups[4].Value, System.Globalization.NumberStyles.HexNumber);
+                Color color = new Color32(r, g, b, a);
+                return "{" + color.ToHexString() + "}";
+            });
+
+            //do the same with color patterns, assuming 255 alpha
+            text = System.Text.RegularExpressions.Regex.Replace(text, colorPattern, match =>
+            {
+                byte b = byte.Parse(match.Groups[1].Value, System.Globalization.NumberStyles.HexNumber);
+                byte g = byte.Parse(match.Groups[2].Value, System.Globalization.NumberStyles.HexNumber);
+                byte r = byte.Parse(match.Groups[3].Value, System.Globalization.NumberStyles.HexNumber);
+                Color color = new Color32(r, g, b, 255); //assume fully opaque
+                return "{" + color.ToHexString() + "}";
+            });
         }
     }
 
@@ -303,7 +340,13 @@ public class ASS : Text
 
         public string ToEncodedString()
         {
-            return $"{fontname}|{fontSize}|{PrimaryColour}|{SecondaryColour}|{OutlineColour}|{BackColour}|{(bold ? "1" : "0")}|{(italic ? "1" : "0")}|{(underline ? "1" : "0")}|{(strikeout ? "1" : "0")}|{scaleX}|{scaleY}|{spacing}|{angle}|{borderStyle}|{outline}|{shadow}|{(int)alignment}|{marginL}|{marginR}|{marginV}|{encoding}";
+            //encode the boolenas into a flag byte
+            byte flags = 0;
+            if (bold) flags |= 0b00000001;
+            if (italic) flags |= 0b00000010;
+            if (underline) flags |= 0b00000100;
+            if (strikeout) flags |= 0b00001000;
+            return $"{styleIndex}|{fontname}|{fontSize}|{PrimaryColour.ToHexString()}|{SecondaryColour.ToHexString()}|{OutlineColour.ToHexString()}|{BackColour.ToHexString()}|{flags}|{scaleX}|{scaleY}|{spacing}|{angle}|{borderStyle}|{outline}|{shadow}|{(int)alignment}|{marginL}|{marginR}|{marginV}|{encoding}";
         }
 
         public override string ToString()
