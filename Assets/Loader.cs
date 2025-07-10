@@ -29,7 +29,6 @@ public class Loader : MonoBehaviour
     public Toggle transcodeToggle;
     public SpoutReceiver spoutReceiver;
     public SpoutSender spoutSender;
-    public ArtNetReceiver receiver;
 
     public static ShowConfiguration showconf = new ShowConfiguration();
 
