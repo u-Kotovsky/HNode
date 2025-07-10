@@ -25,6 +25,11 @@ public class ShowConfiguration
     /// </summary>
     public bool autoMaskOnZero { get; set; }
 
+    //public string ArtnetIP { get; set; } = "127.0.0.1"; //disabled for now as this is not natively supported by the library yet?
+    //public int ArtnetPort { get; set; } = 6454;
+    public string SpoutInputName { get; set; } = "HNode Input";
+    public string SpoutOutputName { get; set; } = "HNode Output";
+
     //initializer
     public ShowConfiguration()
     {

@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using ArtNet;
+using Klak.Spout;
 using SFB;
 using TMPro;
 using UnityEditor;
@@ -25,6 +27,9 @@ public class Loader : MonoBehaviour
     public Button saveButton;
     public Button loadButton;
     public Toggle transcodeToggle;
+    public SpoutReceiver spoutReceiver;
+    public SpoutSender spoutSender;
+    public ArtNetReceiver receiver;
 
     public static ShowConfiguration showconf = new ShowConfiguration();
 
@@ -236,8 +241,6 @@ public class Loader : MonoBehaviour
         System.IO.File.WriteAllText(path, yaml);
     }
 
-    private string importedconf;
-
     public void LoadShowConfiguration()
     {
         //open a file dialog
@@ -262,23 +265,22 @@ public class Loader : MonoBehaviour
         }
 
         showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
-        importedconf = content;
 
         //invalidate the dropdowns and toggles
         InvalidateDropdownsAndToggles();
 
         //start coroutine
         //this is stupid dumb shit but this YML library is being weird and this fixes the issue
-        StartCoroutine(DeferredLoad());
+        StartCoroutine(DeferredLoad(content));
     }
 
-    IEnumerator DeferredLoad()
+    IEnumerator DeferredLoad(string content)
     {
         //returning 0 will make it wait 1 frame
         yield return new WaitForEndOfFrame();
 
         //yayyyyy double load to fix dumb race condition bullshit
-        showconf = ymldeserializer.Deserialize<ShowConfiguration>(importedconf);
+        showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
 
         //run initialization on all generators
         foreach (var generator in showconf.Generators)
@@ -288,6 +290,12 @@ public class Loader : MonoBehaviour
 
         showconf.Serializer.Construct();
         showconf.Deserializer.Construct();
+
+        //setup spout input/outputs
+        spoutSender.spoutName = showconf.SpoutOutputName;
+        spoutReceiver.sourceName = showconf.SpoutInputName;
+
+        //TODO: Add artnet setup here
     }
 
     private void InvalidateDropdownsAndToggles()
