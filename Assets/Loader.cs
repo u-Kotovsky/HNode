@@ -26,7 +26,7 @@ public class Loader : MonoBehaviour
     public Button loadButton;
     public Toggle transcodeToggle;
 
-    public ShowConfiguration showconf = new ShowConfiguration();
+    public static ShowConfiguration showconf = new ShowConfiguration();
 
     IDeserializer ymldeserializer;
     ISerializer ymlserializer;

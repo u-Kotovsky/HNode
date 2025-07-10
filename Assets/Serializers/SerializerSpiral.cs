@@ -36,7 +36,7 @@ public class Spiral : IDMXSerializer
             channelValue,
             channelValue,
             channelValue,
-            255
+            Util.GetBlockAlpha(channelValue)
         );
         TextureWriter.MakeColorBlock(ref pixels, xfinal, yfinal, color, blockSize);
 

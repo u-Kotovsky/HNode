@@ -18,7 +18,7 @@ public class ChannelRemapper : MonoBehaviour
     public void RemapChannels(ref List<byte> channels)
     {
         Profiler.BeginSample("Channel Remap");
-        var mappings = loader.showconf.mappingsChannels;
+        var mappings = Loader.showconf.mappingsChannels;
         int maximumNewChannel = channels.Count;
         foreach (var mapping in mappings)
         {

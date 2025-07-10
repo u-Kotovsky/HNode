@@ -16,7 +16,14 @@ public class ShowConfiguration
     public List<ChannelMapping> mappingsChannels { get; set; }
     public List<UVMapping> mappingsUV { get; set; }
     public List<int> maskedChannels { get; set; }
+    /// <summary>
+    /// If true, the mask will be inverted, meaning that the channels that channels set in <see cref="maskedChannels"/> will be the only ones visible.
+    /// </summary>
     public bool invertMask { get; set; }
+    /// <summary>
+    /// If true, the mask will automatically be applied to channels that are set to zero.
+    /// </summary>
+    public bool autoMaskOnZero { get; set; }
 
     //initializer
     public ShowConfiguration()

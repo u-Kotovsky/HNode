@@ -51,7 +51,7 @@ public class FuralitySomna : IDMXSerializer
                 channelValue,
                 channelValue,
                 channelValue,
-                255
+                Util.GetBlockAlpha(channelValue)
             );
             TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
         }

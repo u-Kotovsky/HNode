@@ -20,7 +20,7 @@ public class TextureWriter : MonoBehaviour
 
     public ChannelRemapper channelRemapper;
     public UVRemapper uvRemapper;
-    public static Loader loader;
+    //public static Loader Loader;
 
     private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public TextMeshProUGUI frameTime;
@@ -29,8 +29,8 @@ public class TextureWriter : MonoBehaviour
 
     void Start()
     {
-        //find the loader
-        loader = FindAnyObjectByType<Loader>();
+        //find the Loader
+        //Loader = FindAnyObjectByType<Loader>();
 
         //set a target framerate to 60
         QualitySettings.vSyncCount = 0;
@@ -64,7 +64,7 @@ public class TextureWriter : MonoBehaviour
 
         Profiler.BeginSample("DMX Merge");
         List<byte> mergedDmxValues = new List<byte>();
-        if (loader.showconf.Transcode)
+        if (Loader.showconf.Transcode)
         {
             mergedDmxValues = reader.dmxData.ToList();
         }
@@ -81,7 +81,7 @@ public class TextureWriter : MonoBehaviour
         }
 
         //now run the generators in order
-        foreach (var generator in loader.showconf.Generators)
+        foreach (var generator in Loader.showconf.Generators)
         {
             generator.GenerateDMX(ref mergedDmxValues);
         }
@@ -90,19 +90,19 @@ public class TextureWriter : MonoBehaviour
         //remap channels
         channelRemapper.RemapChannels(ref mergedDmxValues);
 
-        loader.showconf.Serializer.InitFrame();
+        Loader.showconf.Serializer.InitFrame();
 
         Profiler.BeginSample("Serializer Loop");
         for (int i = 0; i < mergedDmxValues.Count; i++)
         {
             //skip the channel if its masked
-            if (loader.showconf.maskedChannels.Contains(i) ^ loader.showconf.invertMask)
+            if (Loader.showconf.maskedChannels.Contains(i) ^ Loader.showconf.invertMask)
             {
                 continue;
             }
 
             Profiler.BeginSample("Individual Channel Serialization");
-            loader.showconf.Serializer.SerializeChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
+            Loader.showconf.Serializer.SerializeChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
             Profiler.EndSample();
         }
         Profiler.EndSample();

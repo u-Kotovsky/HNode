@@ -29,7 +29,7 @@ public class Binary : IDMXSerializer
                 (byte)(bits[i] ? 255 : 0),
                 (byte)(bits[i] ? 255 : 0),
                 (byte)(bits[i] ? 255 : 0),
-                255
+                Util.GetBlockAlpha(channelValue)
             );
             TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
         }
