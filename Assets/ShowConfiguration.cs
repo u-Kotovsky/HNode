@@ -10,7 +10,8 @@ public class ShowConfiguration
     public IDMXSerializer Deserializer { get; set; }
     public List<IDMXGenerator> Generators { get; set; }
     public bool Transcode { get; set; }
-    public int TranscodeUniverseCount { get; set; }
+    public int TranscodeUniverseCount { get; set; } = 3;
+    public int SerializeUniverseCount { get; set; } = int.MaxValue; //this is the maximum number of universes that can be used for serializing.
 
     //these features are specifically limited to show configurations since it would be a utter pita to define these via UI alone
     public List<ChannelMapping> mappingsChannels { get; set; }

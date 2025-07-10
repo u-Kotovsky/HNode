@@ -72,8 +72,10 @@ public class TextureWriter : MonoBehaviour
         {
             var universeCount = dmxManager.Universes().Length;
 
+            var universesToUse = Math.Min(Loader.showconf.SerializeUniverseCount, universeCount);
+
             //merge all universes into one byte array
-            for (ushort u = 0; u < universeCount; u++)
+            for (ushort u = 0; u < universesToUse; u++)
             {
                 byte[] dmxValues = dmxManager.DmxValues(u);
                 mergedDmxValues.AddRange(dmxValues);

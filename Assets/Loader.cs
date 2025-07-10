@@ -77,8 +77,8 @@ public class Loader : MonoBehaviour
         //default the serializers to VRSL and have transcode off
         showconf.Serializer = vrsl;
         showconf.Deserializer = vrsl;
-        showconf.Transcode = false;
-        showconf.TranscodeUniverseCount = 3;
+        //showconf.Transcode = false;
+        //showconf.TranscodeUniverseCount = 3;
 
         //TODO: REMOVE THIS LATER AFTER TESTING
         /* showconf.Generators.Add(new Text()
