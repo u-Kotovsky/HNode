@@ -94,7 +94,7 @@ public class TextureWriter : MonoBehaviour
         Loader.showconf.Serializer.InitFrame();
 
         Profiler.BeginSample("Serializer Loop");
-        var ChannelsToSerialize = Math.Min(Loader.showconf.SerializeUniverseCount * 512, mergedDmxValues.Count);
+        var ChannelsToSerialize = Math.Min((long)Loader.showconf.SerializeUniverseCount * 512, mergedDmxValues.Count);
         for (int i = 0; i < ChannelsToSerialize; i++)
         {
             //skip the channel if its masked
