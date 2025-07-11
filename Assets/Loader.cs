@@ -78,7 +78,8 @@ public class Loader : MonoBehaviour
         showconf.Serializer = vrsl;
         showconf.Deserializer = vrsl;
         //showconf.Transcode = false;
-        //showconf.TranscodeUniverseCount = 3;
+        showconf.TranscodeUniverseCount = 3;
+        showconf.SerializeUniverseCount = int.MaxValue;
 
         //TODO: REMOVE THIS LATER AFTER TESTING
         /* showconf.Generators.Add(new Text()

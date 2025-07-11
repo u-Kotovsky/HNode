@@ -72,10 +72,9 @@ public class TextureWriter : MonoBehaviour
         {
             var universeCount = dmxManager.Universes().Length;
 
-            var universesToUse = Math.Min(Loader.showconf.SerializeUniverseCount, universeCount);
 
             //merge all universes into one byte array
-            for (ushort u = 0; u < universesToUse; u++)
+            for (ushort u = 0; u < universeCount; u++)
             {
                 byte[] dmxValues = dmxManager.DmxValues(u);
                 mergedDmxValues.AddRange(dmxValues);
@@ -95,7 +94,8 @@ public class TextureWriter : MonoBehaviour
         Loader.showconf.Serializer.InitFrame();
 
         Profiler.BeginSample("Serializer Loop");
-        for (int i = 0; i < mergedDmxValues.Count; i++)
+        var ChannelsToSerialize = Math.Min(Loader.showconf.SerializeUniverseCount * 512, mergedDmxValues.Count);
+        for (int i = 0; i < ChannelsToSerialize; i++)
         {
             //skip the channel if its masked
             if (Loader.showconf.maskedChannels.Contains(i) ^ Loader.showconf.invertMask)
