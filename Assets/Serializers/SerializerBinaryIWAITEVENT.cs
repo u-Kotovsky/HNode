@@ -16,7 +16,10 @@ public class BinaryIWAITEVENT : IDMXSerializer
         //split the value into 8 bits
         var bits = new BitArray(new byte[] { channelValue });
 
-        for (int i = 0; i < bits.Length; i++)
+        //sane endianness
+        //for (int i = 0; i < bits.Length; i++)
+        //weird endianness
+        for (int i = bits.Length - 1; i >= 0; i--)
         {
             GetPositionData(channel, i, out int x, out int y);
             if (x >= textureWidth || y >= textureHeight)
