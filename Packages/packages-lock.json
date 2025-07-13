@@ -212,11 +212,10 @@
       }
     },
     "net.naoyakohda.artnet-unity": {
-      "version": "https://github.com/nasshu2916/ArtNet-Unity.git?path=/Assets/ArtNet#master",
+      "version": "file:net.naoyakohda.artnet-unity@12078a5f801e",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "d5cf00c5d4ceb17496c948e30f715271d82ac5c9"
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

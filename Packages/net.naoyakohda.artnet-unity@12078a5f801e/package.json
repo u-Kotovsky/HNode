@@ -1,0 +1,23 @@
+{
+  "name": "net.naoyakohda.artnet-unity",
+  "author": "Naoya Kohda",
+  "version": "0.2.0",
+  "displayName": "ArtNet-Unity",
+  "description": "Art-Net library for Unity",
+  "dependencies": {},
+  "keywords": [
+    "unity",
+    "ArtNet",
+    "DMX"
+  ],
+  "license": "MIT License",
+  "unity": "2021.3",
+  "samples": [
+    {
+      "path": "Samples",
+      "displayName": "Receive Art-Net packet",
+      "description": "Receive Art-Net packet in Unity sample"
+    }
+  ],
+  "_fingerprint": "12078a5f801e907902ac80d791f49c74ffb0d0d5"
+}

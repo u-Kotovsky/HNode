@@ -1,0 +1,14 @@
+{
+    "name": "ArtNet.Core",
+    "rootNamespace": "",
+    "references": ["GUID:0f009064be0f49cc8ae02b838bdf7fa4"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
