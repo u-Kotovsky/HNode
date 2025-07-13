@@ -8,7 +8,7 @@ namespace ArtNet.Editor.DmxRecorder
     public class SendDestination : ScriptableObject
     {
         [SerializeField] private string _ip = "127.0.0.1";
-        [SerializeField] private int _port = ArtNetReceiver.ArtNetPort;
+        [SerializeField] private int _port = ArtNetReceiver.DefaultArtNetPort;
         [SerializeField] private bool _isSend = false;
 
         public string Ip { get => _ip; private set => _ip = value; }

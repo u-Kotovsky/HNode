@@ -29,6 +29,7 @@ public class Loader : MonoBehaviour
     public Toggle transcodeToggle;
     public SpoutReceiver spoutReceiver;
     public SpoutSender spoutSender;
+    public ArtNetReceiver artNetReceiver;
 
     public static ShowConfiguration showconf = new ShowConfiguration();
 
@@ -294,6 +295,8 @@ public class Loader : MonoBehaviour
         //setup spout input/outputs
         spoutSender.spoutName = showconf.SpoutOutputName;
         spoutReceiver.sourceName = showconf.SpoutInputName;
+
+        artNetReceiver.ChangePort(showconf.ArtNetPort);
 
         //TODO: Add artnet setup here
     }

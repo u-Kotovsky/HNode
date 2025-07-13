@@ -21,7 +21,7 @@ namespace ArtNet.Editor
         [SerializeField] private string _lastOpCode;
         private readonly Dictionary<ushort, byte[]> _dmxData = new();
 
-        private readonly UdpReceiver _receiver = new(ArtNetReceiver.ArtNetPort);
+        private readonly UdpReceiver _receiver = new(ArtNetReceiver.DefaultArtNetPort);
         private readonly Dictionary<ushort, UniverseInfo> _universeInfos = new();
         private readonly Queue<ushort> _updatedUniverses = new();
         private DmxViewer _dmxViewer;

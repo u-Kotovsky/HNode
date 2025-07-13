@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using ArtNet.Common;
 using ArtNet.Enums;
 using ArtNet.IO;
 using ArtNet.Packets;
@@ -25,19 +26,36 @@ namespace ArtNet
 
     public class ArtNetReceiver : MonoBehaviour
     {
-        public const int ArtNetPort = 6454;
+        public const int DefaultArtNetPort = 6454;
 
         [SerializeField] private bool _autoStart = true;
         [SerializeField] private OnReceivedDmxEvent _onReceivedDmxEvent;
         [SerializeField] private OnReceivedPollEvent _onReceivedPollEvent;
         [SerializeField] private OnReceivedPollReplyEvent _onReceivedPollReplyEvent;
 
-        private UdpReceiver UdpReceiver { get; } = new(ArtNetPort);
+        private UdpReceiver UdpReceiver = new(DefaultArtNetPort);
         public DateTime LastReceivedAt { get; private set; }
         public bool IsConnected => LastReceivedAt.AddSeconds(1) > DateTime.Now;
 
         private void Awake()
         {
+            //setup default artnet receiver
+            //UdpReceiver = new(ArtNetPort);
+            //UdpReceiver.OnReceivedPacket = OnReceivedPacket;
+            ChangePort(DefaultArtNetPort);
+        }
+
+        public void ChangePort(int port)
+        {
+            //check if port is different
+            if (UdpReceiver != null && UdpReceiver.Port == port) return;
+
+            ArtNetLogger.LogInfo("ArtNetReceiver", $"Changing port from {UdpReceiver.Port} to {port}");
+            if (UdpReceiver != null && UdpReceiver.IsRunning)
+            {
+                UdpReceiver.StopReceive();
+            }
+            UdpReceiver = new(port);
             UdpReceiver.OnReceivedPacket = OnReceivedPacket;
         }
 

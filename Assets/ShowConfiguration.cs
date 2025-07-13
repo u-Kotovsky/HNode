@@ -30,6 +30,7 @@ public class ShowConfiguration
     //public int ArtnetPort { get; set; } = 6454;
     public string SpoutInputName { get; set; } = "HNode Input";
     public string SpoutOutputName { get; set; } = "HNode Output";
+    public int ArtNetPort { get; set; } = 6454;
 
     //initializer
     public ShowConfiguration()

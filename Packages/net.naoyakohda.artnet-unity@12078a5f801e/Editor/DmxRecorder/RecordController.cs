@@ -18,7 +18,7 @@ namespace ArtNet.Editor.DmxRecorder
 
     public class RecordController
     {
-        private readonly UdpReceiver _receiver = new(ArtNetReceiver.ArtNetPort);
+        private readonly UdpReceiver _receiver = new(ArtNetReceiver.DefaultArtNetPort);
 
         private List<(long, DmxPacket)> _recordedDmx = new();
 
