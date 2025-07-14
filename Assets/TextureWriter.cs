@@ -40,7 +40,7 @@ public class TextureWriter : MonoBehaviour
         //maskedChannels.Add(52);
         //maskedChannels.Add(102);
 
-        texture = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false);
+        texture = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false, true);
         texture.filterMode = FilterMode.Point;
         texture.wrapMode = TextureWrapMode.Clamp;
 
