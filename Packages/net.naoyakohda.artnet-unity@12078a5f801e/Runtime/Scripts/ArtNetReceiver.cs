@@ -48,7 +48,7 @@ namespace ArtNet
         public void ChangePort(int port)
         {
             //check if port is different
-            if (UdpReceiver != null && UdpReceiver.Port == port) return;
+            //if (UdpReceiver != null && UdpReceiver.Port == port) return;
 
             ArtNetLogger.LogInfo("ArtNetReceiver", $"Changing port from {UdpReceiver.Port} to {port}");
             if (UdpReceiver != null && UdpReceiver.IsRunning)
