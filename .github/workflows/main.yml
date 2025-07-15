@@ -65,8 +65,8 @@ jobs:
       # Get nsis
       - name: Install NSIS
         run: |
-          apt-get -y update
-          apt-get -y install nsis
+          sudo apt-get -y update
+          sudo apt-get -y install nsis
 
       # run NSIS installer script for windows builds
       - name: NSIS Installer
