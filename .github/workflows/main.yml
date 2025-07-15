@@ -54,9 +54,29 @@ jobs:
         with:
           allowDirtyBuild: true
           targetPlatform: StandaloneWindows64
+          buildName: HNode
 
       # Output
       - uses: actions/upload-artifact@v4
         with:
-          name: Build
+          name: Universal Build
           path: build
+      
+      # Get nsis
+      - name: Install NSIS
+        run: |
+          bash -c 'echo "deb http://ftp.debian.org/debian unstable main contrib non-free" >> /etc/apt/sources.list.d/unstable.list'
+          apt-get -y update
+          apt-get -y install -t unstable nsis
+
+      # run NSIS installer script for windows builds
+      - name: NSIS Installer
+        uses: joncloud/makensis-action@v4.1
+        with:
+          script-file: .github/scripts/installer.nsi
+      
+      # Upload installer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows Installer
+          path: .github/scripts/installer.exe
