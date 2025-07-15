@@ -14,7 +14,7 @@ namespace ArtNet
         private Task _task;
         private byte[] _receiveBuffer = new byte[1500];
 
-        public int Port { get; }
+        public int Port;
         public bool IsRunning => _task is { IsCanceled: false, IsCompleted: false };
 
         public ReceivedPacketEventHandler OnReceivedPacket = (_, _, _) => { };
@@ -27,6 +27,15 @@ namespace ArtNet
         public UdpReceiver(int port)
         {
             Port = port;
+        }
+
+        public void ChangePort(int port)
+        {
+            if (Port == port) return;
+
+            Port = port;
+            StopReceive();
+            StartReceive();
         }
 
         ~UdpReceiver()

@@ -58,10 +58,10 @@ jobs:
           buildsPath: Builds
 
       # Output
-      - name: Upload Universal Build
+      - name: Upload Windows Portable Build
         uses: actions/upload-artifact@v4
         with:
-          name: Universal Build
+          name: Windows Portable Build
           path: Builds
       
       # Get nsis

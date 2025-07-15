@@ -41,22 +41,15 @@ namespace ArtNet
         {
             //setup default artnet receiver
             //UdpReceiver = new(ArtNetPort);
-            //UdpReceiver.OnReceivedPacket = OnReceivedPacket;
+            UdpReceiver.OnReceivedPacket = OnReceivedPacket;
             ChangePort(DefaultArtNetPort);
         }
 
         public void ChangePort(int port)
         {
             //check if port is different
-            //if (UdpReceiver != null && UdpReceiver.Port == port) return;
-
             ArtNetLogger.LogInfo("ArtNetReceiver", $"Changing port from {UdpReceiver.Port} to {port}");
-            if (UdpReceiver != null && UdpReceiver.IsRunning)
-            {
-                UdpReceiver.StopReceive();
-            }
-            UdpReceiver = new(port);
-            UdpReceiver.OnReceivedPacket = OnReceivedPacket;
+            UdpReceiver.ChangePort(port);
         }
 
         private void OnEnable()
