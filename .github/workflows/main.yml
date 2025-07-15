@@ -6,7 +6,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: debian:sid
     steps:
       # Checkout (without LFS)
       - name: Checkout repository
@@ -66,9 +65,8 @@ jobs:
       # Get nsis
       - name: Install NSIS
         run: |
-          bash -c 'echo "deb http://ftp.debian.org/debian unstable main contrib non-free" >> /etc/apt/sources.list.d/unstable.list'
           apt-get -y update
-          apt-get -y install -t unstable nsis
+          apt-get -y install nsis
 
       # run NSIS installer script for windows builds
       - name: NSIS Installer
