@@ -109,6 +109,10 @@ public class TextureWriter : MonoBehaviour
         }
         Profiler.EndSample();
 
+        Profiler.BeginSample("Frame Finalization");
+        Loader.showconf.Serializer.CompleteFrame(ref pixels, ref mergedDmxValues);
+        Profiler.EndSample();
+
         //send to the UV Remapper
 
         Profiler.BeginSample("Texture Write");

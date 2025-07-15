@@ -9,6 +9,7 @@ public class VRSL : IDMXSerializer
     const int blocksPerCol = 13; // channels per column
     public void Construct() { }
     public void InitFrame() { }
+    public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues) { }
 
     public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {

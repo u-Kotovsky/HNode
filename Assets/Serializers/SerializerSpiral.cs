@@ -19,6 +19,7 @@ public class Spiral : IDMXSerializer
         visited.Clear();
         state = 0;
     }
+    public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues) { }
 
     public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
