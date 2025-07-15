@@ -37,9 +37,12 @@ public class BinaryStageFlight : IDMXSerializer
                 //convert the x y to pixel index
                 //return 4x4 area
                 var color = new Color32(
+                    /* (byte)(bits[7 - j] ? 255 : 0),
                     (byte)(bits[7 - j] ? 255 : 0),
-                    (byte)(bits[7 - j] ? 255 : 0),
-                    (byte)(bits[7 - j] ? 255 : 0),
+                    (byte)(bits[7 - j] ? 255 : 0), */
+                    (byte)(bits[j] ? 255 : 0),
+                    (byte)(bits[j] ? 255 : 0),
+                    (byte)(bits[j] ? 255 : 0),
                     Util.GetBlockAlpha(255) // Alpha should be forced on always
                 );
                 TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
@@ -75,7 +78,7 @@ public class BinaryStageFlight : IDMXSerializer
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight)
     {
         //TODO: CRC Check for transcoding
-        
+
         var bits = new BitArray(8);
         for (int i = 0; i < bits.Length; i++)
         {
@@ -130,6 +133,6 @@ public class BinaryStageFlight : IDMXSerializer
                 if (top == 1) crc ^= polynomial;
             }
         }
-        return (byte)(crc << 4); // put crc on the left and pad 0s
+        return (byte)(crc /* << 4 */); // put crc on the left and pad 0s
     }
 }
