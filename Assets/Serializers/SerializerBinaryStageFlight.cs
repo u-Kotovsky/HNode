@@ -37,12 +37,12 @@ public class BinaryStageFlight : IDMXSerializer
                 //convert the x y to pixel index
                 //return 4x4 area
                 var color = new Color32(
-                    /* (byte)(bits[7 - j] ? 255 : 0),
                     (byte)(bits[7 - j] ? 255 : 0),
-                    (byte)(bits[7 - j] ? 255 : 0), */
+                    (byte)(bits[7 - j] ? 255 : 0),
+                    (byte)(bits[7 - j] ? 255 : 0),
+                    /* (byte)(bits[j] ? 255 : 0),
                     (byte)(bits[j] ? 255 : 0),
-                    (byte)(bits[j] ? 255 : 0),
-                    (byte)(bits[j] ? 255 : 0),
+                    (byte)(bits[j] ? 255 : 0), */
                     Util.GetBlockAlpha(255) // Alpha should be forced on always
                 );
                 TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
@@ -118,7 +118,7 @@ public class BinaryStageFlight : IDMXSerializer
     }
 
     // CRC-4 (x⁴ + x + 1)
-    public static byte Crc4(params byte[] data)
+    /* public static byte Crc4(params byte[] data)
     {
         uint crc = 0;
         uint polynomial = 0x03;
@@ -133,6 +133,24 @@ public class BinaryStageFlight : IDMXSerializer
                 if (top == 1) crc ^= polynomial;
             }
         }
-        return (byte)(crc /* << 4 */); // put crc on the left and pad 0s
+        return (byte)(crc << 4); // put crc on the left and pad 0s
+    } */
+
+    public static byte Crc4(params byte[] data)
+    {
+        uint crc = 0u;
+        uint polynomial = 0x03;
+
+        foreach (uint v in data)
+        {
+            for (int bit = 7; bit >= 0; --bit)
+            {
+                uint inBit = (v >> bit) & 1u;
+                bool top = (crc & 0x8u) != 0u;
+                crc = ((crc << 1) | inBit) & 0xFu;
+                if (top) crc ^= polynomial;
+            }
+        }
+        return (byte)(crc << 4); // put crc on the left and pad 0s
     }
 }
