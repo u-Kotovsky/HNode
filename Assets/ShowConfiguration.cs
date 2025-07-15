@@ -31,6 +31,7 @@ public class ShowConfiguration
     public string SpoutInputName { get; set; } = "HNode Input";
     public string SpoutOutputName { get; set; } = "HNode Output";
     public int ArtNetPort { get; set; } = 6454;
+    public int TargetFramerate { get; set; } = 60;
 
     //initializer
     public ShowConfiguration()

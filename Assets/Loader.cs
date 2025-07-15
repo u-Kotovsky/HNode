@@ -82,6 +82,9 @@ public class Loader : MonoBehaviour
         showconf.TranscodeUniverseCount = 3;
         showconf.SerializeUniverseCount = int.MaxValue;
 
+        //setup framerate
+        SetFramerate(showconf.TargetFramerate);
+
         //TODO: REMOVE THIS LATER AFTER TESTING
         /* showconf.Generators.Add(new Text()
         {
@@ -298,7 +301,20 @@ public class Loader : MonoBehaviour
 
         artNetReceiver.ChangePort(showconf.ArtNetPort);
 
-        //TODO: Add artnet setup here
+        SetFramerate(showconf.TargetFramerate);
+    }
+
+    private static void SetFramerate(int targetFramerate)
+    {
+        //check bounds
+        if (targetFramerate < 1 || targetFramerate > 60)
+        {
+            Debug.LogWarning($"Target framerate {targetFramerate} is out of bounds. Setting to default 60.");
+            targetFramerate = 60;
+        }
+        //setup target framerate
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = targetFramerate;
     }
 
     private void InvalidateDropdownsAndToggles()
