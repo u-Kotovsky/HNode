@@ -120,6 +120,7 @@ public class BinaryStageFlight : IDMXSerializer
     // CRC-4 (x⁴ + x + 1)
     public static byte Crc4(params byte[] data)
     {
+    //TODO: This CRC is still likely wrong. indev go brr
         uint crc = 0;
         uint polynomial = 0x03;
 
