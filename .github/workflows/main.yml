@@ -55,6 +55,7 @@ jobs:
           allowDirtyBuild: true
           targetPlatform: StandaloneWindows64
           buildName: HNode
+          buildsPath: Builds
 
       # Output
       - uses: actions/upload-artifact@v4

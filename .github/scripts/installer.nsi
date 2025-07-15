@@ -34,7 +34,7 @@ WriteUninstaller "$INSTDIR\Uninstall.exe"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${DevName}"   "DisplayName" "${Name}"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${DevName}"   "UninstallString" "$INSTDIR\Uninstall.exe"
 ;Grab all the files
-File /r "..\..\Builds\*"
+File /r "..\..\Builds\StandaloneWindows64\*"
 CreateShortCut "$SMPROGRAMS\${Name}.lnk" "$INSTDIR\HNode.exe"
 SectionEnd
 
