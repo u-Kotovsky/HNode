@@ -58,10 +58,11 @@ jobs:
           buildsPath: Builds
 
       # Output
-      - uses: actions/upload-artifact@v4
+      - name: Upload Universal Build
+        uses: actions/upload-artifact@v4
         with:
           name: Universal Build
-          path: build
+          path: Builds
       
       # Get nsis
       - name: Install NSIS
@@ -76,7 +77,8 @@ jobs:
           script-file: .github/scripts/installer.nsi
       
       # Upload installer
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
         with:
           name: Windows Installer
-          path: .github/scripts/installer.exe
+          path: .github/scripts/HNode setup.exe
