@@ -7,6 +7,8 @@ public class VRSL : IDMXSerializer
 {
     const int blockSize = 16; // 10x10 pixels per channel block
     const int blocksPerCol = 13; // channels per column
+    public bool OutputGamma = true;
+    public bool InputGamma = true;
     public void Construct() { }
     public void InitFrame() { }
     public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues) { }
@@ -17,12 +19,13 @@ public class VRSL : IDMXSerializer
 
         //convert the x y to pixel index
         //return 4x4 area
-        var color = new Color32(
-            channelValue,
-            channelValue,
-            channelValue,
+        var color = new Color(
+            channelValue/255f,
+            channelValue/255f,
+            channelValue/255f,
             Util.GetBlockAlpha(channelValue)
         );
+        if (OutputGamma) { color = color.linear; } //lol WTF VRSL, you output in a converted color space instead of native linear???????
         TextureWriter.MakeColorBlock(ref pixels, x + universeOffset, y, color, blockSize);
     }
 
@@ -35,10 +38,11 @@ public class VRSL : IDMXSerializer
         y += blockSize / 2;
 
         // Get the color block from the texture
-        Color32 color = TextureReader.GetColor(tex, x + universeOffset, y);
+        Color color = TextureReader.GetColor(tex, x + universeOffset, y);
+        if (InputGamma) { color = color.gamma; } //TODO: test this
 
         // Convert the color block to a channel value
-        channelValue = color.g;
+        channelValue = ((Color32)color).g;
     }
 
     private static void GetPositionData(int channel, out int x, out int y, out int universeOffset)
