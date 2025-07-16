@@ -39,7 +39,7 @@ public class VRSL : IDMXSerializer
 
         // Get the color block from the texture
         Color color = TextureReader.GetColor(tex, x + universeOffset, y);
-        if (InputGamma) { color = color.gamma; } //TODO: test this
+        if (InputGamma) { color = color.gamma; } //TODO: test this NEEDS MORE TESTING, seems like this actually should be off by default?????
 
         // Convert the color block to a channel value
         channelValue = ((Color32)color).g;
