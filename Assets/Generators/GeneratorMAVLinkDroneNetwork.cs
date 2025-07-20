@@ -181,9 +181,11 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         handled = false;
                         switch ((MAV_CMD)commandInt.command)
                         {
-                            case MAV_CMD.REQUEST_AUTOPILOT_CAPABILITIES:
+                            //USER_2 is show origin info
+                            //https://github.com/skybrush-io/skybrush-server/blob/4fd65199a0578c56928981a709f0cabb69b15bd8/src/flockwave/server/ext/mavlink/driver.py#L2260
+                            case MAV_CMD.USER_2:
                                 handled = true;
-                                d.SendAutopilotCapabilities();
+                                d.SetShowOrigin(commandInt.x, commandInt.y, commandInt.z);
                                 break;
                             default:
                                 //handle other commands
@@ -387,31 +389,31 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         private byte uid; // the valid range for this is 1 to 255
 
         //lat long and altitude are fixed point numbers
-        private int lat = 1;
-        private int lon = 1;
-        private int alt = 1;
+        private Vector3 latlongaltposition = Vector3.zero;
+
+        private Vector3 showOrigin = Vector3.zero;
 
         UdpClient client;
         IPEndPoint remoteEndPoint;
 
         public List<byte> showFileRaw = new List<byte>();
 
-        private void SetPosition(float lat, float lon, float alt)
-        {
-            const int scalar = 10000000;
-            this.lat = (int)(lat * scalar);
-            this.lon = (int)(lon * scalar);
-            this.alt = (int)(alt * scalar);
-        }
-
         public Drone(byte uid, UdpClient client, IPEndPoint remoteEndPoint)
         {
+            //latlongaltposition = new Vector3(1,1,1);
             this.uid = uid; //0 is not valid
             this.client = client;
             this.remoteEndPoint = remoteEndPoint;
             //SetPosition(globalID * 0.0001f, globalID * 0.0001f, globalID * 0.0001f); // set initial position
 
             parse = new MavlinkParse();
+        }
+
+        public void SetShowOrigin(float lat, float lon, float alt)
+        {
+            showOrigin = new Vector3(lat * 0.0000001f, lon * 0.0000001f, alt * 0.001f);
+            latlongaltposition = showOrigin;
+            Debug.Log($"Drone {uid} set show origin to: {showOrigin}");
         }
 
         public void SendHeartbeat()
@@ -491,29 +493,14 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         }
 
-        public void SendLocalPosition()
-        {
-            var message = new mavlink_local_position_ned_t(
-                (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-            );
-
-            Transmit(MAVLINK_MSG_ID.LOCAL_POSITION_NED, message);
-        }
-
         public void SendGPSRaw()
         {
             var message = new mavlink_gps_raw_int_t(
                 //send current unix time in seconds
                 (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                lat,
-                lon,
-                alt,
+                (int)(latlongaltposition.x * 10000000),
+                (int)(latlongaltposition.y * 10000000),
+                (int)(latlongaltposition.z * 1000), 
                 ushort.MaxValue,
                 ushort.MaxValue,
                 ushort.MaxValue,
@@ -535,9 +522,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         {
             var message = new mavlink_global_position_int_t(
                 (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                lat,
-                lon,
-                alt,
+                (int)(latlongaltposition.x * 10000000),
+                (int)(latlongaltposition.y * 10000000),
+                (int)(latlongaltposition.z * 1000),
                 0,
                 0,
                 0,
