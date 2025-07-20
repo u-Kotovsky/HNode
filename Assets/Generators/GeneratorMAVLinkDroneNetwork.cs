@@ -6,9 +6,11 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CrcSharp;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using static MAVLink;
@@ -130,19 +132,19 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 {
                     case MAVLINK_MSG_ID.COMMAND_LONG:
                         //figure out the command
-                        var obj = (mavlink_command_long_t)message.data;
+                        var commandLong = (mavlink_command_long_t)message.data;
                         //find the drone based on the target sysid
-                        bool found = drones.TryGetValue(obj.target_system, out Drone d);
+                        bool found = drones.TryGetValue(commandLong.target_system, out Drone d);
 
                         if (!found)
                         {
-                            Debug.LogError($"Invalid system target: {obj.target_system}");
+                            Debug.LogError($"Invalid system target: {commandLong.target_system}");
                             continue;
                         }
 
                         //Debug.Log((MAV_CMD)obj.command);
                         bool handled = false;
-                        switch ((MAV_CMD)obj.command)
+                        switch ((MAV_CMD)commandLong.command)
                         {
                             case MAV_CMD.REQUEST_AUTOPILOT_CAPABILITIES:
                                 handled = true;
@@ -154,13 +156,165 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 break;
                             default:
                                 //handle other commands
-                                Debug.Log($"Unhandled command: {(MAV_CMD)obj.command}");
+                                Debug.Log($"Unhandled command: {(MAV_CMD)commandLong.command}");
                                 handled = false;
                                 break;
                         }
                         if (handled)
                         {
-                            d.SendCommandACK((MAV_CMD)obj.command, MAV_RESULT.ACCEPTED, obj.target_system, obj.target_component);
+                            d.SendCommandACK((MAV_CMD)commandLong.command, MAV_RESULT.ACCEPTED, message.sysid, message.compid);
+                        }
+                        break;
+                    case MAVLINK_MSG_ID.COMMAND_INT:
+                        //figure out the command
+                        var commandInt = (mavlink_command_int_t)message.data;
+                        //find the drone based on the target sysid
+                        found = drones.TryGetValue(commandInt.target_system, out d);
+
+                        if (!found)
+                        {
+                            Debug.LogError($"Invalid system target: {commandInt.target_system}");
+                            continue;
+                        }
+
+                        //Debug.Log((MAV_CMD)obj.command);
+                        handled = false;
+                        switch ((MAV_CMD)commandInt.command)
+                        {
+                            case MAV_CMD.REQUEST_AUTOPILOT_CAPABILITIES:
+                                handled = true;
+                                d.SendAutopilotCapabilities();
+                                break;
+                            default:
+                                //handle other commands
+                                Debug.Log($"Unhandled command: {(MAV_CMD)commandInt.command}");
+                                handled = false;
+                                break;
+                        }
+                        if (handled)
+                        {
+                            d.SendCommandACK((MAV_CMD)commandInt.command, MAV_RESULT.ACCEPTED, message.sysid, message.compid);
+                        }
+                        break;
+                    case MAVLINK_MSG_ID.FILE_TRANSFER_PROTOCOL:
+                        var ftpobj = (mavlink_file_transfer_protocol_t)message.data;
+                        //find the drone based on the target sysid
+                        found = drones.TryGetValue(ftpobj.target_system, out d);
+
+                        if (!found)
+                        {
+                            Debug.LogError($"Invalid system target: {ftpobj.target_system}");
+                            continue;
+                        }
+                        //convert to a ftpmessage packet
+                        var ftpIncomingMessage = MavlinkUtil.ByteArrayToStructureGC<FTPMessage>(ftpobj.payload, 0);
+                        //print all the data on it
+                        //Debug.Log($"FTP Message: Seq: {ftpIncomingMessage.seq_number}, Session: {ftpIncomingMessage.session}, Opcode: {ftpIncomingMessage.opcode}, Size: {ftpIncomingMessage.size}, ReqOpcode: {ftpIncomingMessage.req_opcode}, BurstComplete: {ftpIncomingMessage.burst_complete}, Offset: {ftpIncomingMessage.offset}, Data Length: {ftpIncomingMessage.data.Length}");
+                        FTPMessage? sendMessage = null;
+                        switch (ftpIncomingMessage.opcode)
+                        {
+                            case FTPMessage.ftp_opcode.CreateFile:
+                                //reply with ack because we don't actually care about the file name
+                                sendMessage = new FTPMessage(
+                                    (ushort)(ftpIncomingMessage.seq_number + 1),
+                                    ftpIncomingMessage.session,
+                                    FTPMessage.ftp_opcode.ACK,
+                                    0,
+                                    ftpIncomingMessage.opcode,
+                                    1,
+                                    0,
+                                    null
+                                );
+                                break;
+                            case FTPMessage.ftp_opcode.WriteFile:
+                                //ensure the list is large enough
+                                d.showFileRaw.EnsureCapacity((int)(ftpIncomingMessage.size + ftpIncomingMessage.offset));
+                                //write the data to the list
+                                d.showFileRaw.InsertRange((int)ftpIncomingMessage.offset, ftpIncomingMessage.data.Take((int)ftpIncomingMessage.size));
+                                //ack the write
+                                sendMessage = new FTPMessage(
+                                    (ushort)(ftpIncomingMessage.seq_number + 1),
+                                    ftpIncomingMessage.session,
+                                    FTPMessage.ftp_opcode.ACK,
+                                    0,
+                                    ftpIncomingMessage.opcode,
+                                    1,
+                                    0,
+                                    null
+                                );
+                                break;
+                            case FTPMessage.ftp_opcode.TerminateSession:
+                                //print the total size of the file
+                                //Debug.Log($"File received with size: {d.showFileRaw.Count} bytes");
+                                //ack the termination
+                                sendMessage = new FTPMessage(
+                                    (ushort)(ftpIncomingMessage.seq_number + 1),
+                                    ftpIncomingMessage.session,
+                                    FTPMessage.ftp_opcode.ACK,
+                                    0,
+                                    ftpIncomingMessage.opcode,
+                                    1,
+                                    0,
+                                    null
+                                );
+                                break;
+                            case FTPMessage.ftp_opcode.CalcFileCRC32:
+                                //calculate the CRC32 of the received data
+                                var crcParams = new CrcParameters(
+                                    32,
+                                    Convert.ToUInt64("0x04C11DB7", 16),
+                                    0,
+                                    0,
+                                    false,
+                                    false
+                                );
+
+                                var crc32 = new Crc(crcParams);
+
+                                var crc = crc32.CalculateAsNumeric(d.showFileRaw.ToArray());
+
+                                //Debug.Log($"Calculated CRC32: {crc:X8} for file with size: {d.showFileRaw.Count} bytes");
+
+                                //fake the CRC for now
+                                //TODO: Actually get this shit workin frfr
+                                crc = Convert.ToUInt64("0x4B6F7F6B", 16);
+
+                                //conver the CRC to a byte array
+                                byte[] crcBytes = BitConverter.GetBytes(crc);
+
+                                //ack with the CRC32 value
+                                sendMessage = new FTPMessage(
+                                    (ushort)(ftpIncomingMessage.seq_number + 1),
+                                    ftpIncomingMessage.session,
+                                    FTPMessage.ftp_opcode.ACK,
+                                    (byte)crcBytes.Length,
+                                    ftpIncomingMessage.opcode,
+                                    1,
+                                    0,
+                                    crcBytes
+                                );
+                                break;
+                            case FTPMessage.ftp_opcode.ResetSessions:
+                                //reply with ack because we don't actually care about the file name
+                                sendMessage = new FTPMessage(
+                                    (ushort)(ftpIncomingMessage.seq_number + 1),
+                                    ftpIncomingMessage.session,
+                                    FTPMessage.ftp_opcode.ACK,
+                                    0,
+                                    ftpIncomingMessage.opcode,
+                                    1,
+                                    0,
+                                    null
+                                );
+                                break;
+                            default:
+                                Debug.Log($"Unhandled FTP message: {ftpIncomingMessage.opcode}");
+                                break;
+                        }
+
+                        if (sendMessage != null)
+                        {
+                            d.SendFTPMessage(sendMessage.Value, message.sysid, message.compid);
                         }
                         break;
                     default:
@@ -170,6 +324,60 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             }
 
             await UniTask.Delay(5);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 251)]
+    public struct FTPMessage
+    {
+        public ushort seq_number;
+        public byte session;
+        public ftp_opcode opcode;
+        public byte size;
+        public ftp_opcode req_opcode;
+        public byte burst_complete;
+        public byte padding;
+        public uint offset;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 251 - 12)]
+        public byte[] data;
+
+        public FTPMessage(ushort seq_number, byte session, ftp_opcode opcode, byte size, ftp_opcode req_opcode, byte burst_complete, uint offset, byte[] data)
+        {
+            this.seq_number = seq_number;
+            this.session = session;
+            this.opcode = opcode;
+            this.size = size;
+            this.req_opcode = req_opcode;
+            this.burst_complete = burst_complete;
+            this.padding = 0; //padding to align to 4 bytes
+            this.offset = offset;
+            this.data = data ?? new byte[251 - 12];
+        }
+
+        public enum ftp_opcode : byte
+        {
+            None = 0,
+            TerminateSession = 1,
+            ResetSessions = 2,
+            ListDirectory = 3,
+            OpenFileRO = 4,
+            ReadFile = 5,
+            CreateFile = 6,
+            WriteFile = 7,
+            RemoveFile = 8,
+            CreateDirectory = 9,
+            RemoveDirectory = 10,
+            OpenFileWO = 11,
+            TruncateFile = 12,
+            Rename = 13,
+            CalcFileCRC32 = 14,
+            BurstReadFile = 15,
+
+
+
+            ACK = 128,
+            NAK = 129,
         }
     }
 
@@ -185,6 +393,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         UdpClient client;
         IPEndPoint remoteEndPoint;
+
+        public List<byte> showFileRaw = new List<byte>();
 
         private void SetPosition(float lat, float lon, float alt)
         {
@@ -221,7 +431,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         public void Transmit<T>(MAVLINK_MSG_ID id, T message)
             where T : struct
         {
-            var sendBytes = parse.GenerateMAVLinkPacket20(id, message, sysid: uid);
+            var sendBytes = parse.GenerateMAVLinkPacket20(id, message, sysid: uid, compid: 1);
 
             client.Send(sendBytes, sendBytes.Length, remoteEndPoint.Address.ToString(), remoteEndPoint.Port);
         }
@@ -258,6 +468,27 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             );
 
             Transmit(MAVLINK_MSG_ID.COMMAND_ACK, message);
+        }
+
+        public void SendFTPMessage(FTPMessage ftpMessage, byte target_system, byte target_component)
+        {
+            //convert to a mavlink_file_transfer_protocol_t
+            var ftpobj = new mavlink_file_transfer_protocol_t
+            (
+                0,
+                target_system = target_system,
+                target_component = target_component,
+                MavlinkUtil.StructureToByteArray(ftpMessage)
+            );
+
+            Transmit(MAVLINK_MSG_ID.FILE_TRANSFER_PROTOCOL, ftpobj);
+        }
+
+        public int FTPSEQ = 0;
+
+        public void SendFTPACK()
+        {
+
         }
 
         public void SendLocalPosition()
