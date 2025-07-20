@@ -22,6 +22,18 @@ public static class Extensions
         return list;
     }
 
+    public static List<T> SetRange<T>(this List<T> list, int startIndex, int count, T[] value)
+    {
+        //ensure the list has enough capacity
+        list.EnsureCapacity(startIndex + count);
+
+        for (int i = startIndex; i < startIndex + count; i++)
+        {
+            list[i] = value[i - startIndex];
+        }
+        return list;
+    }
+
     public static string ToNewlineString<T>(this List<T> list)
     {
         if (list == null || list.Count == 0)

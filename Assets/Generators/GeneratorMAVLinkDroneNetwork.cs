@@ -25,6 +25,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
     public int droneCount = 254;
     public int networkPort = 14550;
+    public int channelStart = 0;
     public void Construct()
     {
         client = new UdpClient();
@@ -50,6 +51,36 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
     public void GenerateDMX(ref List<byte> dmxData)
     {
+        foreach (Drone d in drones.Values)
+        {
+            //convert the XYZ to bytes
+            //do this by converting them to -1 to 1 range from -800 to 800
+            float scaledX = Mathf.InverseLerp(-800, 800, d.Position.x);
+            float scaledY = Mathf.InverseLerp(-800, 800, d.Position.y);
+            float scaledZ = Mathf.InverseLerp(-800, 800, d.Position.z);
+
+            //convert to 16 bit ushorts
+            ushort x = (ushort)(scaledX * ushort.MaxValue);
+            ushort y = (ushort)(scaledY * ushort.MaxValue);
+            ushort z = (ushort)(scaledZ * ushort.MaxValue);
+
+            //merge into a single list
+            List<byte> droneValues = new List<byte>();
+
+            //append to dmxData
+            droneValues.AddRange(BitConverter.GetBytes(x));
+            droneValues.AddRange(BitConverter.GetBytes(y));
+            droneValues.AddRange(BitConverter.GetBytes(z));
+
+            //append the LED color
+            droneValues.Add(d.LEDColor.r);
+            droneValues.Add(d.LEDColor.g);
+            droneValues.Add(d.LEDColor.b);
+
+            //set the data
+            dmxData.SetRange(channelStart + ((d.uid - 1) * droneValues.Count), droneValues.Count, droneValues.ToArray());
+        }
+        Debug.Log(dmxData.Count);
         return;
     }
 
@@ -230,9 +261,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 break;
                             case FTPMessage.ftp_opcode.WriteFile:
                                 //ensure the list is large enough
-                                d.showFileRaw.EnsureCapacity((int)(ftpIncomingMessage.size + ftpIncomingMessage.offset));
+                                //d.showFileRaw.EnsureCapacity((int)(ftpIncomingMessage.size + ftpIncomingMessage.offset));
                                 //write the data to the list
-                                d.showFileRaw.InsertRange((int)ftpIncomingMessage.offset, ftpIncomingMessage.data.Take((int)ftpIncomingMessage.size));
+                                d.showFileRaw.SetRange((int)ftpIncomingMessage.offset, ftpIncomingMessage.size, ftpIncomingMessage.data);
                                 //ack the write
                                 sendMessage = new FTPMessage(
                                     (ushort)(ftpIncomingMessage.seq_number + 1),
@@ -267,8 +298,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                     Convert.ToUInt64("0x04C11DB7", 16),
                                     0,
                                     0,
-                                    false,
-                                    false
+                                    true,
+                                    true
                                 );
 
                                 var crc32 = new Crc(crcParams);
@@ -276,10 +307,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 var crc = crc32.CalculateAsNumeric(d.showFileRaw.ToArray());
 
                                 //Debug.Log($"Calculated CRC32: {crc:X8} for file with size: {d.showFileRaw.Count} bytes");
-
-                                //fake the CRC for now
-                                //TODO: Actually get this shit workin frfr
-                                crc = Convert.ToUInt64("0x4B6F7F6B", 16);
 
                                 //conver the CRC to a byte array
                                 byte[] crcBytes = BitConverter.GetBytes(crc);
@@ -386,12 +413,23 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     public class Drone
     {
         private MavlinkParse parse;
-        private byte uid; // the valid range for this is 1 to 255
+        public byte uid; // the valid range for this is 1 to 255
 
         //lat long and altitude are fixed point numbers
         private Vector3 latlongaltposition = Vector3.zero;
 
         private Vector3 showOrigin = Vector3.zero;
+        public Vector3 Position
+        {
+            get
+            {
+                var x = measure(showOrigin.x, latlongaltposition.y, showOrigin.x, showOrigin.y);
+                var y = measure(latlongaltposition.x, showOrigin.y, showOrigin.x, showOrigin.y);
+                return new Vector3((float)x, (float)y, latlongaltposition.z);
+            }
+        }
+
+        public Color32 LEDColor;
 
         UdpClient client;
         IPEndPoint remoteEndPoint;
@@ -409,11 +447,22 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             parse = new MavlinkParse();
         }
 
+        public double measure(float lat1, float lon1, float lat2, float lon2){  // generally used geo measurement function
+            var R = 6378.137; // Radius of earth in KM
+            var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
+            var dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
+            var a = Math.Sin(dLat/2) * Math.Sin(dLat/2) +
+            Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
+            Math.Sin(dLon/2) * Math.Sin(dLon/2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1-a));
+            var d = R * c;
+            return d * 1000; // meters
+        }
+
         public void SetShowOrigin(float lat, float lon, float alt)
         {
             showOrigin = new Vector3(lat * 0.0000001f, lon * 0.0000001f, alt * 0.001f);
             latlongaltposition = showOrigin;
-            Debug.Log($"Drone {uid} set show origin to: {showOrigin}");
         }
 
         public void SendHeartbeat()
