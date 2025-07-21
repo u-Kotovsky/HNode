@@ -6,7 +6,8 @@ using UnityEngine;
 public class BinaryDrones : IDMXSerializer
 {
     const int blockSize = 4; // 10x10 pixels per channel block
-    const int blocksPerCol = 33*8; // channels per column
+    const int blocksPerCol = 33 * 8; // channels per column
+    public bool wrapChannels = true; // wrap channels down to the next row if they exceed the texture width
 
     public void Construct() { }
     public void InitFrame() { }
@@ -19,7 +20,7 @@ public class BinaryDrones : IDMXSerializer
 
         for (int i = 0; i < bits.Length; i++)
         {
-            GetPositionData(channel, i, out int x, out int y);
+            GetPositionData(channel, i, textureWidth, out int x, out int y);
             if (x >= textureWidth || y >= textureHeight)
             {
                 continue; // Skip if the calculated pixel is out of bounds
@@ -41,7 +42,7 @@ public class BinaryDrones : IDMXSerializer
         var bits = new BitArray(8);
         for (int i = 0; i < bits.Length; i++)
         {
-            GetPositionData(channel, i, out int x, out int y);
+            GetPositionData(channel, i, textureWidth, out int x, out int y);
             //add on a offset
             x += 1;
             y += 1;
@@ -56,11 +57,18 @@ public class BinaryDrones : IDMXSerializer
         channelValue = ConvertToByte(bits);
     }
 
-    private static void GetPositionData(int channel, int i, out int x, out int y)
+    private void GetPositionData(int channel, int i, int textureWidth, out int x, out int y)
     {
         int newChannel = (channel * 8) + i;
         x = (newChannel / blocksPerCol) * blockSize;
         y = (newChannel % blocksPerCol) * blockSize;
+        if (wrapChannels)
+        {
+            //wrap them around if they hit the border
+            int wrap = x / textureWidth;
+            x = x % textureWidth;
+            y = y + (wrap * (blocksPerCol * blockSize));
+        }
     }
 
     byte ConvertToByte(BitArray bits)
