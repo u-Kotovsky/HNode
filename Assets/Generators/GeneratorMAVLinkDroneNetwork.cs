@@ -80,7 +80,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             //set the data
             dmxData.SetRange(channelStart + ((d.uid - 1) * droneValues.Count), droneValues.Count, droneValues.ToArray());
         }
-        Debug.Log(dmxData.Count);
+        //Debug.Log(dmxData.Count);
         return;
     }
 
@@ -185,6 +185,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 //we dont actually CARE about message intervals, so just ACK it
                                 handled = true;
                                 break;
+                            case MAV_CMD.USER_1:
+                                //show control information, such as reload show, remove show or test pyro
+                                //https://github.com/skybrush-io/skybrush-server/blob/4fd65199a0578c56928981a709f0cabb69b15bd8/src/flockwave/server/ext/mavlink/enums.py#L629
+                                //we dont care about these, just ack them
+                                handled = true;
+                                break;
                             default:
                                 //handle other commands
                                 Debug.Log($"Unhandled command: {(MAV_CMD)commandLong.command}");
@@ -228,6 +234,86 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         {
                             d.SendCommandACK((MAV_CMD)commandInt.command, MAV_RESULT.ACCEPTED, message.sysid, message.compid);
                         }
+                        break;
+                    case MAVLINK_MSG_ID.PARAM_REQUEST_READ:
+                        var paramRequestRead = (mavlink_param_request_read_t)message.data;
+                        //find the drone based on the target sysid
+                        found = drones.TryGetValue(paramRequestRead.target_system, out d);
+
+                        if (!found)
+                        {
+                            Debug.LogError($"Invalid system target: {paramRequestRead.target_system}");
+                            continue;
+                        }
+
+                        //convert the byte array to a string
+                        string paramName = Encoding.UTF8.GetString(paramRequestRead.param_id).TrimEnd('\0');
+                        //get the parameter type
+                        found = d.parameters.TryGetValue(paramName, out float paramValue);
+                        if (!found)
+                        {
+                            //Debug.LogError($"Parameter not found: {paramName}, sending 0");
+                            paramValue = 0f;
+                        }
+
+                        //send it back
+                        var paramValueMessage = new mavlink_param_value_t(
+                            paramValue,
+                            (ushort)d.parameters.Count,
+                            (ushort)d.parameters.Keys.ToList().IndexOf(paramName),
+                            paramRequestRead.param_id,
+                            (byte)MAV_PARAM_TYPE.REAL32
+                        );
+                        d.Transmit(MAVLINK_MSG_ID.PARAM_VALUE, paramValueMessage);
+                        break;
+                    case MAVLINK_MSG_ID.PARAM_SET:
+                        var paramSet = (mavlink_param_set_t)message.data;
+                        //find the drone based on the target sysid
+                        found = drones.TryGetValue(paramSet.target_system, out d);
+
+                        if (!found)
+                        {
+                            Debug.LogError($"Invalid system target: {paramSet.target_system}");
+                            continue;
+                        }
+
+                        //convert the byte array to a string
+                        paramName = Encoding.UTF8.GetString(paramSet.param_id).TrimEnd('\0');
+                        d.parameters[paramName] = paramSet.param_value;
+                        //send it back as a confirmation
+                        var paramSetMessage = new mavlink_param_value_t(
+                            paramSet.param_value,
+                            (ushort)d.parameters.Count,
+                            (ushort)d.parameters.Keys.ToList().IndexOf(paramName),
+                            paramSet.param_id,
+                            (byte)MAV_PARAM_TYPE.REAL32
+                        );
+                        d.Transmit(MAVLINK_MSG_ID.PARAM_VALUE, paramSetMessage);
+                        Debug.Log($"Parameter set: {paramName} = {paramSet.param_value}");
+                        break;
+                    case MAVLINK_MSG_ID.MISSION_COUNT:
+                        var missionCountMessage = (mavlink_mission_count_t)message.data;
+                        //find the drone based on the target sysid
+                        found = drones.TryGetValue(missionCountMessage.target_system, out d);
+
+                        if (!found)
+                        {
+                            Debug.LogError($"Invalid system target: {missionCountMessage.target_system}");
+                            continue;
+                        }
+
+                        //switch on the mission type itself, we dont care about geofencing
+                        switch ((MAV_MISSION_TYPE)missionCountMessage.mission_type)
+                        {
+                            case MAV_MISSION_TYPE.FENCE:
+                                break;
+                            default:
+                                Debug.LogWarning($"Unhandled mission type: {(MAV_MISSION_TYPE)missionCountMessage.mission_type}");
+                                break;
+                        }
+
+                        //acknowledge the mission count
+                        d.SendMissionACK(MAV_MISSION_RESULT.MAV_MISSION_ACCEPTED, (MAV_MISSION_TYPE)missionCountMessage.mission_type, message.sysid, message.compid);
                         break;
                     case MAVLINK_MSG_ID.FILE_TRANSFER_PROTOCOL:
                         var ftpobj = (mavlink_file_transfer_protocol_t)message.data;
@@ -431,6 +517,11 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public Color32 LEDColor;
 
+        public Dictionary<string, float> parameters = new Dictionary<string, float>()
+        {
+            {"FENCE_ALT_MAX", 1000},
+        };
+
         UdpClient client;
         IPEndPoint remoteEndPoint;
 
@@ -447,14 +538,15 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             parse = new MavlinkParse();
         }
 
-        public double measure(float lat1, float lon1, float lat2, float lon2){  // generally used geo measurement function
+        public double measure(float lat1, float lon1, float lat2, float lon2)
+        {  // generally used geo measurement function
             var R = 6378.137; // Radius of earth in KM
             var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
             var dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
-            var a = Math.Sin(dLat/2) * Math.Sin(dLat/2) +
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
             Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
-            Math.Sin(dLon/2) * Math.Sin(dLon/2);
-            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1-a));
+            Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
             var d = R * c;
             return d * 1000; // meters
         }
@@ -470,7 +562,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             var message = new mavlink_heartbeat_t(
                 127,
                 (byte)MAV_TYPE.GENERIC,
-                (byte)MAV_AUTOPILOT.GENERIC,
+                (byte)MAV_AUTOPILOT.ARDUPILOTMEGA,
                 (byte)MAV_MODE_FLAG.AUTO_ENABLED,
                 (byte)MAV_STATE.STANDBY,
                 MAVLINK_VERSION);
@@ -521,6 +613,17 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             Transmit(MAVLINK_MSG_ID.COMMAND_ACK, message);
         }
 
+        public void SendMissionACK(MAV_MISSION_RESULT result, MAV_MISSION_TYPE type, byte target_system, byte target_component)
+        {
+            var message = new mavlink_mission_ack_t(
+                target_system,
+                target_component,
+                (byte)result,
+                (byte)type
+            );
+            Transmit(MAVLINK_MSG_ID.MISSION_ACK, message);
+        }
+
         public void SendFTPMessage(FTPMessage ftpMessage, byte target_system, byte target_component)
         {
             //convert to a mavlink_file_transfer_protocol_t
@@ -535,13 +638,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             Transmit(MAVLINK_MSG_ID.FILE_TRANSFER_PROTOCOL, ftpobj);
         }
 
-        public int FTPSEQ = 0;
-
-        public void SendFTPACK()
-        {
-
-        }
-
         public void SendGPSRaw()
         {
             var message = new mavlink_gps_raw_int_t(
@@ -549,7 +645,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 (int)(latlongaltposition.x * 10000000),
                 (int)(latlongaltposition.y * 10000000),
-                (int)(latlongaltposition.z * 1000), 
+                (int)(latlongaltposition.z * 1000),
                 ushort.MaxValue,
                 ushort.MaxValue,
                 ushort.MaxValue,
