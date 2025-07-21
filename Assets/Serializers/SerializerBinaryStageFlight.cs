@@ -8,10 +8,11 @@ public class BinaryStageFlight : IDMXSerializer
     const int blockSize = 4; // 10x10 pixels per channel block
     const int channelsPerCol = 6;
     const int blocksPerCol = channelsPerCol * 8; // channels per column
+    const int CRCBits = 4;
 
     public void Construct() { }
     public void InitFrame() { }
-    public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues)
+    public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight)
     {
         //figure out the lowest pixel it wouldve drawn before
         int startY = blocksPerCol * blockSize;
@@ -31,9 +32,10 @@ public class BinaryStageFlight : IDMXSerializer
             int x = (i / channelsPerCol) * blockSize;
             //draw the 4 bits
             var bits = new BitArray(new byte[] { crc });
-            for (int j = 0; j < /* bits.Length */ 4; j++)
+            for (int j = 0; j < /* bits.Length */ CRCBits; j++)
             {
                 int y = startY + j * blockSize;
+                CalculateWrapping(x, y, out int xd, out int yd, textureWidth);
                 //convert the x y to pixel index
                 //return 4x4 area
                 var color = new Color32(
@@ -45,7 +47,7 @@ public class BinaryStageFlight : IDMXSerializer
                     (byte)(bits[j] ? 255 : 0), */
                     Util.GetBlockAlpha(255) // Alpha should be forced on always
                 );
-                TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
+                TextureWriter.MakeColorBlock(ref pixels, xd, yd, color, blockSize);
             }
         }
     }
@@ -58,7 +60,7 @@ public class BinaryStageFlight : IDMXSerializer
         //sane endianness
         for (int i = 0; i < bits.Length; i++)
         {
-            GetPositionData(channel, i, out int x, out int y);
+            GetPositionData(channel, i, textureWidth, out int x, out int y);
             if (x >= textureWidth || y >= textureHeight)
             {
                 continue; // Skip if the calculated pixel is out of bounds
@@ -82,7 +84,7 @@ public class BinaryStageFlight : IDMXSerializer
         var bits = new BitArray(8);
         for (int i = 0; i < bits.Length; i++)
         {
-            GetPositionData(channel, i, out int x, out int y);
+            GetPositionData(channel, i, textureWidth, out int x, out int y);
             //add on a offset
             x += 1;
             y += 1;
@@ -97,13 +99,21 @@ public class BinaryStageFlight : IDMXSerializer
         channelValue = ConvertToByte(bits);
     }
 
-    private static void GetPositionData(int channel, int i, out int x, out int y)
+    private static void GetPositionData(int channel, int i, int textureWidth, out int x, out int y)
     {
         //int newChannel = (channel * 8) + i;
         //encode backwards, endiannes flip
         int newChannel = (channel * 8) + (7 - i);
         x = (newChannel / blocksPerCol) * blockSize;
         y = (newChannel % blocksPerCol) * blockSize;
+        CalculateWrapping(x, y, out x, out y, textureWidth);
+    }
+
+    private static void CalculateWrapping(int x, int y, out int adjx, out int adjy, int textureWidth)
+    {
+        int wrap = x / textureWidth;
+        adjx = x % textureWidth;
+        adjy = y + (wrap * (blocksPerCol + CRCBits) * blockSize); // +4 is for the CRC bits
     }
 
     byte ConvertToByte(BitArray bits)
@@ -116,26 +126,6 @@ public class BinaryStageFlight : IDMXSerializer
         bits.CopyTo(bytes, 0);
         return bytes[0];
     }
-
-    // CRC-4 (x⁴ + x + 1)
-    /* public static byte Crc4(params byte[] data)
-    {
-    //TODO: This CRC is still likely wrong. indev go brr
-        uint crc = 0;
-        uint polynomial = 0x03;
-
-        foreach (uint v in data)
-        {
-            for (int bit = 7; bit >= 0; --bit)
-            {
-                uint inBit = (v >> bit) & 1;
-                uint top = (crc >> 3) & 1;
-                crc = ((crc << 1) | inBit) & 0xF;
-                if (top == 1) crc ^= polynomial;
-            }
-        }
-        return (byte)(crc << 4); // put crc on the left and pad 0s
-    } */
 
     public static byte Crc4(params byte[] data)
     {
@@ -152,6 +142,6 @@ public class BinaryStageFlight : IDMXSerializer
                 if (top) crc ^= polynomial;
             }
         }
-        return (byte)(crc << 4); // put crc on the left and pad 0s
+        return (byte)(crc << CRCBits); // put crc on the left and pad 0s
     }
 }

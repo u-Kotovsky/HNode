@@ -35,7 +35,7 @@ public interface IDMXSerializer
     /// </summary>
     /// <param name="pixels"></param>
     /// <param name="channelValues"></param>
-    void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues);
+    void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight);
 
     /// <summary>
     /// Called to initialize the serializer
