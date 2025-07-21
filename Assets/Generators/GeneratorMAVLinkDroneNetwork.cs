@@ -262,7 +262,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             //https://github.com/skybrush-io/skybrush-server/blob/4fd65199a0578c56928981a709f0cabb69b15bd8/src/flockwave/server/ext/mavlink/driver.py#L2260
                             case MAV_CMD.USER_2:
                                 handled = true;
-                                d.SetShowOrigin(commandInt.x* 0.0000001f, commandInt.y* 0.0000001f, commandInt.z * 0.001f);
+                                d.SetShowOrigin(commandInt.x * 0.0000001f, commandInt.y * 0.0000001f, commandInt.z * 0.001f);
                                 break;
                             default:
                                 //handle other commands
@@ -567,7 +567,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         UdpClient client;
         IPEndPoint remoteEndPoint;
 
+        //constructed here https://github.com/skybrush-io/skybrush-server/blob/4fd65199a0578c56928981a709f0cabb69b15bd8/src/flockwave/server/ext/mavlink/driver.py#L2225
         public List<byte> showFileRaw = new List<byte>();
+        public ShowFile showFile;
 
         public Drone(byte uid, UdpClient client, IPEndPoint remoteEndPoint)
         {
@@ -607,6 +609,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         public void ReloadShow()
         {
             Debug.Log($"Reloading show for drone {uid}");
+
+            showFile = new ShowFile(showFileRaw);
         }
 
         public void SendHeartbeat()
@@ -758,5 +762,53 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
             Transmit(MAVLINK_MSG_ID.SYS_STATUS, message);
         }
+        public class ShowFile
+        {
+            public List<byte> RawData { get; set; } = new List<byte>();
+
+            public ShowFile(List<byte> rawData)
+            {
+                RawData = rawData;
+
+                /* //print the bin results of the show file in raw hex
+                StringBuilder hex = new StringBuilder(RawData.Count * 2);
+                foreach (byte b in RawData)
+                    hex.AppendFormat("{0:x2}", b);
+                Debug.Log(hex); */
+
+                //make a copy to operate on
+                Queue<byte> fileData = new Queue<byte>(RawData);
+
+                //file header is the first 10 bytes, pull that out of the buffer
+                List<byte> header = fileData.DequeueChunk(10).ToList();
+
+                //next we should have a block header that is 3 bytes long.
+                while (fileData.Count > 0)
+                {
+                    ExtractBlock(fileData);
+                }
+            }
+
+            private static void ExtractBlock(Queue<byte> fileData)
+            {
+                //the first byte is the block type
+                //the next 2 bytes are the block size
+                BlockType blockType = (BlockType)fileData.DequeueChunk(1).First();
+                int blockSize = BitConverter.ToUInt16(fileData.DequeueChunk(2).ToArray(), 0);
+                Debug.Log($"Block Type: {blockType}, Block Size: {blockSize}");
+                List<byte> blockData = fileData.DequeueChunk(blockSize).ToList();
+            }
+
+            enum BlockType : byte
+            {
+                TRAJECTORY = 1,
+                LIGHT_PROGRAM = 2,
+                COMMENT = 3,
+                RTH_PLAN = 4,
+                YAW_CONTROL = 5,
+                EVENT_LIST = 6
+            }
+        }
     }
+
 }

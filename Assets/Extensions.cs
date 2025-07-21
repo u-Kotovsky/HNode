@@ -56,4 +56,12 @@ public static class Extensions
         byte a = (byte)(col.a * 255);
         return (char)r + "" + (char)g + "" + (char)b + "" + (char)a;
     }
+
+    public static IEnumerable<T> DequeueChunk<T>(this Queue<T> queue, int chunkSize) 
+    {
+        for (int i = 0; i < chunkSize && queue.Count > 0; i++)
+        {
+            yield return queue.Dequeue();
+        }
+    }
 }
