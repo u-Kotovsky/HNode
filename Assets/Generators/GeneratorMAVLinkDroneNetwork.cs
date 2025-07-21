@@ -28,7 +28,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     public int channelStart = 0;
     public float gridLon = 0;//x
     public float gridLat = 0;//y
-    public int gridLonCount = 0;
+    public int gridLonCount = 1;
     public float gridSpacingLon = 0.0001f; //spacing in degrees
     public float gridSpacingLat = 0.0001f; //spacing in degrees
     public float initialAltitude = 0f;
@@ -63,7 +63,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                               initialAltitude);
                 //set the LED color to a random color
                 d.LEDColor = new Color32((byte)UnityEngine.Random.Range(0, 255), (byte)UnityEngine.Random.Range(0, 255), (byte)UnityEngine.Random.Range(0, 255), 255);
-                dronesLeft -= 1;
+                dronesLeft--;
                 if (dronesLeft <= 0)
                 {
                     break;
@@ -373,6 +373,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         switch (ftpIncomingMessage.opcode)
                         {
                             case FTPMessage.ftp_opcode.CreateFile:
+                                //clear out the existing file data
+                                d.showFileRaw.Clear();
                                 //reply with ack because we don't actually care about the file name
                                 sendMessage = new FTPMessage(
                                     (ushort)(ftpIncomingMessage.seq_number + 1),
