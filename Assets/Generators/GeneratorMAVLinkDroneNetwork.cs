@@ -26,6 +26,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     public int droneCount = 254;
     public int networkPort = 14550;
     public int channelStart = 0;
+    public float gridLon = 0;//x
+    public float gridLat = 0;//y
+    public int gridLonCount = 0;
+    public float gridSpacingLon = 0.0001f; //spacing in degrees
+    public float gridSpacingLat = 0.0001f; //spacing in degrees
+    public float initialAltitude = 0f;
     public void Construct()
     {
         client = new UdpClient();
@@ -41,6 +47,28 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         {
             //Debug.Log(i);
             drones.Add(i, new Drone(i, client, remoteEndPoint));
+        }
+
+        //layout all the drones
+        int dronesLeft = drones.Count;
+        while (dronesLeft > 0)
+        {
+            for (int j = 0; j < gridLonCount; j++)
+            {
+                //get the drone at the index
+                Drone d = drones[(byte)(dronesLeft)];
+                //set the position based on the grid
+                d.SetPosition(gridLon + (j * gridSpacingLat),
+                              gridLat + ((dronesLeft - 1) / gridLonCount) * gridSpacingLon,
+                              initialAltitude);
+                //set the LED color to a random color
+                d.LEDColor = new Color32((byte)UnityEngine.Random.Range(0, 255), (byte)UnityEngine.Random.Range(0, 255), (byte)UnityEngine.Random.Range(0, 255), 255);
+                dronesLeft -= 1;
+                if (dronesLeft <= 0)
+                {
+                    break;
+                }
+            }
         }
 
         //startup tasks
@@ -146,7 +174,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         while (Application.isPlaying)
         {
             //listen for messages on 14555
-            if (client.Available > 0)
+            while (client.Available > 0)
             {
                 byte[] buffer = client.Receive(ref selfEndPoint);
                 stream.Seek(0, SeekOrigin.Begin);
@@ -188,7 +216,19 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             case MAV_CMD.USER_1:
                                 //show control information, such as reload show, remove show or test pyro
                                 //https://github.com/skybrush-io/skybrush-server/blob/4fd65199a0578c56928981a709f0cabb69b15bd8/src/flockwave/server/ext/mavlink/enums.py#L629
-                                //we dont care about these, just ack them
+                                //ack them automatically
+                                switch (commandLong.param1)
+                                {
+                                    case 0:
+                                        d.ReloadShow();
+                                        break;
+                                    case 1:
+                                        //d.RemoveShow();
+                                        break;
+                                    case 2:
+                                        //d.TestPyro();
+                                        break;
+                                }
                                 handled = true;
                                 break;
                             default:
@@ -222,7 +262,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             //https://github.com/skybrush-io/skybrush-server/blob/4fd65199a0578c56928981a709f0cabb69b15bd8/src/flockwave/server/ext/mavlink/driver.py#L2260
                             case MAV_CMD.USER_2:
                                 handled = true;
-                                d.SetShowOrigin(commandInt.x, commandInt.y, commandInt.z);
+                                d.SetShowOrigin(commandInt.x* 0.0000001f, commandInt.y* 0.0000001f, commandInt.z * 0.001f);
                                 break;
                             default:
                                 //handle other commands
@@ -289,7 +329,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             (byte)MAV_PARAM_TYPE.REAL32
                         );
                         d.Transmit(MAVLINK_MSG_ID.PARAM_VALUE, paramSetMessage);
-                        Debug.Log($"Parameter set: {paramName} = {paramSet.param_value}");
+                        //Debug.Log($"Parameter set: {paramName} = {paramSet.param_value}");
                         break;
                     case MAVLINK_MSG_ID.MISSION_COUNT:
                         var missionCountMessage = (mavlink_mission_count_t)message.data;
@@ -438,7 +478,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 }
             }
 
-            await UniTask.Delay(5);
+            await UniTask.Delay(1);
         }
     }
 
@@ -538,7 +578,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             parse = new MavlinkParse();
         }
 
-        public double measure(float lat1, float lon1, float lat2, float lon2)
+        private double measure(float lat1, float lon1, float lat2, float lon2)
         {  // generally used geo measurement function
             var R = 6378.137; // Radius of earth in KM
             var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
@@ -553,8 +593,18 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public void SetShowOrigin(float lat, float lon, float alt)
         {
-            showOrigin = new Vector3(lat * 0.0000001f, lon * 0.0000001f, alt * 0.001f);
-            latlongaltposition = showOrigin;
+            showOrigin = new Vector3(lat, lon, alt);
+            //latlongaltposition = showOrigin;
+        }
+
+        public void SetPosition(float lat, float lon, float alt)
+        {
+            latlongaltposition = new Vector3(lat, lon, alt);
+        }
+
+        public void ReloadShow()
+        {
+            Debug.Log($"Reloading show for drone {uid}");
         }
 
         public void SendHeartbeat()
