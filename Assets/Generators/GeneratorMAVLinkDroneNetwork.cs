@@ -58,7 +58,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                               gridLat + ((dronesLeft - 1) / gridLonCount) * gridSpacingLon,
                               initialAltitude);
                 //set the LED color to a random color
-                d.LEDColor = new Color32((byte)UnityEngine.Random.Range(0, 255), (byte)UnityEngine.Random.Range(0, 255), (byte)UnityEngine.Random.Range(0, 255), 255);
                 dronesLeft--;
                 if (dronesLeft <= 0)
                 {
@@ -102,10 +101,13 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             droneValues.AddRange(BitConverter.GetBytes(y).Reverse());
             droneValues.AddRange(BitConverter.GetBytes(z).Reverse());
 
+            Color32 color = d.GetDroneColor();
+            //Debug.Log($"Drone {d.uid} color: {color.r}, {color.g}, {color.b}");
+
             //append the LED color
-            droneValues.Add(d.LEDColor.r);
-            droneValues.Add(d.LEDColor.g);
-            droneValues.Add(d.LEDColor.b);
+            droneValues.Add(color.r);
+            droneValues.Add(color.g);
+            droneValues.Add(color.b);
 
             //set the data
             dmxData.SetRange(channelStart + ((d.uid - 1) * droneValues.Count), droneValues.Count, droneValues.ToArray());
@@ -559,7 +561,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             }
         }
 
-        public Color32 LEDColor;
+        private Color32 LEDColor;
 
         public Dictionary<string, float> parameters = new Dictionary<string, float>()
         {
@@ -582,6 +584,16 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             //SetPosition(globalID * 0.0001f, globalID * 0.0001f, globalID * 0.0001f); // set initial position
 
             parse = new MavlinkParse();
+        }
+
+        public Color32 GetDroneColor()
+        {
+            if (showFile != null)
+            {
+                //get color at time
+                return showFile.GetColorAtRealTime(DateTime.Now);
+            }
+            return Color.black;
         }
 
         private double measure(float lat1, float lon1, float lat2, float lon2)
