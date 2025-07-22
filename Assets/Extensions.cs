@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 
@@ -47,6 +48,14 @@ public static class Extensions
         return result.ToString();
     }
 
+    public static string ToHexString(this List<byte> bytes)
+    {
+        StringBuilder hex = new StringBuilder(bytes.Count * 2);
+        foreach (byte b in bytes)
+            hex.AppendFormat("{0:x2}", b);
+        return hex.ToString();
+    }
+
     public static string ToDMXString(this Color col)
     {
         //get the byte representation of the color
@@ -59,6 +68,7 @@ public static class Extensions
 
     public static IEnumerable<T> DequeueChunk<T>(this Queue<T> queue, int chunkSize) 
     {
+        //Debug.Log($"Dequeueing chunk of size {chunkSize} from queue with {queue.Count} items.");
         for (int i = 0; i < chunkSize && queue.Count > 0; i++)
         {
             yield return queue.Dequeue();

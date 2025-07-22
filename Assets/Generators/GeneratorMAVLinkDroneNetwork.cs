@@ -81,6 +81,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     {
         foreach (Drone d in drones.Values)
         {
+            //make their X move cleanly based on the time
+            d.SetPosition(((float)Math.Sin(DateTime.UtcNow.Ticks * 0.000000001d) - 0.5f) * 0.001f, 0, 40);
+            //Debug.Log((float)DateTime.UtcNow.Millisecond * 0.001f);
+            //force color to 255
+            d.LEDColor = new Color32(255, 255, 255, 255);
+
             //convert the XYZ to bytes
             //do this by converting them to -1 to 1 range from -800 to 800
             float scaledX = Mathf.InverseLerp(-800, 800, d.Position.x);
@@ -96,9 +102,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             List<byte> droneValues = new List<byte>();
 
             //append to dmxData
-            droneValues.AddRange(BitConverter.GetBytes(x));
-            droneValues.AddRange(BitConverter.GetBytes(y));
-            droneValues.AddRange(BitConverter.GetBytes(z));
+            droneValues.AddRange(BitConverter.GetBytes(x).Reverse());
+            droneValues.AddRange(BitConverter.GetBytes(y).Reverse());
+            droneValues.AddRange(BitConverter.GetBytes(z).Reverse());
 
             //append the LED color
             droneValues.Add(d.LEDColor.r);
@@ -603,6 +609,11 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public void SetPosition(float lat, float lon, float alt)
         {
+            //if any of the values are 0, make them as SMALL as possible
+            float epsilon = 0.0000001f;
+            if (lat == 0) lat = epsilon;
+            if (lon == 0) lon = epsilon;
+            if (alt == 0) alt = epsilon;
             latlongaltposition = new Vector3(lat, lon, alt);
         }
 
@@ -766,6 +777,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         {
             public List<byte> RawData { get; set; } = new List<byte>();
 
+            //programs
+            public List<lightEvent> LightProgram { get; set; } = new List<lightEvent>();
+
             public ShowFile(List<byte> rawData)
             {
                 RawData = rawData;
@@ -789,14 +803,28 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 }
             }
 
-            private static void ExtractBlock(Queue<byte> fileData)
+            private void ExtractBlock(Queue<byte> fileData)
             {
                 //the first byte is the block type
                 //the next 2 bytes are the block size
                 BlockType blockType = (BlockType)fileData.DequeueChunk(1).First();
                 int blockSize = BitConverter.ToUInt16(fileData.DequeueChunk(2).ToArray(), 0);
                 Debug.Log($"Block Type: {blockType}, Block Size: {blockSize}");
-                List<byte> blockData = fileData.DequeueChunk(blockSize).ToList();
+                Queue<byte> blockData = new(fileData.DequeueChunk(blockSize));
+
+                switch (blockType)
+                {
+                    case BlockType.LIGHT_PROGRAM:
+                        while (blockData.Count > 0)
+                        {
+                            LightProgram.Add(new lightEvent(ref blockData));
+                        }
+                        //Debug.Log(blockData.ToHexString());
+                        break;
+                    default:
+                        Debug.LogWarning($"Unhandled block type: {blockType}");
+                        break;
+                }
             }
 
             enum BlockType : byte
@@ -808,7 +836,186 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 YAW_CONTROL = 5,
                 EVENT_LIST = 6
             }
+
+            public struct lightEvent
+            {
+                //duration is encoded in varunit format
+                //MSB is 1 if the integer continues to the next byte, 0 if it is the last byte
+                //duration is encoded as number of frames at 50 FPS, so each value is 20ms
+                public TimeSpan duration;
+                public Color32? color; //null if no change
+                public Opcode opcode;
+                public byte? counter;
+                public int? address;
+
+                public lightEvent(ref Queue<byte> data)
+                {
+                    //pop the first byte to get the opcode
+                    opcode = (Opcode)data.DequeueChunk(1).First();
+                    //Debug.Log($"Opcode: {opcode}");
+
+                    //assign duration as 0
+                    duration = TimeSpan.Zero;
+                    //assign color as null
+                    color = null;
+                    counter = null;
+                    address = null;
+
+                    byte tempByte;
+
+                    switch (opcode)
+                    {
+                        case Opcode.END:
+                        case Opcode.NOP:
+                        case Opcode.LOOP_END:
+                        case Opcode.RESET_CLOCK:
+                        case Opcode.UNUSED_1:
+                            break;
+                        case Opcode.SLEEP:
+                        case Opcode.WAIT_UNTIL: //this one isnt technically correct but its not used anymore anyway so whatever
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.SET_COLOR:
+                        case Opcode.SET_COLOR_FROM_CHANNELS: //99% sure this works the same way
+                            color = new Color32(
+                                data.DequeueChunk(1).First(),
+                                data.DequeueChunk(1).First(),
+                                data.DequeueChunk(1).First(),
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.SET_GRAY:
+                            tempByte = data.DequeueChunk(1).First();
+                            color = new Color32(
+                                tempByte,
+                                tempByte,
+                                tempByte,
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.SET_BLACK:
+                            color = new Color32(
+                                0,
+                                0,
+                                0,
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.SET_WHITE:
+                            color = new Color32(
+                                255,
+                                255,
+                                255,
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.FADE_TO_COLOR:
+                        case Opcode.FADE_TO_COLOR_FROM_CHANNELS:
+                            color = new Color32(
+                                data.DequeueChunk(1).First(),
+                                data.DequeueChunk(1).First(),
+                                data.DequeueChunk(1).First(),
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.FADE_TO_GRAY:
+                            tempByte = data.DequeueChunk(1).First();
+                            color = new Color32(
+                                tempByte,
+                                tempByte,
+                                tempByte,
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.FADE_TO_BLACK:
+                            color = new Color32(
+                                0,
+                                0,
+                                0,
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.FADE_TO_WHITE:
+                            color = new Color32(
+                                255,
+                                255,
+                                255,
+                                255
+                            );
+                            duration = GetDuration(ref data);
+                            break;
+                        case Opcode.LOOP_BEGIN:
+                            counter = data.DequeueChunk(1).First();
+                            break;
+                        case Opcode.JUMP:
+                            address = GetVarInt(ref data);
+                            break;
+                        default:
+                            throw new NotImplementedException($"Unhandled opcode: {opcode}");
+                    }
+
+                    Debug.Log($"Light Event: Opcode: {opcode}, Duration: {duration}, Color: {color}, Counter: {counter}, Address: {address}");
+                }
+
+                private static int GetVarInt(ref Queue<byte> data)
+                {
+                    //duration is encoded in varint format
+                    //MSB is 1 if the integer continues to the next byte, 0 if it is the last byte
+                    //duration is encoded as number of frames at 50 FPS, so each value is 20ms
+                    int val = 0;
+                    int shift = 0;
+                    byte b;
+                    do
+                    {
+                        b = data.DequeueChunk(1).First();
+                        val |= (b & 0x7F) << shift;
+                        shift += 7;
+                    } while ((b & 0x80) != 0);
+
+                    return val;
+                }
+
+                private static TimeSpan GetDuration(ref Queue<byte> data)
+                {
+                    return TimeSpan.FromMilliseconds(GetVarInt(ref data) * 20);
+                }
+
+                //https://github.com/skybrush-io/libskybrush/blob/9ecf48d6fcf258c5be77bf31d88a91241b1a5700/src/lights/commands.h#L39
+                //https://github.com/skybrush-io/libskybrush/blob/9ecf48d6fcf258c5be77bf31d88a91241b1a5700/src/lights/commands.cpp#L104
+                public enum Opcode
+                {
+                    END = 0,
+                    NOP = 1,
+                    SLEEP = 2,
+                    WAIT_UNTIL = 3, //apparently not used anymore
+                    SET_COLOR = 4,
+                    SET_GRAY = 5,
+                    SET_BLACK = 6,
+                    SET_WHITE = 7,
+                    FADE_TO_COLOR = 8,
+                    FADE_TO_GRAY = 9,
+                    FADE_TO_BLACK = 10,
+                    FADE_TO_WHITE = 11,
+                    LOOP_BEGIN = 12,
+                    LOOP_END = 13,
+                    RESET_CLOCK = 14,
+                    UNUSED_1 = 15,
+                    SET_COLOR_FROM_CHANNELS = 16,
+                    FADE_TO_COLOR_FROM_CHANNELS = 17,
+                    JUMP = 18,
+                    TRIGGERED_JUMP = 19, //ignored for now
+                    SET_PYRO = 20, //ignored for now TODO: Implement for pyro control
+                    SET_PYRO_ALL = 21, //ignored for now TODO: Implement for pyro control
+                    NUMBER_OF_COMMANDS, //automatic assignment to match the number of commands
+                }
+            }
         }
     }
-
 }
