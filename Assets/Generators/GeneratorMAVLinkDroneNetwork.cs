@@ -187,7 +187,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
                 MAVLINK_MSG_ID messageId = (MAVLINK_MSG_ID)message.msgid;
 
-                Debug.Log(messageId);
+                //Debug.Log(messageId);
 
                 switch (messageId)
                 {
@@ -321,7 +321,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
                         //convert the byte array to a string
                         paramName = Encoding.UTF8.GetString(paramSet.param_id).TrimEnd('\0');
-                        d.parameters[paramName] = paramSet.param_value;
+                        d.SetParameter(paramName, paramSet.param_value);
                         //send it back as a confirmation
                         var paramSetMessage = new mavlink_param_value_t(
                             paramSet.param_value,
@@ -331,7 +331,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             (byte)MAV_PARAM_TYPE.REAL32
                         );
                         d.Transmit(MAVLINK_MSG_ID.PARAM_VALUE, paramSetMessage);
-                        Debug.Log($"Parameter set: {paramName} = {paramSet.param_value}");
+                        //Debug.Log($"Parameter set: {paramName} = {paramSet.param_value}");
                         break;
                     case MAVLINK_MSG_ID.MISSION_COUNT:
                         var missionCountMessage = (mavlink_mission_count_t)message.data;
@@ -563,7 +563,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public Dictionary<string, float> parameters = new Dictionary<string, float>()
         {
-            {"FENCE_ALT_MAX", 1000},
+            //{"FENCE_ALT_MAX", 1000},
         };
 
         UdpClient client;
@@ -595,6 +595,49 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
             var d = R * c;
             return d * 1000; // meters
+        }
+
+        DateTime GetFromGps(int weeknumber, double seconds)
+        {
+            DateTime datum = new DateTime(1980,1,6,0,0,0);
+            DateTime week = datum.AddDays(weeknumber * 7);
+            DateTime time = week.AddSeconds(seconds);
+            //subtract leap seconds
+            time = time.AddSeconds(-18);
+            //offset backwards to be aligned with UTC time
+            time = TimeZoneInfo.ConvertTimeFromUtc(time, TimeZoneInfo.Local);
+            return time;
+        }
+
+        public void SetParameter(string name, float value)
+        {
+            if (parameters.ContainsKey(name))
+            {
+                parameters[name] = value;
+
+                //check if the show start time parameter was set
+                if (name == "SHOW_START_TIME")
+                {
+                    //set the show file time
+                    if (showFile != null)
+                    {
+                        //time is seconds in the week
+                        //get what the current week is
+                        int weekNumber = (int)(DateTime.UtcNow - new DateTime(1980, 1, 6)).TotalDays / 7;
+                        showFile.showStartTime = GetFromGps(weekNumber, value);
+                        //render militiary time
+                        //Debug.Log($"Show start time set to: {showFile.showStartTime:yyyy-MM-dd HH:mm:ss} UTC for drone {uid}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Show file is not initialized, cannot set show start time.");
+                    }
+                }
+            }
+            else
+            {
+                parameters.Add(name, value);
+            }
         }
 
         public void SetShowOrigin(float lat, float lon, float alt)
@@ -644,8 +687,15 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public void SendAutopilotCapabilities()
         {
+            //this is here because its not part of the official standard
+            const ulong DRONE_SHOW_MODE = 0x4000000;
             var message = new mavlink_autopilot_version_t(
-                (ulong)MAV_PROTOCOL_CAPABILITY.SET_POSITION_TARGET_GLOBAL_INT,
+                (ulong)(MAV_PROTOCOL_CAPABILITY.PARAM_FLOAT
+                | MAV_PROTOCOL_CAPABILITY.FTP
+                | MAV_PROTOCOL_CAPABILITY.SET_POSITION_TARGET_GLOBAL_INT
+                | MAV_PROTOCOL_CAPABILITY.SET_POSITION_TARGET_LOCAL_NED
+                | MAV_PROTOCOL_CAPABILITY.MAVLINK2
+                ) | DRONE_SHOW_MODE,
                 uid, //random capabilities
                 (uint)FIRMWARE_VERSION_TYPE.BETA,
                 (uint)FIRMWARE_VERSION_TYPE.BETA,
@@ -776,6 +826,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             //programs
             public List<LightEvent> LightProgram = new();
 
+            public DateTime showStartTime;
+
             public ShowFile(List<byte> rawData)
             {
                 RawData = rawData;
@@ -830,6 +882,13 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         Debug.LogWarning($"Unhandled block type: {blockType}");
                         break;
                 }
+            }
+
+            public Color32 GetColorAtRealTime(DateTime time)
+            {
+                //convert the time to a timespan since the show start time
+                TimeSpan elapsed = time - showStartTime;
+                return GetColorAtTime(elapsed);
             }
 
             public Color32 GetColorAtTime(TimeSpan time)
