@@ -187,7 +187,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
                 MAVLINK_MSG_ID messageId = (MAVLINK_MSG_ID)message.msgid;
 
-                //Debug.Log(messageId);
+                Debug.Log(messageId);
 
                 switch (messageId)
                 {
@@ -331,7 +331,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             (byte)MAV_PARAM_TYPE.REAL32
                         );
                         d.Transmit(MAVLINK_MSG_ID.PARAM_VALUE, paramSetMessage);
-                        //Debug.Log($"Parameter set: {paramName} = {paramSet.param_value}");
+                        Debug.Log($"Parameter set: {paramName} = {paramSet.param_value}");
                         break;
                     case MAVLINK_MSG_ID.MISSION_COUNT:
                         var missionCountMessage = (mavlink_mission_count_t)message.data;
@@ -821,15 +821,56 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         }
 
                         //debug print start and end time of events
-                        foreach (var lightProgram in LightProgram)
+                        /* foreach (var lightProgram in LightProgram)
                         {
                             Debug.Log($"Light Event: Opcode: {lightProgram.opcode}, Start Time: {lightProgram.startTime}, End Time: {lightProgram.endTime}, Duration: {lightProgram.duration}, Color: {lightProgram.color}, Counter: {lightProgram.counter}, Address: {lightProgram.address}");
-                        }
+                        } */
                         break;
                     default:
                         Debug.LogWarning($"Unhandled block type: {blockType}");
                         break;
                 }
+            }
+
+            public Color32 GetColorAtTime(TimeSpan time)
+            {
+                //find the first event that starts after the given time
+                LightEvent startevent = null;
+                Color32 lastColor = Color.black; //used for fading, start black
+                for (int i = 0; i < LightProgram.Count; i++)
+                {
+                    if (LightProgram[i].startTime.HasValue && LightProgram[i].startTime.Value <= time && LightProgram[i].endTime >= time)
+                    {
+                        startevent = LightProgram[i];
+                        break; //break out of the loop now that we found it
+                    }
+                    //this will get the coloe of the event right BEFORE startevent
+                    if (LightProgram[i].color.HasValue) //only do it if this event defines a color. This will make sure that the color is the latest event WITH a color define
+                    {
+                        lastColor = LightProgram[i].color.Value; //if no color is set, use black
+                    }
+                }
+
+                //make sure we have a event
+                if (startevent == null)
+                {
+                    //if we dont have a event, return black
+                    return Color.black;
+                }
+
+                //if this event is a fade
+                if (startevent.IsFade)
+                {
+                    //lerp between the last color and the current color
+                    if (startevent.color.HasValue)
+                    {
+                        //if the color is set, use it
+                        return Color32.Lerp(lastColor, startevent.color.Value, (float)(time - startevent.startTime.Value).TotalMilliseconds / (float)startevent.duration.TotalMilliseconds);
+                    }
+                }
+
+                //otherwise its a instantaneous set command
+                return startevent.color ?? lastColor; //if no color is set, use the last color
             }
 
             enum BlockType : byte
@@ -851,6 +892,16 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 public int? address = null;
                 public TimeSpan? startTime = null;
                 public TimeSpan endTime => startTime.HasValue ? startTime.Value + duration : TimeSpan.Zero;
+
+                public bool IsFade => opcode switch
+                {
+                    Opcode.FADE_TO_COLOR or
+                    Opcode.FADE_TO_COLOR_FROM_CHANNELS or
+                    Opcode.FADE_TO_GRAY or
+                    Opcode.FADE_TO_BLACK or
+                    Opcode.FADE_TO_WHITE => true,
+                    _ => false,
+                };
 
                 public LightEvent(ref Queue<byte> data)
                 {
@@ -961,7 +1012,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             throw new NotImplementedException($"Unhandled opcode: {opcode}");
                     }
 
-                    Debug.Log($"Light Event: Opcode: {opcode}, Duration: {duration}, Color: {color}, Counter: {counter}, Address: {address}");
+                    //Debug.Log($"Light Event: Opcode: {opcode}, Duration: {duration}, Color: {color}, Counter: {counter}, Address: {address}");
                 }
 
                 private static int GetVarInt(ref Queue<byte> data)
