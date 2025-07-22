@@ -78,10 +78,10 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         foreach (Drone d in drones.Values)
         {
             //make their X move cleanly based on the time
-            d.SetPosition(((float)Math.Sin(DateTime.UtcNow.Ticks * 0.000000001d) - 0.5f) * 0.001f, 0, 40);
+            //d.SetPosition(((float)Math.Sin(DateTime.UtcNow.Ticks * 0.000000001d) - 0.5f) * 0.001f, 0, 40);
             //Debug.Log((float)DateTime.UtcNow.Millisecond * 0.001f);
             //force color to 255
-            d.LEDColor = new Color32(255, 255, 255, 255);
+            //d.LEDColor = new Color32(255, 255, 255, 255);
 
             //convert the XYZ to bytes
             //do this by converting them to -1 to 1 range from -800 to 800
@@ -771,20 +771,14 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         }
         public class ShowFile
         {
-            public List<byte> RawData { get; set; } = new List<byte>();
+            public List<byte> RawData = new();
 
             //programs
-            public List<lightEvent> LightProgram { get; set; } = new List<lightEvent>();
+            public List<LightEvent> LightProgram = new();
 
             public ShowFile(List<byte> rawData)
             {
                 RawData = rawData;
-
-                /* //print the bin results of the show file in raw hex
-                StringBuilder hex = new StringBuilder(RawData.Count * 2);
-                foreach (byte b in RawData)
-                    hex.AppendFormat("{0:x2}", b);
-                Debug.Log(hex); */
 
                 //make a copy to operate on
                 Queue<byte> fileData = new Queue<byte>(RawData);
@@ -813,9 +807,24 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     case BlockType.LIGHT_PROGRAM:
                         while (blockData.Count > 0)
                         {
-                            LightProgram.Add(new lightEvent(ref blockData));
+                            LightProgram.Add(new LightEvent(ref blockData));
                         }
-                        //Debug.Log(blockData.ToHexString());
+                        //compute the start and end time for all of the events
+                        if (LightProgram.Count > 0)
+                        {
+                            //set the start time of the first event
+                            LightProgram[0].startTime = TimeSpan.Zero;
+                            for (int i = 1; i < LightProgram.Count; i++)
+                            {
+                                LightProgram[i].startTime = LightProgram[i - 1].endTime;
+                            }
+                        }
+
+                        //debug print start and end time of events
+                        foreach (var lightProgram in LightProgram)
+                        {
+                            Debug.Log($"Light Event: Opcode: {lightProgram.opcode}, Start Time: {lightProgram.startTime}, End Time: {lightProgram.endTime}, Duration: {lightProgram.duration}, Color: {lightProgram.color}, Counter: {lightProgram.counter}, Address: {lightProgram.address}");
+                        }
                         break;
                     default:
                         Debug.LogWarning($"Unhandled block type: {blockType}");
@@ -833,18 +842,17 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 EVENT_LIST = 6
             }
 
-            public struct lightEvent
+            public class LightEvent
             {
-                //duration is encoded in varunit format
-                //MSB is 1 if the integer continues to the next byte, 0 if it is the last byte
-                //duration is encoded as number of frames at 50 FPS, so each value is 20ms
                 public TimeSpan duration;
-                public Color32? color; //null if no change
+                public Color32? color = null; //null if no change
                 public Opcode opcode;
-                public byte? counter;
-                public int? address;
+                public byte? counter = null;
+                public int? address = null;
+                public TimeSpan? startTime = null;
+                public TimeSpan endTime => startTime.HasValue ? startTime.Value + duration : TimeSpan.Zero;
 
-                public lightEvent(ref Queue<byte> data)
+                public LightEvent(ref Queue<byte> data)
                 {
                     //pop the first byte to get the opcode
                     opcode = (Opcode)data.DequeueChunk(1).First();
@@ -852,10 +860,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
                     //assign duration as 0
                     duration = TimeSpan.Zero;
-                    //assign color as null
-                    color = null;
-                    counter = null;
-                    address = null;
 
                     byte tempByte;
 
@@ -999,13 +1003,13 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     FADE_TO_GRAY = 9,
                     FADE_TO_BLACK = 10,
                     FADE_TO_WHITE = 11,
-                    LOOP_BEGIN = 12,
-                    LOOP_END = 13,
-                    RESET_CLOCK = 14,
-                    UNUSED_1 = 15,
-                    SET_COLOR_FROM_CHANNELS = 16,
-                    FADE_TO_COLOR_FROM_CHANNELS = 17,
-                    JUMP = 18,
+                    LOOP_BEGIN = 12, //ignore, shouldnt be used anymore
+                    LOOP_END = 13, //ignore, shouldnt be used anymore
+                    RESET_CLOCK = 14, //ignore, shouldnt be used anymore
+                    UNUSED_1 = 15, //ignore, shouldnt be used anymore
+                    SET_COLOR_FROM_CHANNELS = 16, //ignore, shouldnt be used anymore
+                    FADE_TO_COLOR_FROM_CHANNELS = 17, //ignore, shouldnt be used anymore
+                    JUMP = 18, //ignore, shouldnt be used anymore
                     TRIGGERED_JUMP = 19, //ignored for now
                     SET_PYRO = 20, //ignored for now TODO: Implement for pyro control
                     SET_PYRO_ALL = 21, //ignored for now TODO: Implement for pyro control
