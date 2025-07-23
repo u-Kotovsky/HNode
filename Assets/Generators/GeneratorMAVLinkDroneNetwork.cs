@@ -673,6 +673,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             Debug.Log($"Reloading show for drone {uid}");
 
             showFile = new ShowFile(showFileRaw);
+
+            //now that we are done with making the show file, drop it
+            showFileRaw.Clear();
         }
 
         public void SendHeartbeat()
@@ -833,8 +836,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         }
         public class ShowFile
         {
-            public List<byte> RawData = new();
-
             //programs
             public List<LightEvent> LightProgram = new();
 
@@ -842,10 +843,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
             public ShowFile(List<byte> rawData)
             {
-                RawData = rawData;
-
                 //make a copy to operate on
-                Queue<byte> fileData = new Queue<byte>(RawData);
+                Queue<byte> fileData = new Queue<byte>(rawData);
 
                 //file header is the first 10 bytes, pull that out of the buffer
                 List<byte> header = fileData.DequeueChunk(10).ToList();
