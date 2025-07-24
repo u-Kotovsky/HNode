@@ -87,9 +87,11 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
             //convert the XYZ to bytes
             //do this by converting them to -1 to 1 range from -800 to 800
-            float scaledX = Mathf.InverseLerp(-800, 800, d.Position.x);
-            float scaledY = Mathf.InverseLerp(-800, 800, d.Position.y);
-            float scaledZ = Mathf.InverseLerp(-800, 800, d.Position.z);
+            Vector3 pos = d.GetDronePosition();
+            //Debug.Log($"Drone {d.uid} position: {pos.x}, {pos.y}, {pos.z}");
+            float scaledX = Mathf.InverseLerp(-800, 800, pos.x);
+            float scaledY = Mathf.InverseLerp(-800, 800, pos.y);
+            float scaledZ = Mathf.InverseLerp(-800, 800, pos.z);
 
             //convert to 16 bit ushorts
             ushort x = (ushort)(scaledX * ushort.MaxValue);
@@ -554,7 +556,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         private Vector3 latlongaltposition = Vector3.zero;
 
         private Vector3 showOrigin = Vector3.zero;
-        public Vector3 Position
+        private Vector3 Position
         {
             get
             {
@@ -572,8 +574,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 return new Vector3((float)x, (float)y, latlongaltposition.z);
             }
         }
-
-        private Color32 LEDColor;
 
         public Dictionary<string, float> parameters = new Dictionary<string, float>()
         {
@@ -596,6 +596,18 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             //SetPosition(globalID * 0.0001f, globalID * 0.0001f, globalID * 0.0001f); // set initial position
 
             parse = new MavlinkParse();
+        }
+
+        public Vector3 GetDronePosition()
+        {
+            if (showFile != null)
+            {
+                //get position at real time
+                return showFile.GetPositionAtRealTime(DateTime.Now);
+            }
+
+            //if no show file, return the GPS based position
+            return Position;
         }
 
         public Color32 GetDroneColor()
@@ -919,7 +931,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         {
                             TrajectoryProgram.Add(new Trajectory(ref blockData, startPos, startYaw, scale));
                             //next startpos is the trajectory we just added
-                            startPos = TrajectoryProgram.Last().ControlPoints.Last();
+                            startPos = TrajectoryProgram.Last().lastPosition;
                             startYaw = TrajectoryProgram.Last().yawControlPoints.Last();
                         }
 
@@ -938,6 +950,38 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         Debug.LogWarning($"Unhandled block type: {blockType}");
                         break;
                 }
+            }
+
+            public Vector3 GetPositionAtRealTime(DateTime time)
+            {
+                //convert the time to a timespan since the show start time
+                TimeSpan elapsed = time - showStartTime;
+                return GetPositionAtTime(elapsed);
+            }
+
+            public Vector3 GetPositionAtTime(TimeSpan time)
+            {
+                //fake ass way of doing this initially, just teleport to first control point of the trajectory we find ourselves on
+
+                //find the trajectory that contains the current time in the show
+                foreach (var traj in TrajectoryProgram)
+                {
+                    if (time > traj.startTime && time < traj.endTime)
+                    {
+                        //Debug.Log(traj.ControlPoints[0]);
+                        //get the time inside the bezier curve
+                        float t = (float)((time - traj.startTime) / traj.duration);
+                        return traj.evaluate(t);
+                    }
+                }
+
+                //if we are PAST the last one, just use that final value
+                if (time > TrajectoryProgram.Last().endTime)
+                {
+                    TrajectoryProgram.Last().evaluate(1.0f);
+                }
+
+                return TrajectoryProgram.First().evaluate(0.0f);
             }
 
             public Color32 GetColorAtRealTime(DateTime time)
@@ -1004,8 +1048,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 public List<float> xControlPoints = new();
                 public List<float> yControlPoints = new();
                 public List<float> zControlPoints = new();
-                public List<Vector3> ControlPoints = new(); //gets built after the individual XYZ control points get fully defined
-                public List<float> yawControlPoints = new();
+                public List<float> yawControlPoints = new(); //unused
+                public Vector3 lastPosition;
                 public BezierOrder X_Order;
                 public BezierOrder Y_Order;
                 public BezierOrder Z_Order;
@@ -1034,56 +1078,63 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     zControlPoints.AddRange(DecodeAxisControlPoints(ref data, scale, Z_Order));
                     yawControlPoints.AddRange(DecodeAxisControlPoints(ref data, scale, YAW_Order));
 
-                    //build up the full control point list. Each list needs to get expanded to a 7th degree bezier curve
-                    xControlPoints = ExpandControlPointsToSeventhDegree(xControlPoints);
-                    yControlPoints = ExpandControlPointsToSeventhDegree(yControlPoints);
-                    zControlPoints = ExpandControlPointsToSeventhDegree(zControlPoints);
-                    yawControlPoints = ExpandControlPointsToSeventhDegree(yawControlPoints);
-
-                    //assemble them into a final Vector3 control point list
-                    for (int i = 0; i < 8; i++)
-                    {
-                        ControlPoints.Add(new Vector3(xControlPoints[i], yControlPoints[i], zControlPoints[i]));
-                    }
-
-                    //flush out unnecesary data now that we are done construction
-                    xControlPoints.Clear();
-                    yControlPoints.Clear();
-                    zControlPoints.Clear();
-
-                    Debug.Log($"Trajectory Created; Duration is {duration}, Control points are: {ControlPoints.ToDelineatedString()}");
+                    lastPosition = new Vector3(
+                        xControlPoints.Last(),
+                        yControlPoints.Last(),
+                        zControlPoints.Last()
+                    );
                 }
 
-                public List<float> ExpandControlPointsToSeventhDegree(List<float> points)
+                public Vector3 evaluate(float t)
                 {
-                    List<float> newPoints = new();
+                    //evaluate the bezier curve at time t
+                    //t is between 0 and 1
 
-                    //this probably sucks balls as a way to do this but whatever, its 10:30 pm and I just wanna get this working
-                    switch (points.Count)
+                    //get the control points
+                    float x = BezierEvaluate(xControlPoints, t);
+                    float y = BezierEvaluate(yControlPoints, t);
+                    float z = BezierEvaluate(zControlPoints, t);
+
+                    return new Vector3(x, y, z);
+                }
+
+                public float BezierEvaluate(List<float> controlPoints, float t)
+                {
+                    switch (controlPoints.Count)
                     {
                         case 1:
-                            //expand it to 8
-                            newPoints.AddRange(Enumerable.Repeat(points[0], 8));
-                            break;
+                            return controlPoints[0]; //constant
                         case 2:
-                            //straight line, split down the middle
-                            newPoints.AddRange(Enumerable.Repeat(points[0], 4));
-                            newPoints.AddRange(Enumerable.Repeat(points[1], 4));
-                            break;
+                            return Mathf.Lerp(controlPoints[0], controlPoints[1], t); //straight line
                         case 4:
-                            //cubic
-                            newPoints.AddRange(Enumerable.Repeat(points[0], 2));
-                            newPoints.AddRange(Enumerable.Repeat(points[1], 2));
-                            newPoints.AddRange(Enumerable.Repeat(points[2], 2));
-                            newPoints.AddRange(Enumerable.Repeat(points[3], 2));
-                            break;
+                            return BezierCubicEvaluate(controlPoints, t); //cubic bezier
                         case 8:
-                            //already is correct
-                            newPoints = points;
-                            break;
+                            return BezierSeventhDegreeEvaluate(controlPoints, t); //seventh degree bezier
+                        default:
+                            throw new ArgumentException("Invalid number of control points");
                     }
+                }
 
-                    return newPoints;
+                public static float BezierCubicEvaluate(List<float> controlPoints, float t)
+                {
+                    //cubic bezier formula
+                    return Mathf.Pow(1 - t, 3) * controlPoints[0] +
+                           3 * Mathf.Pow(1 - t, 2) * t * controlPoints[1] +
+                           3 * (1 - t) * Mathf.Pow(t, 2) * controlPoints[2] +
+                           Mathf.Pow(t, 3) * controlPoints[3];
+                }
+
+                public static float BezierSeventhDegreeEvaluate(List<float> controlPoints, float t)
+                {
+                    //seventh degree bezier formula
+                    return Mathf.Pow(1 - t, 7) * controlPoints[0] +
+                           7 * Mathf.Pow(1 - t, 6) * t * controlPoints[1] +
+                           21 * Mathf.Pow(1 - t, 5) * Mathf.Pow(t, 2) * controlPoints[2] +
+                           35 * Mathf.Pow(1 - t, 4) * Mathf.Pow(t, 3) * controlPoints[3] +
+                           35 * Mathf.Pow(1 - t, 3) * Mathf.Pow(t, 4) * controlPoints[4] +
+                           21 * Mathf.Pow(1 - t, 2) * Mathf.Pow(t, 5) * controlPoints[5] +
+                           7 * (1 - t) * Mathf.Pow(t, 6) * controlPoints[6] +
+                           Mathf.Pow(t, 7) * controlPoints[7];
                 }
 
                 public void DecodeDuration(ref Queue<byte> data)

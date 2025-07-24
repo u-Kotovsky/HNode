@@ -77,6 +77,8 @@ public class TextureWriter : MonoBehaviour
             }
         }
 
+        Profiler.EndSample();
+        Profiler.BeginSample("DMX Generators");
         //now run the generators in order
         foreach (var generator in Loader.showconf.Generators)
         {
