@@ -77,10 +77,13 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         foreach (Drone d in drones.Values)
         {
             //make their X move cleanly based on the time
-            //d.SetPosition(((float)Math.Sin(DateTime.UtcNow.Ticks * 0.000000001d) - 0.5f) * 0.001f, 0, 40);
+            //float offset = ((float)Math.Sin(DateTime.UtcNow.Ticks * 0.00000001d) - 0.5f) * 0.01f;
+            //d.SetPosition(((float)Math.Sin(DateTime.UtcNow.Ticks * 0.00000001d) - 0.5f) * 0.001f, 0, 40);
             //Debug.Log((float)DateTime.UtcNow.Millisecond * 0.001f);
             //force color to 255
             //d.LEDColor = new Color32(255, 255, 255, 255);
+            //d.SetPosition(d.uid, 0, 0);
+            //d.SetPosition(0.000950f, 0.000950f, -50);
 
             //convert the XYZ to bytes
             //do this by converting them to -1 to 1 range from -800 to 800
@@ -557,6 +560,15 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             {
                 var x = measure(showOrigin.x, latlongaltposition.y, showOrigin.x, showOrigin.y);
                 var y = measure(latlongaltposition.x, showOrigin.y, showOrigin.x, showOrigin.y);
+                //adjust for sign
+                if (showOrigin.y - latlongaltposition.y > 0)
+                {
+                    x = -x;
+                }
+                if (showOrigin.x - latlongaltposition.x > 0)
+                {
+                    y = -y;
+                }
                 return new Vector3((float)x, (float)y, latlongaltposition.z);
             }
         }
@@ -838,6 +850,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         {
             //programs
             public List<LightEvent> LightProgram = new();
+            public List<Trajectory> TrajectoryProgram = new();
 
             public DateTime showStartTime;
 
@@ -888,6 +901,38 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         {
                             Debug.Log($"Light Event: Opcode: {lightProgram.opcode}, Start Time: {lightProgram.startTime}, End Time: {lightProgram.endTime}, Duration: {lightProgram.duration}, Color: {lightProgram.color}, Counter: {lightProgram.counter}, Address: {lightProgram.address}");
                         } */
+                        break;
+                    case BlockType.TRAJECTORY:
+                        //decode the scale/flags, and the start xyz
+                        //flags is the first byte
+                        byte flags = blockData.DequeueChunk(1).First();
+                        //MSB is unused, scale is the remaining 7 bits
+                        // 0x7f is 01111111
+                        byte scale = (byte)(flags & 0x7F);
+                        Vector3 startPos = Trajectory.DecodeStartSpatialCoordinates(ref blockData, scale);
+                        float startYaw = Trajectory.DecodeAngleCoordinate(ref blockData);
+
+                        //print this info
+                        Debug.Log($"Scale: {scale}, Trajectory Start: {startPos}, Yaw: {startYaw}");
+
+                        while (blockData.Count > 0)
+                        {
+                            TrajectoryProgram.Add(new Trajectory(ref blockData, startPos, startYaw, scale));
+                            //next startpos is the trajectory we just added
+                            startPos = TrajectoryProgram.Last().ControlPoints.Last();
+                            startYaw = TrajectoryProgram.Last().yawControlPoints.Last();
+                        }
+
+                        //compute the start and end time for all of the events
+                        if (TrajectoryProgram.Count > 0)
+                        {
+                            //set the start time of the first event
+                            TrajectoryProgram[0].startTime = TimeSpan.Zero;
+                            for (int i = 1; i < TrajectoryProgram.Count; i++)
+                            {
+                                TrajectoryProgram[i].startTime = TrajectoryProgram[i - 1].endTime;
+                            }
+                        }
                         break;
                     default:
                         Debug.LogWarning($"Unhandled block type: {blockType}");
@@ -951,6 +996,192 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 RTH_PLAN = 4,
                 YAW_CONTROL = 5,
                 EVENT_LIST = 6
+            }
+
+            //https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/trajectory_formats/#compressed-representation
+            public class Trajectory
+            {
+                public List<float> xControlPoints = new();
+                public List<float> yControlPoints = new();
+                public List<float> zControlPoints = new();
+                public List<Vector3> ControlPoints = new(); //gets built after the individual XYZ control points get fully defined
+                public List<float> yawControlPoints = new();
+                public BezierOrder X_Order;
+                public BezierOrder Y_Order;
+                public BezierOrder Z_Order;
+                public BezierOrder YAW_Order;
+                public TimeSpan duration;
+                public TimeSpan startTime;
+                public TimeSpan endTime => startTime + duration;
+
+                public Trajectory(ref Queue<byte> data, Vector3 startPos, float startYaw, byte scale)
+                {
+                    xControlPoints.Add(startPos.x);
+                    yControlPoints.Add(startPos.y);
+                    zControlPoints.Add(startPos.z);
+                    yawControlPoints.Add(startYaw);
+
+                    //decode the axis order information
+                    DecodeAxies(ref data);
+
+                    //decode the duration info
+                    DecodeDuration(ref data);
+
+                    //control points are stored in this order
+                    //X Y Z YAW
+                    xControlPoints.AddRange(DecodeAxisControlPoints(ref data, scale, X_Order));
+                    yControlPoints.AddRange(DecodeAxisControlPoints(ref data, scale, Y_Order));
+                    zControlPoints.AddRange(DecodeAxisControlPoints(ref data, scale, Z_Order));
+                    yawControlPoints.AddRange(DecodeAxisControlPoints(ref data, scale, YAW_Order));
+
+                    //build up the full control point list. Each list needs to get expanded to a 7th degree bezier curve
+                    xControlPoints = ExpandControlPointsToSeventhDegree(xControlPoints);
+                    yControlPoints = ExpandControlPointsToSeventhDegree(yControlPoints);
+                    zControlPoints = ExpandControlPointsToSeventhDegree(zControlPoints);
+                    yawControlPoints = ExpandControlPointsToSeventhDegree(yawControlPoints);
+
+                    //assemble them into a final Vector3 control point list
+                    for (int i = 0; i < 8; i++)
+                    {
+                        ControlPoints.Add(new Vector3(xControlPoints[i], yControlPoints[i], zControlPoints[i]));
+                    }
+
+                    //flush out unnecesary data now that we are done construction
+                    xControlPoints.Clear();
+                    yControlPoints.Clear();
+                    zControlPoints.Clear();
+
+                    Debug.Log($"Trajectory Created; Duration is {duration}, Control points are: {ControlPoints.ToDelineatedString()}");
+                }
+
+                public List<float> ExpandControlPointsToSeventhDegree(List<float> points)
+                {
+                    List<float> newPoints = new();
+
+                    //this probably sucks balls as a way to do this but whatever, its 10:30 pm and I just wanna get this working
+                    switch (points.Count)
+                    {
+                        case 1:
+                            //expand it to 8
+                            newPoints.AddRange(Enumerable.Repeat(points[0], 8));
+                            break;
+                        case 2:
+                            //straight line, split down the middle
+                            newPoints.AddRange(Enumerable.Repeat(points[0], 4));
+                            newPoints.AddRange(Enumerable.Repeat(points[1], 4));
+                            break;
+                        case 4:
+                            //cubic
+                            newPoints.AddRange(Enumerable.Repeat(points[0], 2));
+                            newPoints.AddRange(Enumerable.Repeat(points[1], 2));
+                            newPoints.AddRange(Enumerable.Repeat(points[2], 2));
+                            newPoints.AddRange(Enumerable.Repeat(points[3], 2));
+                            break;
+                        case 8:
+                            //already is correct
+                            newPoints = points;
+                            break;
+                    }
+
+                    return newPoints;
+                }
+
+                public void DecodeDuration(ref Queue<byte> data)
+                {
+                    //duration is a signed short in milliseconds
+                    //duration = TimeSpan.FromMilliseconds(BitConverter.ToInt16(data.DequeueChunk(2).ToArray(), 0));
+                    //cursed, was getting NEGATIVE durations somehow????
+                    duration = TimeSpan.FromMilliseconds(BitConverter.ToUInt16(data.DequeueChunk(2).ToArray(), 0));
+                }
+
+                public void DecodeAxies(ref Queue<byte> data)
+                {
+                    //deque the byte
+                    byte dat = data.Dequeue();
+                    X_Order = DecodeAxisOrder(dat, Axis.X);
+                    Y_Order = DecodeAxisOrder(dat, Axis.Y);
+                    Z_Order = DecodeAxisOrder(dat, Axis.Z);
+                    YAW_Order = DecodeAxisOrder(dat, Axis.YAW);
+                }
+
+                public static BezierOrder DecodeAxisOrder(byte data, Axis ax)
+                {
+                    //shift the data 
+                    byte shifted = (byte)(data >> (byte)ax);
+                    //grab just the two LSBs
+                    shifted &= 0x03;
+
+                    //convert to the enum
+                    return (BezierOrder)shifted;
+                }
+
+                public List<float> DecodeAxisControlPoints(ref Queue<byte> data, byte scale, BezierOrder ord)
+                {
+                    List<float> points = new();
+
+                    int pointCount = 0;
+                    //this is one less than the actual control point count due to us already having the start position
+                    switch (ord)
+                    {
+                        case BezierOrder.Constant:
+                            pointCount = 0;
+                            break;
+                        case BezierOrder.StraightLine:
+                            pointCount = 1;
+                            break;
+                        case BezierOrder.Cubic:
+                            pointCount = 3;
+                            break;
+                        case BezierOrder.SeventhDegree:
+                            pointCount = 7;
+                            break;
+                    }
+
+                    for (int i = 0; i < pointCount; i++)
+                    {
+                        points.Add(DecodeSpatialCoordinate(ref data, scale));
+                    }
+
+                    return points;
+                }
+
+                public static Vector3 DecodeStartSpatialCoordinates(ref Queue<byte> data, byte scale)
+                {
+                    return new Vector3(
+                        DecodeSpatialCoordinate(ref data, scale),
+                        DecodeSpatialCoordinate(ref data, scale),
+                        DecodeSpatialCoordinate(ref data, scale)
+                    );
+                }
+
+                public static float DecodeSpatialCoordinate(ref Queue<byte> data, byte scale)
+                {
+                    //get the start XYZ YAW position, coordinates are in millimeters as signed shorts
+                    return BitConverter.ToInt16(data.DequeueChunk(2).ToArray(), 0) * scale / 1000f; //convert to meters
+                }
+
+                public static float DecodeAngleCoordinate(ref Queue<byte> data)
+                {
+                    //Angles (for the yaw coordinate) are represented as 1/10th of degrees and are stored as signed 2-byte integers.
+                    return BitConverter.ToInt16(data.DequeueChunk(2).ToArray(), 0) / 10f;
+                }
+
+                public enum BezierOrder : byte
+                {
+                    Constant = 0, //00
+                    StraightLine = 1, //01
+                    Cubic = 2, //10
+                    SeventhDegree = 3, //11
+                }
+
+                //represents how many bits need to be shifted to get different axis's
+                public enum Axis : byte
+                {
+                    X = 0,
+                    Y = 2,
+                    Z = 4,
+                    YAW = 6,
+                }
             }
 
             public class LightEvent

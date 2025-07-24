@@ -48,6 +48,19 @@ public static class Extensions
         return result.ToString();
     }
 
+    public static string ToDelineatedString<T>(this List<T> list)
+    {
+        if (list == null || list.Count == 0)
+            return "EMPTY LIST";
+
+        var result = new System.Text.StringBuilder();
+        for (int i = 0; i < list.Count; i++)
+        {
+            result.Append(list[i] + " ");
+        }
+        return result.ToString();
+    }
+
     public static string ToHexString(this List<byte> bytes)
     {
         StringBuilder hex = new StringBuilder(bytes.Count * 2);
