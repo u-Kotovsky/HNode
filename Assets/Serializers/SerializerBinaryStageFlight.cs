@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 public class BinaryStageFlight : IDMXSerializer
 {
@@ -61,16 +62,17 @@ public class BinaryStageFlight : IDMXSerializer
         for (int i = 0; i < bits.Length; i++)
         {
             GetPositionData(channel, i, textureWidth, out int x, out int y);
-            if (x >= textureWidth || y >= textureHeight)
+            /* if (x >= textureWidth || y >= textureHeight)
             {
                 continue; // Skip if the calculated pixel is out of bounds
-            }
+            } */
             //convert the x y to pixel index
             //return 4x4 area
+            byte val = (byte)(bits[i] ? 255 : 0);
             var color = new Color32(
-                (byte)(bits[i] ? 255 : 0),
-                (byte)(bits[i] ? 255 : 0),
-                (byte)(bits[i] ? 255 : 0),
+                val,
+                val,
+                val,
                 Util.GetBlockAlpha(channelValue)
             );
             TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
