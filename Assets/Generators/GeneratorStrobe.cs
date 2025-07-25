@@ -11,6 +11,7 @@ public class Strobe : IDMXGenerator
     public float frequency = 1.0f; //in Hz
 
     public void Construct() { }
+    public void Deconstruct() { }
     public void GenerateDMX(ref List<byte> dmxData)
     {
         dmxData.EnsureCapacity(channel);

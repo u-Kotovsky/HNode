@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using CrcSharp;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -28,6 +29,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     public float gridSpacingLon = 0.0001f; //spacing in degrees
     public float gridSpacingLat = 0.0001f; //spacing in degrees
     public float initialAltitude = 0f;
+    private List<UniTask> tasks = new List<UniTask>();
+    private CancellationTokenSource cancellationTokenSource = new();
     public void Construct()
     {
         client = new UdpClient();
@@ -67,9 +70,16 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         }
 
         //startup tasks
-        UniTask.Void(SendData);
-        UniTask.Void(SendHeartbeat);
-        UniTask.Void(ReceiveData);
+        CancellationToken cancellationToken = cancellationTokenSource.Token;
+        tasks.Add(UniTask.Create(SendData, cancellationToken));
+        tasks.Add(UniTask.Create(SendHeartbeat, cancellationToken));
+        tasks.Add(UniTask.Create(ReceiveData, cancellationToken));
+    }
+
+    public void Deconstruct()
+    {
+        //end all the tasks
+        cancellationTokenSource.Cancel();
     }
 
     public void GenerateDMX(ref List<byte> dmxData)
@@ -122,12 +132,18 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     }
 
 
-    public async UniTaskVoid SendData()
+    public async UniTask SendData(CancellationToken cancellationToken)
     {
         while (Application.isPlaying)
         {
+            //check cancellation token
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+
             //send data for all drones
-            const int perUpdate = 10; //how many drones to process per update
+                const int perUpdate = 10; //how many drones to process per update
             int currentCount = 0;
             foreach (Drone d in drones.Values)
             {
@@ -151,10 +167,16 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     }
 
     //update coroutine
-    public async UniTaskVoid SendHeartbeat()
+    public async UniTask SendHeartbeat(CancellationToken cancellationToken)
     {
         while (Application.isPlaying)
         {
+            //check cancellation token
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+
             //process X ammount every time
             const int perUpdate = 10; //how many drones to process per update
             int currentCount = 0;
@@ -178,10 +200,16 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         }
     }
     Stream stream = new MemoryStream();
-    public async UniTaskVoid ReceiveData()
+    public async UniTask ReceiveData(CancellationToken cancellationToken)
     {
         while (Application.isPlaying)
         {
+            //check cancellation token
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+
             //listen for messages on 14555
             while (client.Available > 0)
             {

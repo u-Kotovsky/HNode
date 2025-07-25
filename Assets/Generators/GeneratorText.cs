@@ -25,6 +25,7 @@ public class Text : IDMXGenerator
     public int maxCharacters = 32;
 
     public virtual void Construct() { }
+    public virtual void Deconstruct() { }
 
     //I swear to god to anyone reading this code. This is like, the 5TH FUCKING TIME ive had to write a system like this
     //its unbelievable that there isnt a standard for fallback character conversion considering the ammount of times
