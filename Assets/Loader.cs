@@ -268,6 +268,12 @@ public class Loader : MonoBehaviour
             return;
         }
 
+        //deconstruct all generators before we lose references to them
+        foreach (var generator in showconf.Generators)
+        {
+            generator.Deconstruct();
+        }
+
         showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
 
         //invalidate the dropdowns and toggles
@@ -282,12 +288,6 @@ public class Loader : MonoBehaviour
     {
         //returning 0 will make it wait 1 frame
         yield return new WaitForEndOfFrame();
-
-        //deconstruct all generators
-        foreach (var generator in showconf.Generators)
-        {
-            generator.Deconstruct();
-        }
 
         //yayyyyy double load to fix dumb race condition bullshit
         showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
