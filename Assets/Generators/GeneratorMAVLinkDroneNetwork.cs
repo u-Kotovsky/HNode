@@ -1123,7 +1123,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     float y = BezierEvaluate(yControlPoints, t);
                     float z = BezierEvaluate(zControlPoints, t);
 
-                    return new Vector3(x, y, z);
+                    return new Vector3(-y, x, z); //blender coord system go brrrr
                 }
 
                 public float BezierEvaluate(List<float> controlPoints, float t)
