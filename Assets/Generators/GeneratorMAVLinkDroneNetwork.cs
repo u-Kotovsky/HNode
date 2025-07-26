@@ -1006,9 +1006,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
             public Vector3 GetPositionAtTime(TimeSpan time)
             {
-                //fake ass way of doing this initially, just teleport to first control point of the trajectory we find ourselves on
-
                 //find the trajectory that contains the current time in the show
+                //TODO: Dont do this, use a pointer based system instead
                 foreach (var traj in TrajectoryProgram)
                 {
                     if (time > traj.startTime && time < traj.endTime)
@@ -1040,6 +1039,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             {
                 //find the first event that starts after the given time
                 LightEvent startevent = null;
+                //TODO: Dont do this, use a pointer based system instead
                 foreach (var prog in LightProgram)
                 {
                     if (prog.startTime <= time && prog.endTime >= time)
