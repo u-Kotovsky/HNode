@@ -1284,7 +1284,18 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 public TimeSpan duration;
                 public Color32 color;
                 public Color32 previousEventColor = new Color32(0, 0, 0, 255); //default to black as the previous color
-                public bool setsColor;
+                public bool setsColor => opcode switch
+                {
+                    Opcode.SET_COLOR or
+                    Opcode.SET_COLOR_FROM_CHANNELS or
+                    Opcode.SET_GRAY or
+                    Opcode.FADE_TO_COLOR or
+                    Opcode.FADE_TO_COLOR_FROM_CHANNELS or
+                    Opcode.FADE_TO_GRAY or
+                    Opcode.FADE_TO_BLACK or
+                    Opcode.FADE_TO_WHITE => true,
+                    _ => false,
+                };
                 public Opcode opcode;
                 public byte? counter = null;
                 public int? address = null;
