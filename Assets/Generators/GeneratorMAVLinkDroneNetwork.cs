@@ -213,7 +213,17 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             //listen for messages on 14555
             while (client.Available > 0)
             {
-                byte[] buffer = client.Receive(ref selfEndPoint);
+                byte[] buffer;
+                try
+                {
+                    buffer = client.Receive(ref selfEndPoint);
+                }
+                //connection forcibly closed
+                catch (SocketException ex)
+                {
+                    //Debug.LogWarning(ex.Message);
+                    continue;
+                }
                 stream.Seek(0, SeekOrigin.Begin);
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Seek(0, SeekOrigin.Begin);
@@ -515,7 +525,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         Debug.Log($"Unhandled message: {messageId}");
                         break;
                 }
-            }
+                }
 
             await UniTask.Delay(1);
         }
@@ -810,8 +820,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             var ftpobj = new mavlink_file_transfer_protocol_t
             (
                 0,
-                target_system = target_system,
-                target_component = target_component,
+                target_system,
+                target_component,
                 MavlinkUtil.StructureToByteArray(ftpMessage)
             );
 
