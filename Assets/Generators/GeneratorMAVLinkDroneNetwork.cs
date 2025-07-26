@@ -722,7 +722,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public void ReloadShow()
         {
-            Debug.Log($"Reloading show for drone {uid}");
+            //Debug.Log($"Reloading show for drone {uid}");
 
             showFile = new ShowFile(showFileRaw);
 
@@ -915,7 +915,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 //the next 2 bytes are the block size
                 BlockType blockType = (BlockType)fileData.DequeueChunk(1).First();
                 int blockSize = BitConverter.ToUInt16(fileData.DequeueChunk(2).ToArray(), 0);
-                Debug.Log($"Block Type: {blockType}, Block Size: {blockSize}");
+                //Debug.Log($"Block Type: {blockType}, Block Size: {blockSize}");
                 Queue<byte> blockData = new(fileData.DequeueChunk(blockSize));
 
                 switch (blockType)
@@ -932,7 +932,22 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             LightProgram[0].startTime = TimeSpan.Zero;
                             for (int i = 1; i < LightProgram.Count; i++)
                             {
+                                //setup the end time of the last light event
+                                LightProgram[i - 1].endTime = LightProgram[i - 1].startTime + LightProgram[i - 1].duration;
                                 LightProgram[i].startTime = LightProgram[i - 1].endTime;
+                            }
+
+                            //setup the cached previous event value
+                            //cache the previous color and the start time
+                            Color32 lastColor = Color.black;
+                            foreach (var ev in LightProgram)
+                            {
+                                ev.previousEventColor = lastColor; //set the previous event color to the last color
+
+                                if (ev.setsColor) //only do it if this event defines a color. This will make sure that the color is the latest event WITH a color define
+                                {
+                                    lastColor = ev.color; //if no color is set, use black
+                                }
                             }
                         }
 
@@ -953,7 +968,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         float startYaw = Trajectory.DecodeAngleCoordinate(ref blockData);
 
                         //print this info
-                        Debug.Log($"Scale: {scale}, Trajectory Start: {startPos}, Yaw: {startYaw}");
+                        //Debug.Log($"Scale: {scale}, Trajectory Start: {startPos}, Yaw: {startYaw}");
 
                         while (blockData.Count > 0)
                         {
@@ -970,6 +985,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             TrajectoryProgram[0].startTime = TimeSpan.Zero;
                             for (int i = 1; i < TrajectoryProgram.Count; i++)
                             {
+                                //setup the end time of the last trajectory
+                                TrajectoryProgram[i - 1].endTime = TrajectoryProgram[i - 1].startTime + TrajectoryProgram[i - 1].duration;
                                 TrajectoryProgram[i].startTime = TrajectoryProgram[i - 1].endTime;
                             }
                         }
@@ -1023,18 +1040,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             {
                 //find the first event that starts after the given time
                 LightEvent startevent = null;
-                Color32 lastColor = Color.black; //used for fading, start black
-                for (int i = 0; i < LightProgram.Count; i++)
+                foreach (var prog in LightProgram)
                 {
-                    if (LightProgram[i].startTime.HasValue && LightProgram[i].startTime.Value <= time && LightProgram[i].endTime >= time)
+                    if (prog.startTime <= time && prog.endTime >= time)
                     {
-                        startevent = LightProgram[i];
+                        startevent = prog;
                         break; //break out of the loop now that we found it
-                    }
-                    //this will get the coloe of the event right BEFORE startevent
-                    if (LightProgram[i].color.HasValue) //only do it if this event defines a color. This will make sure that the color is the latest event WITH a color define
-                    {
-                        lastColor = LightProgram[i].color.Value; //if no color is set, use black
                     }
                 }
 
@@ -1049,15 +1060,20 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 if (startevent.IsFade)
                 {
                     //lerp between the last color and the current color
-                    if (startevent.color.HasValue)
+                    if (startevent.setsColor)
                     {
                         //if the color is set, use it
-                        return Color32.Lerp(lastColor, startevent.color.Value, (float)(time - startevent.startTime.Value).TotalMilliseconds / (float)startevent.duration.TotalMilliseconds);
+                        return Color32.Lerp(startevent.previousEventColor, startevent.color, (float)(time - startevent.startTime).TotalMilliseconds / (float)startevent.duration.TotalMilliseconds);
                     }
                 }
 
                 //otherwise its a instantaneous set command
-                return startevent.color ?? lastColor; //if no color is set, use the last color
+                if (startevent.setsColor)
+                {
+                    //if the color is set, use it
+                    return startevent.color;
+                }
+                return startevent.previousEventColor;
             }
 
             enum BlockType : byte
@@ -1084,7 +1100,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 public BezierOrder YAW_Order;
                 public TimeSpan duration;
                 public TimeSpan startTime;
-                public TimeSpan endTime => startTime + duration;
+                public TimeSpan endTime;
 
                 public Trajectory(ref Queue<byte> data, Vector3 startPos, float startYaw, byte scale)
                 {
@@ -1266,12 +1282,14 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             public class LightEvent
             {
                 public TimeSpan duration;
-                public Color32? color = null; //null if no change
+                public Color32 color;
+                public Color32 previousEventColor = new Color32(0, 0, 0, 255); //default to black as the previous color
+                public bool setsColor;
                 public Opcode opcode;
                 public byte? counter = null;
                 public int? address = null;
-                public TimeSpan? startTime = null;
-                public TimeSpan endTime => startTime.HasValue ? startTime.Value + duration : TimeSpan.Zero;
+                public TimeSpan startTime = new TimeSpan(-50);
+                public TimeSpan endTime = new TimeSpan(-1);
 
                 public bool IsFade => opcode switch
                 {
