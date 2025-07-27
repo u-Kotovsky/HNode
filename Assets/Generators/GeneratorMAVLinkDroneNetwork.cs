@@ -659,8 +659,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         }
 
         private double measure(float lat1, float lon1, float lat2, float lon2)
-        {  // generally used geo measurement function
-            var R = 6378.137; // Radius of earth in KM
+        {
+            // generally used geo measurement function
+            const double R = 6378.137; // Radius of earth in KM
             var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
             var dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
             var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
@@ -669,6 +670,19 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
             var d = R * c;
             return d * 1000; // meters
+        }
+
+        public Vector3 XYZtoLatLonAlt(Vector3 xyz)
+        {
+            const double R = 6378.137; // Radius of earth in KM
+            //convert the meters to kilometers
+            xyz.x /= 1000;
+            xyz.y /= 1000;
+            //pass altitude through
+            var new_longitude = showOrigin.y + (xyz.y / R) * (180 / Math.PI) / Math.Cos(showOrigin.y * Math.PI / 180);
+            var new_latitude = showOrigin.x + (xyz.x / R) * (180 / Math.PI);
+
+            return new Vector3((float)new_longitude, (float)new_latitude, xyz.z);
         }
 
         DateTime GetFromGps(int weeknumber, double seconds)
@@ -837,12 +851,16 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public void SendGPSRaw()
         {
+            //get the drone position
+            var pos = GetDronePosition();
+            //convert to lat long and altitude
+            var latlongalt = XYZtoLatLonAlt(pos);
             var message = new mavlink_gps_raw_int_t(
                 //send current unix time in seconds
                 (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                (int)(latlongaltposition.x * 10000000),
-                (int)(latlongaltposition.y * 10000000),
-                (int)(latlongaltposition.z * 1000),
+                (int)(latlongalt.x * 10000000),
+                (int)(latlongalt.y * 10000000),
+                (int)(latlongalt.z * 1000),
                 ushort.MaxValue,
                 ushort.MaxValue,
                 ushort.MaxValue,
@@ -862,11 +880,15 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         public void SendGPSFiltered()
         {
+            //get the drone position
+            var pos = GetDronePosition();
+            //convert to lat long and altitude
+            var latlongalt = XYZtoLatLonAlt(pos);
             var message = new mavlink_global_position_int_t(
                 (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                (int)(latlongaltposition.x * 10000000),
-                (int)(latlongaltposition.y * 10000000),
-                (int)(latlongaltposition.z * 1000),
+                (int)(latlongalt.x * 10000000),
+                (int)(latlongalt.y * 10000000),
+                (int)(latlongalt.z * 1000),
                 0,
                 0,
                 0,
@@ -912,7 +934,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             public int TrajectoryProgramPointer = 0;
             const int PointerLookahead = 5;
 
-            public DateTime showStartTime;
+            public DateTime showStartTime = DateTime.UtcNow + TimeSpan.FromDays(2); //assume way into the future
 
             public ShowFile(List<byte> rawData)
             {
