@@ -698,6 +698,13 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         //time is seconds in the week
                         //get what the current week is
                         int weekNumber = (int)(DateTime.UtcNow - new DateTime(1980, 1, 6)).TotalDays / 7;
+                        //check if its different to what it currently is
+                        if (showFile.showStartTime != GetFromGps(weekNumber, value))
+                        {
+                            //reset program counters
+                            showFile.LightProgramPointer = 0;
+                            showFile.TrajectoryProgramPointer = 0;
+                        }
                         showFile.showStartTime = GetFromGps(weekNumber, value);
                         //render militiary time
                         //Debug.Log($"Show start time set to: {showFile.showStartTime:yyyy-MM-dd HH:mm:ss} UTC for drone {uid}");
@@ -1033,6 +1040,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 if (time > TrajectoryProgram.Last().endTime)
                 {
                     return TrajectoryProgram.Last().evaluate(1.0f);
+                }
+
+                //if we are before the first one, just use the first one
+                if (time < TrajectoryProgram.First().startTime)
+                {
+                    return TrajectoryProgram.First().evaluate(0.0f);
                 }
 
                 //check if we are not in a light event now
