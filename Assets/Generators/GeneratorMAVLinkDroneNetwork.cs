@@ -1084,6 +1084,20 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
             public Color32 GetColorAtTime(TimeSpan time)
             {
+                //if this is before the first event, return black
+                if (time < LightProgram.First().startTime)
+                {
+                    //Debug.Log($"Early exit at start of light prog, {time}   {LightProgram.First().startTime}");
+                    return Color.black;
+                }
+
+                //if its after, return black too
+                if (time > LightProgram.Last().endTime)
+                {
+                    //Debug.Log($"Early exit at end of light prog, {time}   {LightProgram.Last().endTime}");
+                    return Color.black;
+                }
+
                 //check if we are not in a light event now
                 if (!LightProgram[LightProgramPointer].InsideEvent(time))
                 {
