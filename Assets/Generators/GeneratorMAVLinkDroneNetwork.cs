@@ -900,7 +900,10 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         {
             //programs
             public List<LightEvent> LightProgram = new();
+            public int LightProgramPointer = 0;
             public List<Trajectory> TrajectoryProgram = new();
+            public int TrajectoryProgramPointer = 0;
+            const int PointerLookahead = 5;
 
             public DateTime showStartTime;
 
@@ -959,6 +962,11 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                     lastColor = ev.color; //if no color is set, use black
                                 }
                             }
+
+                            //sort it
+                            LightProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
+                            //reset the program counter
+                            LightProgramPointer = 0;
                         }
 
                         //debug print start and end time of events
@@ -999,6 +1007,11 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 TrajectoryProgram[i - 1].endTime = TrajectoryProgram[i - 1].startTime + TrajectoryProgram[i - 1].duration;
                                 TrajectoryProgram[i].startTime = TrajectoryProgram[i - 1].endTime;
                             }
+
+                            //sort it
+                            TrajectoryProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
+                            //reset the program counter
+                            TrajectoryProgramPointer = 0;
                         }
                         break;
                     default:
@@ -1016,26 +1029,32 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
             public Vector3 GetPositionAtTime(TimeSpan time)
             {
-                //find the trajectory that contains the current time in the show
-                //TODO: Dont do this, use a pointer based system instead
-                foreach (var traj in TrajectoryProgram)
-                {
-                    if (time > traj.startTime && time < traj.endTime)
-                    {
-                        //Debug.Log(traj.ControlPoints[0]);
-                        //get the time inside the bezier curve
-                        float t = (float)((time - traj.startTime) / traj.duration);
-                        return traj.evaluate(t);
-                    }
-                }
-
                 //if we are PAST the last one, just use that final value
                 if (time > TrajectoryProgram.Last().endTime)
                 {
-                    TrajectoryProgram.Last().evaluate(1.0f);
+                    return TrajectoryProgram.Last().evaluate(1.0f);
                 }
 
-                return TrajectoryProgram.First().evaluate(0.0f);
+                //check if we are not in a light event now
+                if (!TrajectoryProgram[TrajectoryProgramPointer].InsideEvent(time))
+                {
+                    //look ahead at the next 5 and see if we are in one of them
+                    for (int i = TrajectoryProgramPointer + 1; i < TrajectoryProgram.Count && i < TrajectoryProgramPointer + PointerLookahead; i++)
+                    {
+                        if (TrajectoryProgram[i].InsideEvent(time))
+                        {
+                            //we are in this light event, set the pointer to that
+                            TrajectoryProgramPointer = i;
+                            break;
+                        }
+                    }
+                }
+
+                Trajectory tevent = TrajectoryProgram[LightProgramPointer];
+
+                //get the time inside the bezier curve
+                float t = (float)((time - tevent.startTime) / tevent.duration);
+                return tevent.evaluate(t);
             }
 
             public Color32 GetColorAtRealTime(DateTime time)
@@ -1047,24 +1066,22 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
             public Color32 GetColorAtTime(TimeSpan time)
             {
-                //find the first event that starts after the given time
-                LightEvent startevent = null;
-                //TODO: Dont do this, use a pointer based system instead
-                foreach (var prog in LightProgram)
+                //check if we are not in a light event now
+                if (!LightProgram[LightProgramPointer].InsideEvent(time))
                 {
-                    if (prog.startTime <= time && prog.endTime >= time)
+                    //look ahead at the next 5 and see if we are in one of them
+                    for (int i = LightProgramPointer + 1; i < LightProgram.Count && i < LightProgramPointer + PointerLookahead; i++)
                     {
-                        startevent = prog;
-                        break; //break out of the loop now that we found it
+                        if (LightProgram[i].InsideEvent(time))
+                        {
+                            //we are in this light event, set the pointer to that
+                            LightProgramPointer = i;
+                            break;
+                        }
                     }
                 }
 
-                //make sure we have a event
-                if (startevent == null)
-                {
-                    //if we dont have a event, return black
-                    return Color.black;
-                }
+                LightEvent startevent = LightProgram[LightProgramPointer];
 
                 //if this event is a fade
                 if (startevent.IsFade)
@@ -1137,6 +1154,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         yControlPoints.Last(),
                         zControlPoints.Last()
                     );
+                }
+
+                public bool InsideEvent(TimeSpan time)
+                {
+                    //check if the time is inside the event
+                    return time >= startTime && time < endTime;
                 }
 
                 public Vector3 evaluate(float t)
@@ -1450,6 +1473,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     } while ((b & 0x80) != 0);
 
                     return val;
+                }
+
+                public bool InsideEvent(TimeSpan time)
+                {
+                    //check if the time is inside the event
+                    return time >= startTime && time < endTime;
                 }
 
                 private static TimeSpan GetDuration(ref Queue<byte> data)
