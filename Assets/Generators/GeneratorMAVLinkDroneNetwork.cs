@@ -948,9 +948,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         //compute the start and end time for all of the events
                         if (LightProgram.Count > 0)
                         {
-                            //sort it
-                            LightProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
-                            
                             //set the start time of the first event
                             LightProgram[0].startTime = TimeSpan.Zero;
                             for (int i = 1; i < LightProgram.Count; i++)
@@ -1010,9 +1007,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         //compute the start and end time for all of the events
                         if (TrajectoryProgram.Count > 0)
                         {
-                            //sort it
-                            TrajectoryProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
-
                             //set the start time of the first event
                             TrajectoryProgram[0].startTime = TimeSpan.Zero;
                             for (int i = 1; i < TrajectoryProgram.Count; i++)
