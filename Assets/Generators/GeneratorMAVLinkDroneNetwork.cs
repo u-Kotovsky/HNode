@@ -1063,7 +1063,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     }
                 }
 
-                Trajectory tevent = TrajectoryProgram[LightProgramPointer];
+                Trajectory tevent = TrajectoryProgram[TrajectoryProgramPointer];
 
                 //get the time inside the bezier curve
                 float t = (float)((time - tevent.startTime) / tevent.duration);
