@@ -948,6 +948,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         //compute the start and end time for all of the events
                         if (LightProgram.Count > 0)
                         {
+                            //sort it
+                            LightProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
+                            
                             //set the start time of the first event
                             LightProgram[0].startTime = TimeSpan.Zero;
                             for (int i = 1; i < LightProgram.Count; i++)
@@ -956,6 +959,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 LightProgram[i - 1].endTime = LightProgram[i - 1].startTime + LightProgram[i - 1].duration;
                                 LightProgram[i].startTime = LightProgram[i - 1].endTime;
                             }
+
+                            //setup the last end time
+                            LightProgram.Last().endTime = LightProgram.Last().startTime + LightProgram.Last().duration;
 
                             //setup the cached previous event value
                             //cache the previous color and the start time
@@ -970,8 +976,6 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 }
                             }
 
-                            //sort it
-                            LightProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
                             //reset the program counter
                             LightProgramPointer = 0;
                         }
@@ -1006,6 +1010,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         //compute the start and end time for all of the events
                         if (TrajectoryProgram.Count > 0)
                         {
+                            //sort it
+                            TrajectoryProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
+
                             //set the start time of the first event
                             TrajectoryProgram[0].startTime = TimeSpan.Zero;
                             for (int i = 1; i < TrajectoryProgram.Count; i++)
@@ -1015,8 +1022,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                                 TrajectoryProgram[i].startTime = TrajectoryProgram[i - 1].endTime;
                             }
 
-                            //sort it
-                            TrajectoryProgram.Sort((a, b) => a.startTime.CompareTo(b.startTime));
+                            //setup the last end time
+                            TrajectoryProgram.Last().endTime = TrajectoryProgram.Last().startTime + TrajectoryProgram.Last().duration;
+
                             //reset the program counter
                             TrajectoryProgramPointer = 0;
                         }
@@ -1039,12 +1047,14 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 //if we are PAST the last one, just use that final value
                 if (time > TrajectoryProgram.Last().endTime)
                 {
+                    //Debug.Log($"Early exit at end of prog, {time}   {TrajectoryProgram.Last().endTime}");
                     return TrajectoryProgram.Last().evaluate(1.0f);
                 }
 
                 //if we are before the first one, just use the first one
                 if (time < TrajectoryProgram.First().startTime)
                 {
+                    //Debug.Log($"Early exit at start of prog, {time}   {TrajectoryProgram.First().startTime}");
                     return TrajectoryProgram.First().evaluate(0.0f);
                 }
 
@@ -1063,6 +1073,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     }
                 }
 
+                //Debug.Log(TrajectoryProgramPointer);
                 Trajectory tevent = TrajectoryProgram[TrajectoryProgramPointer];
 
                 //get the time inside the bezier curve
