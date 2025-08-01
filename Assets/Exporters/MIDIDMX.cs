@@ -136,8 +136,6 @@ public class MIDIDMX : IExporter
             float midiTimeout = (float)(Stopwatch.GetTimestamp() - midiLastUpdate) / (float)Stopwatch.Frequency;
             if (midiTimeout > 1)
             {
-                midiCatchup = 0;
-
                 Reset();
 
                 midiLastUpdate = Stopwatch.GetTimestamp();
@@ -171,6 +169,10 @@ public class MIDIDMX : IExporter
     private void Reset()
     {
         midiData = new byte[maxChannels];
+        midiUpdates = 0;
+        midiScanPosition = 0;
+        midiCatchup = 0;
+
         findVRCLog();
         ChangeBanks(0);
         midiKnock();
