@@ -274,6 +274,11 @@ public class Loader : MonoBehaviour
             generator.Deconstruct();
         }
 
+        foreach (var exporter in showconf.Exporters)
+        {
+            exporter.Deconstruct();
+        }
+
         showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
 
         //invalidate the dropdowns and toggles
@@ -296,6 +301,11 @@ public class Loader : MonoBehaviour
         foreach (var generator in showconf.Generators)
         {
             generator.Construct();
+        }
+
+        foreach (var exporter in showconf.Exporters)
+        {
+            exporter.Construct();
         }
 
         showconf.Serializer.Construct();

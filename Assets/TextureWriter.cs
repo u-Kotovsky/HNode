@@ -90,6 +90,10 @@ public class TextureWriter : MonoBehaviour
         channelRemapper.RemapChannels(ref mergedDmxValues);
 
         Loader.showconf.Serializer.InitFrame();
+        foreach (var exporter in Loader.showconf.Exporters)
+        {
+            exporter.InitFrame();
+        }
 
         Profiler.BeginSample("Serializer Loop");
         var ChannelsToSerialize = Math.Min((long)Loader.showconf.SerializeUniverseCount * 512, mergedDmxValues.Count);
@@ -103,12 +107,20 @@ public class TextureWriter : MonoBehaviour
 
             Profiler.BeginSample("Individual Channel Serialization");
             Loader.showconf.Serializer.SerializeChannel(ref pixels, mergedDmxValues[i], i, TextureWidth, TextureHeight);
+            foreach (var exporter in Loader.showconf.Exporters)
+            {
+                exporter.SerializeChannel(mergedDmxValues[i], i);
+            }
             Profiler.EndSample();
         }
         Profiler.EndSample();
 
         Profiler.BeginSample("Frame Finalization");
         Loader.showconf.Serializer.CompleteFrame(ref pixels, ref mergedDmxValues, TextureWidth, TextureHeight);
+        foreach (var exporter in Loader.showconf.Exporters)
+        {
+            exporter.CompleteFrame(ref mergedDmxValues);
+        }
         Profiler.EndSample();
 
         //send to the UV Remapper
