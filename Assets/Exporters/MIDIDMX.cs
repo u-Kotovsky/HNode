@@ -22,7 +22,11 @@ public class MIDIDMX : IExporter
     public bool useEditorLog;
     public int channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
 
-    byte[] midiData = new byte[16384];
+    const int maxChannels = 16384;
+    const int channelsPerUpdate = 100; //KEEP THIS AT 100 until VRC fixes their buffers :)
+    const int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
+
+    byte[] midiData = new byte[maxChannels];
 
     int bankStatus = 0;
     OutputDevice midiOutput;
@@ -32,9 +36,12 @@ public class MIDIDMX : IExporter
     int midiCatchup = 0;
     int midiScanPosition = 0;
 
-    long midiUpdate = 0;
+    long midiLastUpdate = 0;
 
-    //Gets a list of MIDI devices
+    /// <summary>
+    /// Gets list of MIDI devices
+    /// </summary>
+    /// <returns>String List of devices</returns>
     public ICollection<string> GetMidiDevices()
     {
         ICollection<string> tDevices = new List<string> { "(none)" };
@@ -48,8 +55,11 @@ public class MIDIDMX : IExporter
         return tDevices;
     }
 
-    //Sets active midi device, connects immediately.
-    //Returns false on failure
+    /// <summary>
+    /// Sets active midi device, connects immediately.
+    /// </summary>
+    /// <param name="device">String name of device to connect to.</param>
+    /// <returns>True if connected, false on any failure.</returns>
     public bool MidiConnectDevice(string device)
     {
         try
@@ -87,52 +97,50 @@ public class MIDIDMX : IExporter
     /// <param name="channelValues"></param>
     public void CompleteFrame(ref List<byte> channelValues)
     {
-        if (midiOutput != null)
+        if (isMidiReady())
         {
-            if (isMidiReady())
+            //Finds all channels that need data sent over
+            //Sends only up to 
+            midiUpdates = 0;
+            for (int i = midiCatchup; i < channelValues.Count; i++)
             {
-                //Midi updates
-                int midiUpdates = 0;
-                for (int i = midiCatchup; i < channelValues.Count; i++)
+                if ((channelValues[i] != midiData[i] || (i >= midiScanPosition && i < midiScanPosition + idleScanChannels)) && i < channelLimit)
                 {
-                    if ((channelValues[i] != midiData[i] || (i >= midiScanPosition && i < midiScanPosition + 10)) && i < channelLimit)
+                    if (midiUpdates >= channelsPerUpdate)
                     {
-                        if (midiUpdates >= 100)
-                        {
-                            midiCatchup = i;
-                            break;
-                        }
-                        midiData[i] = channelValues[i];
-
-                        SendMidi(i, channelValues[i]);
+                        midiCatchup = i;
+                        break;
                     }
-                }
+                    midiData[i] = channelValues[i];
 
-                if (midiUpdates < 100)
-                {
-                    midiCatchup = 0;
+                    SendMidi(i, channelValues[i]);
                 }
-
-                midiScanPosition += 10;
-                if (midiScanPosition > channelLimit)
-                {
-                    midiScanPosition = 0;
-                }
-
-                midiWatchdog();
-                midiUpdate = Stopwatch.GetTimestamp();
             }
-            else
+
+            if (midiUpdates < channelsPerUpdate)
             {
-                float midiTimeout = (float)(Stopwatch.GetTimestamp() - midiUpdate) / (float)Stopwatch.Frequency;
-                if (midiTimeout > 1)
-                {
-                    midiCatchup = 0;
+                midiCatchup = 0;
+            }
 
-                    midiReset();
+            midiScanPosition += idleScanChannels;
+            if (midiScanPosition > channelLimit)
+            {
+                midiScanPosition = 0;
+            }
 
-                    midiUpdate = Stopwatch.GetTimestamp();
-                }
+            midiWatchdog();
+            midiLastUpdate = Stopwatch.GetTimestamp();
+        }
+        else
+        {
+            float midiTimeout = (float)(Stopwatch.GetTimestamp() - midiLastUpdate) / (float)Stopwatch.Frequency;
+            if (midiTimeout > 1)
+            {
+                midiCatchup = 0;
+
+                Reset();
+
+                midiLastUpdate = Stopwatch.GetTimestamp();
             }
         }
     }
@@ -142,9 +150,12 @@ public class MIDIDMX : IExporter
     /// </summary>
     public void Construct()
     {
-        midiReset();
+        Reset();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public void Deconstruct()
     {
         if (midiOutput != null)
@@ -154,17 +165,27 @@ public class MIDIDMX : IExporter
             logStream.Close();
     }
 
-
-    private void midiReset()
+    /// <summary>
+    /// Resets entire midi chain, clearing all data and beginning world knocking again.
+    /// </summary>
+    private void Reset()
     {
+        midiData = new byte[maxChannels];
         findVRCLog();
         ChangeBanks(0);
         midiKnock();
         midiWatchdog();
     }
 
+    /// <summary>
+    /// Sends a DMX channel as MIDI
+    /// </summary>
+    /// <param name="channel">DMX channel number with universe added</param>
+    /// <param name="value">DMX value</param>
     private void SendMidi(int channel, byte value)
     {
+        if (midiOutput == null) return;
+
         int bank = (int)(channel / 2048);
         if (bankStatus != bank)
         {
@@ -194,21 +215,56 @@ public class MIDIDMX : IExporter
         midiUpdates++;
     }
 
-    //Todo: Wait for callback to ensure the bank swap was triggered
+    /// <summary>
+    /// Sends a MIDI control signal
+    /// </summary>
+    /// <param name="channel">Channel, usually 15 for MIDIDMX</param>
+    /// <param name="control">Control number/note number</param>
+    /// <param name="value">Value</param>
+    private void SendMidiControl(int channel, int control, int value)
+    {
+        if (midiOutput == null) return;
+
+        ControlChangeEvent midiWD = new ControlChangeEvent();
+        midiWD.Channel = (FourBitNumber)channel;
+        midiWD.ControlNumber = (SevenBitNumber)control;
+        midiWD.ControlValue = (SevenBitNumber)value;
+
+        midiOutput.SendEvent(midiWD);
+    }
+
+    /// <summary>
+    /// Changes data banks.
+    /// A data bank is a set of 2048 channels.
+    /// </summary>
+    /// <param name="bank">Bank number from 0 to 7.</param>
     private void ChangeBanks(int bank)
     {
         bankStatus = bank;
+
+        if (bank < 0) bank = 0;
+        if (bank > 7) bank = 7;
 
         SendMidiControl(15, 127, bank);
         midiUpdates++;
     }
 
-    //Are we good to send more midi data?
+    /// <summary>
+    /// Checks if we're good to process and send MIDI data.
+    /// This reads the VRC log file to ensure the world responded to our watchdog signal.
+    /// A watchdog packet MUST be sent before checking this.
+    /// </summary>
+    /// <returns>True if ready for more data, false if we're not.</returns>
     private bool isMidiReady()
     {
         if (logStream == null)
         {
             findVRCLog();
+            return false;
+        }
+
+        if (midiOutput == null)
+        {
             return false;
         }
 
@@ -244,38 +300,29 @@ public class MIDIDMX : IExporter
         return false;
     }
 
-    //Sends watchdog "packet"
+    /// <summary>
+    /// Sends watchdog packet to the world.
+    /// </summary>
     private void midiWatchdog()
     {
-        if (midiOutput != null)
-        {
-            SendMidiControl(15, 127, 127);
-        }
+        SendMidiControl(15, 127, 127);
     }
 
-    private void SendMidiControl(int channel, int control, int value)
-    {
-        ControlChangeEvent midiWD = new ControlChangeEvent();
-        midiWD.Channel = (FourBitNumber)channel;
-        midiWD.ControlNumber = (SevenBitNumber)control;
-        midiWD.ControlValue = (SevenBitNumber)value;
-
-        midiOutput.SendEvent(midiWD);
-    }
-
-    //Unlocks world receiver
+    /// <summary>
+    /// Sends a sequence of commands to 'knock' the world receiver into accepting data.
+    /// MIDIDMX on the world side may not respond until this is done.
+    /// </summary>
     private void midiKnock()
     {
-        if (midiOutput != null)
-        {
-            SendMidiControl(15, 127, 101);
-            SendMidiControl(15, 127, 120);
-            SendMidiControl(15, 127, 107);
-        }
+        SendMidiControl(15, 127, 101);
+        SendMidiControl(15, 127, 120);
+        SendMidiControl(15, 127, 107);
     }
 
-    //Finds and opens VRC Log
-    //Closes the stream if it's already open [will find latest file if needed]
+    /// <summary>
+    /// Finds the VRC log to watch for watchdog signals.
+    /// This will close the stream and find the latest log available if called again.
+    /// </summary>
     private void findVRCLog()
     {
         if (logStream != null)
