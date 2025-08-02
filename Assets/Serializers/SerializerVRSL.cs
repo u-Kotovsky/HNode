@@ -5,10 +5,18 @@ using UnityEngine;
 
 public class VRSL : IDMXSerializer
 {
+    public enum OutputConfigs
+    {
+        HorizontalTop,
+        VerticalLeft,
+        VerticalRight,
+        HorizontalBottom,
+    }
     const int blockSize = 16; // 10x10 pixels per channel block
     const int blocksPerCol = 13; // channels per column
     public bool OutputGamma = true;
     public bool InputGamma = true;
+    public OutputConfigs outputConfig = OutputConfigs.HorizontalTop;
     public void Construct() { }
     public void InitFrame() { }
     public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight) { }
@@ -16,6 +24,40 @@ public class VRSL : IDMXSerializer
     public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)
     {
         GetPositionData(channel, out int x, out int y, out int universeOffset);
+
+        //if vertical, flip
+        switch (outputConfig)
+        {
+            case OutputConfigs.HorizontalTop:
+                x += universeOffset;
+                break;
+            case OutputConfigs.HorizontalBottom:
+                x += universeOffset;
+                y += textureHeight - (blocksPerCol * blockSize); // Shift down for horizontal bottom layout
+                break;
+            case OutputConfigs.VerticalLeft:
+                //swap x and y
+                int temp = x;
+                x = y;
+                y = temp;
+                y += universeOffset;
+                //flip Y coordinate
+                y = textureHeight - y - blockSize; // Flip Y coordinate for vertical layout
+                break;
+            case OutputConfigs.VerticalRight:
+                //swap x and y
+                temp = x;
+                x = y;
+                y = temp;
+                y += universeOffset;
+                //flip Y coordinate
+                y = textureHeight - y - blockSize; // Flip Y coordinate for vertical layout
+                x += textureWidth - (blocksPerCol * blockSize); // Shift to the right for vertical right layout
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(outputConfig), outputConfig, null);
+        }
+        
 
         //convert the x y to pixel index
         //return 4x4 area
@@ -26,7 +68,7 @@ public class VRSL : IDMXSerializer
             Util.GetBlockAlpha(channelValue)
         );
         if (OutputGamma) { color = color.linear; } //lol WTF VRSL, you output in a converted color space instead of native linear???????
-        TextureWriter.MakeColorBlock(ref pixels, x + universeOffset, y, color, blockSize);
+        TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
     }
 
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight)
