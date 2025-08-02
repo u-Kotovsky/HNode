@@ -22,6 +22,13 @@ public class MIDIDMX : IExporter
     public bool useEditorLog;
     public int channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
 
+    public enum Status : int
+    {
+        Disconnected, //Not connected to MIDI
+        ConnectedWait, //Connected to MIDI, not connected to world.
+        ConnectedSendingData, //Connected to world and sending data
+    }
+
     const int maxChannels = 16384;
     const int channelsPerUpdate = 100; //KEEP THIS AT 100 until VRC fixes their buffers :)
     const int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
@@ -70,6 +77,34 @@ public class MIDIDMX : IExporter
         catch
         {
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the status of the Midi Exporter
+    /// </summary>
+    /// <returns>
+    /// Returns a MIDIDMX.Status indicating the status.
+    /// 
+    /// Status.Disconnected - No MIDI connection.
+    /// Status.ConnectedWait - Connected to MIDI, waiting on a compatible world to connect to.
+    /// Status.ConnectedSendingData - Connected to MIDI and actively sending data to a compatible world.
+    /// </returns>
+    public Status MidiStatus()
+    {
+        float midiTimeout = (float)(Stopwatch.GetTimestamp() - midiLastUpdate) / (float)Stopwatch.Frequency;
+
+        if (midiOutput == null)
+        {
+            return Status.Disconnected;
+        }
+        else if (midiTimeout > 1)
+        {
+            return Status.ConnectedWait;
+        }
+        else
+        {
+            return Status.ConnectedSendingData;
         }
     }
 
