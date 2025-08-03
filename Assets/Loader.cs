@@ -45,6 +45,7 @@ public class Loader : MonoBehaviour
         //load in all the serializers
         serializers = GetAllInterfaceImplementations<IDMXSerializer>();
         generators = GetAllInterfaceImplementations<IDMXGenerator>();
+        exporters = GetAllInterfaceImplementations<IExporter>();
 
         //find the VRSL one
         VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
@@ -133,7 +134,7 @@ public class Loader : MonoBehaviour
             serializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
         }
 
-        foreach (var exporterType in showconf.Exporters)
+        foreach (var exporterType in exporters)
         {
             //needed to tag each exporter type
             serializer.WithTagMapping("!" + exporterType.GetType().Name, exporterType.GetType());
