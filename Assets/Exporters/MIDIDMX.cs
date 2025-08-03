@@ -20,7 +20,7 @@ using UnityEngine;
 
 public class MIDIDMX : IExporter
 {
-    public bool useEditorLog;
+    public bool useEditorLog = false;
     public int channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
     public string midiDevice = "loopMIDI Port"; //Default to no device selected
 
@@ -52,7 +52,7 @@ public class MIDIDMX : IExporter
     public int channelsPerUpdate = 100; //KEEP THIS AT 100 until VRC fixes their buffers :)
     public int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
 
-    private List<byte> midiData = new List<byte>(maxChannels);
+    private int[] midiData = new int[maxChannels];
 
     private int bankStatus = 0;
     private OutputDevice midiOutput;
@@ -83,15 +83,23 @@ public class MIDIDMX : IExporter
     /// <returns>True if connected, false on any failure.</returns>
     public bool MidiConnectDevice(string device)
     {
-        try
+        if (midiOutput != null)
         {
-            midiOutput = OutputDevice.GetByName(device);
+            midiOutput.Dispose();
+            midiOutput = null;
+        }
+        
+        // try
+        // {
+        midiOutput = OutputDevice.GetByName(device);
+            UnityEngine.Debug.Log("Connected");
             return true;
-        }
-        catch
-        {
-            return false;
-        }
+        // }
+        // catch
+        // {
+        //     UnityEngine.Debug.Log("Failed to connect");
+        //     return false;
+        // }
     }
 
     /// <summary>
@@ -179,6 +187,11 @@ public class MIDIDMX : IExporter
     /// </summary>
     public void Construct()
     {
+        UnityEngine.Debug.Log("Connect: "+midiDevice);
+
+        //Repeatedly attempting to connect to a MIDI device will make the win32 api treat it as in use and prohibit access.
+        MidiConnectDevice(midiDevice);
+
         Reset();
     }
 
@@ -197,14 +210,11 @@ public class MIDIDMX : IExporter
     private void Reset()
     {
         UnityEngine.Debug.Log("Resetting MIDIDMX...");
-        midiData = new List<byte>(maxChannels);
+        midiData = new int[maxChannels];
         midiUpdates = 0;
         midiScanPosition = 0;
         midiCatchup = 0;
-
-        //attempt to connect
-        MidiConnectDevice(midiDevice);
-
+        
         findVRCLog();
         ChangeBanks(0);
         midiKnock();

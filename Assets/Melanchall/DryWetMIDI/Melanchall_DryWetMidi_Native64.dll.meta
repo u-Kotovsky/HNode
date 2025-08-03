@@ -1,10 +1,8 @@
 fileFormatVersion: 2
-guid: 2a7ac24ae551a0649b9ceeaa6422c532
-labels:
-- NuGetForUnity
+guid: 0cc4c49b6f4e58145badf186870fce0e
 PluginImporter:
   externalObjects: {}
-  serializedVersion: 3
+  serializedVersion: 2
   iconMap: {}
   executionOrder: {}
   defineConstraints: []
@@ -13,17 +11,24 @@ PluginImporter:
   isExplicitlyReferenced: 0
   validateReferences: 1
   platformData:
-    Any:
+  - first:
+      Any: 
+    second:
       enabled: 1
       settings: {}
-    Editor:
+  - first:
+      Editor: Editor
+    second:
       enabled: 0
       settings:
         DefaultValueInitialized: true
-    WindowsStoreApps:
-      enabled: 0
-      settings:
-        CPU: AnyCPU
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 222171
+  packageName: DryWetMIDI
+  packageVersion: 8.0.2
+  assetPath: Assets/Melanchall/DryWetMIDI/Melanchall_DryWetMidi_Native64.dll
+  uploadId: 776551
