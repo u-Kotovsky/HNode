@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Composing;
 using Melanchall.DryWetMidi.Core;
@@ -29,35 +30,47 @@ public class MIDIDMX : IExporter
         ConnectedSendingData, //Connected to world and sending data
     }
 
+    public enum ControlCode : int
+    {
+        KnockStart = 101,
+        KnockMiddle = 120,
+        KnockFinish = 107,
+        Watchdog = 127,
+        Clear = 100,
+        ChangeToBank0 = 0,
+        ChangeToBank1 = 1,
+        ChangeToBank2 = 2,
+        ChangeToBank3 = 3,
+        ChangeToBank4 = 4,
+        ChangeToBank5 = 5,
+        ChangeToBank6 = 6,
+        ChangeToBank7 = 7,
+    }
+
     const int maxChannels = 16384;
-    const int channelsPerUpdate = 100; //KEEP THIS AT 100 until VRC fixes their buffers :)
-    const int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
+    public int channelsPerUpdate = 100; //KEEP THIS AT 100 until VRC fixes their buffers :)
+    public int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
 
-    byte[] midiData = new byte[maxChannels];
+    private List<byte> midiData = new List<byte>(maxChannels);
 
-    int bankStatus = 0;
-    OutputDevice midiOutput;
-    FileStream logStream;
-
-    int midiUpdates = 0;
-    int midiCatchup = 0;
-    int midiScanPosition = 0;
-
-    long midiLastUpdate = 0;
+    private int bankStatus = 0;
+    private OutputDevice midiOutput;
+    private FileStream logStream;
+    private int midiUpdates = 0;
+    private int midiCatchup = 0;
+    private int midiScanPosition = 0;
+    private long midiLastUpdate = 0;
 
     /// <summary>
     /// Gets list of MIDI devices
     /// </summary>
     /// <returns>String List of devices</returns>
-    public ICollection<string> GetMidiDevices()
+    public List<string> GetMidiDevices()
     {
-        ICollection<string> tDevices = new List<string> { "(none)" };
+        List<string> tDevices = new List<string> { "(none)" };
         ICollection<OutputDevice> devices = OutputDevice.GetAll();
 
-        foreach (OutputDevice device in devices)
-        {
-            tDevices.Add(device.Name);
-        }
+        tDevices.AddRange(devices.Select(device => device.Name));
 
         return tDevices;
     }
@@ -108,28 +121,10 @@ public class MIDIDMX : IExporter
         }
     }
 
-    /// <summary>
-    /// Serializes a channel from a raw byte representation
-    /// </summary>
-    /// <param name="channelValue"></param>
-    /// <param name="channel"></param>
-    public void SerializeChannel(byte channelValue, int channel)
-    {
-    }
+    public void SerializeChannel(byte channelValue, int channel) { }
 
-    /// <summary>
-    /// Called at the start of each frame to reset any state.
-    /// </summary>
-    public void InitFrame()
-    {
-    }
+    public void InitFrame() { }
 
-    /// <summary>
-    /// Called after all channels have been serialized for the current frame.
-    /// Can be used to for example generate a CRC block area, or operate on multiple channels at once.
-    /// </summary>
-    /// <param name="pixels"></param>
-    /// <param name="channelValues"></param>
     public void CompleteFrame(ref List<byte> channelValues)
     {
         if (isMidiReady())
@@ -191,11 +186,8 @@ public class MIDIDMX : IExporter
     /// </summary>
     public void Deconstruct()
     {
-        if (midiOutput != null)
-            midiOutput.Dispose();
-
-        if (logStream != null)
-            logStream.Close();
+        midiOutput?.Dispose();
+        logStream?.Close();
     }
 
     /// <summary>
@@ -203,7 +195,7 @@ public class MIDIDMX : IExporter
     /// </summary>
     private void Reset()
     {
-        midiData = new byte[maxChannels];
+        midiData = new List<byte>(maxChannels);
         midiUpdates = 0;
         midiScanPosition = 0;
         midiCatchup = 0;
@@ -233,39 +225,39 @@ public class MIDIDMX : IExporter
 
         if (channel < 1024)
         {
-            int t = channel;
-            NoteOnEvent noteOn = new NoteOnEvent();
-            noteOn.Channel = (FourBitNumber)((t >> 6) & 0xF);
-            noteOn.NoteNumber = (SevenBitNumber)(((t << 1) & 0x7F) + ((value >> 7) & 0x1));
-            noteOn.Velocity = (SevenBitNumber)(value & 0x7F);
-            midiOutput.SendEvent(noteOn);
+            Send18BitMessage<NoteOnEvent>(channel, value, 0);
         }
         else
         {
-            int t = channel - 1024;
-            NoteOffEvent noteOff = new NoteOffEvent();
-            noteOff.Channel = (FourBitNumber)((t >> 6) & 0xF);
-            noteOff.NoteNumber = (SevenBitNumber)(((t << 1) & 0x7F) + ((value >> 7) & 0x1));
-            noteOff.Velocity = (SevenBitNumber)(value & 0x7F);
-            midiOutput.SendEvent(noteOff);
+            Send18BitMessage<NoteOffEvent>(channel, value, 1024);
         }
         midiUpdates++;
+    }
+
+    private void Send18BitMessage<T>(int channel, byte channelvalue, int channeloffset) where T : NoteEvent, new()
+    {
+        int t = channel - channeloffset;
+        T noteOff = new()
+        {
+            Channel = (FourBitNumber)((t >> 6) & 0xF),
+            NoteNumber = (SevenBitNumber)(((t << 1) & 0x7F) + ((channelvalue >> 7) & 0x1)),
+            Velocity = (SevenBitNumber)(channelvalue & 0x7F)
+        };
+        midiOutput.SendEvent(noteOff);
     }
 
     /// <summary>
     /// Sends a MIDI control signal
     /// </summary>
     /// <param name="channel">Channel, usually 15 for MIDIDMX</param>
-    /// <param name="control">Control number/note number</param>
-    /// <param name="value">Value</param>
-    private void SendMidiControl(int channel, int control, int value)
+    private void SendMidiControl(int channel, ControlCode code)
     {
         if (midiOutput == null) return;
 
         ControlChangeEvent midiWD = new ControlChangeEvent();
         midiWD.Channel = (FourBitNumber)channel;
-        midiWD.ControlNumber = (SevenBitNumber)control;
-        midiWD.ControlValue = (SevenBitNumber)value;
+        midiWD.ControlNumber = (SevenBitNumber)127; //constant magic number for control codes
+        midiWD.ControlValue = (SevenBitNumber)(int)code;
 
         midiOutput.SendEvent(midiWD);
     }
@@ -279,10 +271,9 @@ public class MIDIDMX : IExporter
     {
         bankStatus = bank;
 
-        if (bank < 0) bank = 0;
-        if (bank > 7) bank = 7;
+        Mathf.Clamp(bank, (int)ControlCode.ChangeToBank0, (int)ControlCode.ChangeToBank7);
 
-        SendMidiControl(15, 127, bank);
+        SendMidiControl(15, (ControlCode)bank);
         midiUpdates++;
     }
 
@@ -342,7 +333,7 @@ public class MIDIDMX : IExporter
     /// </summary>
     private void midiWatchdog()
     {
-        SendMidiControl(15, 127, 127);
+        SendMidiControl(15, ControlCode.Watchdog);
     }
 
     /// <summary>
@@ -351,9 +342,9 @@ public class MIDIDMX : IExporter
     /// </summary>
     private void midiKnock()
     {
-        SendMidiControl(15, 127, 101);
-        SendMidiControl(15, 127, 120);
-        SendMidiControl(15, 127, 107);
+        SendMidiControl(15, ControlCode.KnockStart);
+        SendMidiControl(15, ControlCode.KnockMiddle);
+        SendMidiControl(15, ControlCode.KnockFinish);
     }
 
     /// <summary>
