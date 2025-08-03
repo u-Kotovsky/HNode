@@ -22,6 +22,7 @@ public class MIDIDMX : IExporter
 {
     public bool useEditorLog;
     public int channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
+    public string midiDevice = "loopMIDI Port"; //Default to no device selected
 
     public enum Status : int
     {
@@ -195,10 +196,14 @@ public class MIDIDMX : IExporter
     /// </summary>
     private void Reset()
     {
+        UnityEngine.Debug.Log("Resetting MIDIDMX...");
         midiData = new List<byte>(maxChannels);
         midiUpdates = 0;
         midiScanPosition = 0;
         midiCatchup = 0;
+
+        //attempt to connect
+        MidiConnectDevice(midiDevice);
 
         findVRCLog();
         ChangeBanks(0);
