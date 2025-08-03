@@ -133,6 +133,12 @@ public class Loader : MonoBehaviour
             serializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
         }
 
+        foreach (var exporterType in showconf.Exporters)
+        {
+            //needed to tag each exporter type
+            serializer.WithTagMapping("!" + exporterType.GetType().Name, exporterType.GetType());
+        }
+
         //build it
         ymlserializer = serializer.Build();
 
