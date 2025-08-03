@@ -52,6 +52,8 @@ public class MIDIDMX : IExporter
     public int channelsPerUpdate = 100; //KEEP THIS AT 100 until VRC fixes their buffers :)
     public int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
 
+    //changed this back to an int array since it was throwing out of bounds on a list for no obvious reason
+    //change it back if you feel like debugging.
     private int[] midiData = new int[maxChannels];
 
     private int bankStatus = 0;
@@ -83,16 +85,18 @@ public class MIDIDMX : IExporter
     /// <returns>True if connected, false on any failure.</returns>
     public bool MidiConnectDevice(string device)
     {
+        //This is really only useful if you're changing devices
+        //Reconnecting to the same device you're already connected to throws an exception on windows
         if (midiOutput != null)
         {
             midiOutput.Dispose();
             midiOutput = null;
         }
         
+        //commented out to let exceptions through
         // try
         // {
         midiOutput = OutputDevice.GetByName(device);
-            UnityEngine.Debug.Log("Connected");
             return true;
         // }
         // catch
@@ -139,7 +143,6 @@ public class MIDIDMX : IExporter
         if (isMidiReady())
         {
             //Finds all channels that need data sent over
-            //Sends only up to 
             midiUpdates = 0;
             for (int i = midiCatchup; i < channelValues.Count; i++)
             {
