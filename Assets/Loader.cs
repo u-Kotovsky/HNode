@@ -21,6 +21,7 @@ public class Loader : MonoBehaviour
 
     //dmx generator source
     List<IDMXGenerator> generators;
+    List<IExporter> exporters;
     public TMP_Dropdown serializerDropdown;
     public TMP_Dropdown deserializerDropdown;
     public TMP_InputField transcodeUniverseInput;
@@ -158,6 +159,12 @@ public class Loader : MonoBehaviour
         {
             //needed to tag each generator type
             deserializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
+        }
+
+        foreach (var exporterType in exporters)
+        {
+            //needed to tag each exporter type
+            deserializer.WithTagMapping("!" + exporterType.GetType().Name, exporterType.GetType());
         }
 
         //build it
