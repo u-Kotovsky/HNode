@@ -55,6 +55,10 @@ public static class Util
         rt.SetBottom(bottom);
     }
 
+    private const float FONTSIZE = 24f;
+    private const float TEXTWIDTH = 500f;
+    private const float ELEMENTHEIGHT = 30f;
+
 
 
     //helper funcs for UI
@@ -87,6 +91,8 @@ public static class Util
         SetRectCenterStretch((RectTransform)textObject.transform);
         textComponent.text = text;
         textComponent.color = Color.white; //default color
+        textComponent.fontSize = FONTSIZE;
+
         return textComponent;
     }
 
@@ -99,12 +105,13 @@ public static class Util
         var img = buttonObject.AddComponent<Image>();
         button.targetGraphic = img;
 
-        ((RectTransform)buttonObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 50f);
+        ((RectTransform)buttonObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, ELEMENTHEIGHT);
 
         GameObject textObject = new GameObject("Text");
         textObject.transform.SetParent(buttonObject.transform, false);
         var textComponent = textObject.AddComponent<TextMeshProUGUI>();
         textComponent.text = title;
+        textComponent.fontSize = FONTSIZE;
 
         SetRectCenterStretch((RectTransform)textObject.transform);
 
@@ -118,11 +125,12 @@ public static class Util
         var toggle = toggleObject.AddComponent<Toggle>();
         toggle.colors = normalColorBlock;
 
-        ((RectTransform)toggleObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 50f);
+        ((RectTransform)toggleObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, ELEMENTHEIGHT);
 
         GameObject textObject = new GameObject("Text");
         textObject.transform.SetParent(toggleObject.transform, false);
         var textComponent = textObject.AddComponent<TextMeshProUGUI>();
+        textComponent.fontSize = FONTSIZE;
         textComponent.text = title;
 
         SetRectCenterStretch((RectTransform)textObject.transform);
@@ -135,7 +143,7 @@ public static class Util
         SetRectCenterStretch((RectTransform)backgroundObject.transform);
 
         //set the height of the input field
-        ((RectTransform)backgroundObject.transform).SetLeft(300f);
+        ((RectTransform)backgroundObject.transform).SetLeft(TEXTWIDTH);
 
         toggle.targetGraphic = backgroundImage;
 
@@ -159,7 +167,7 @@ public static class Util
         layoutObject.AddComponent<RectTransform>();
 
         //set height
-        ((RectTransform)layoutObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 50f);
+        ((RectTransform)layoutObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, ELEMENTHEIGHT);
 
         var textObj = AddText((RectTransform)layoutObject.transform, title);
 
@@ -174,7 +182,7 @@ public static class Util
         SetRectCenterStretch((RectTransform)inputFieldObject.transform);
 
         //set the height of the input field
-        ((RectTransform)inputFieldObject.transform).SetLeft(300f);
+        ((RectTransform)inputFieldObject.transform).SetLeft(TEXTWIDTH);
 
         //sub object text area
         GameObject textAreaObject = new GameObject("TextArea");
@@ -187,12 +195,16 @@ public static class Util
         GameObject placeholderTextObject = new GameObject("Placeholder");
         placeholderTextObject.transform.SetParent(textAreaObject.transform, false);
         var placeholderText = placeholderTextObject.AddComponent<TextMeshProUGUI>();
+        placeholderText.fontSize = FONTSIZE;
         SetRectCenterStretch((RectTransform)placeholderTextObject.transform);
-        placeholderText.text = "....";
+        placeholderText.text = "Placeholder....";
+        //make it gray
+        placeholderText.color = Color.gray;
 
         GameObject textObject = new GameObject("Text");
         textObject.transform.SetParent(textAreaObject.transform, false);
         var text = textObject.AddComponent<TextMeshProUGUI>();
+        text.fontSize = FONTSIZE;
         SetRectCenterStretch((RectTransform)textObject.transform);
 
         inputfield.textComponent = text;

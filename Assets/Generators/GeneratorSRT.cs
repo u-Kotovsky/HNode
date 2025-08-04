@@ -1,13 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SRT : Text
 {
     //file path to SRT file
     public string filePath = "";
-    public bool generateSubtitlePercentage= false;
+    public bool generateSubtitlePercentage = false;
     public int subtitlePercentChannel = 0;
 
     public Mode mode = Mode.OnConfigLoad;
@@ -71,6 +73,8 @@ public class SRT : Text
     //constructor, unusual but used to setup the initial file load
     public override void Construct()
     {
+        events.Clear();
+
         Debug.Log("SRT Construct called, loading file: " + filePath);
         string lyricsraw = "";
         //load the file if it exists
@@ -146,5 +150,58 @@ public class SRT : Text
         {
             return $"{start} --> {end}: {text}";
         }
+    }
+
+    private protected TMP_InputField filePathInputfield;
+    private protected Toggle subtitlePercentageToggle;
+    private protected TMP_InputField subtitlePercentChannelInputfield;
+    private protected Button reloadButton;
+    public override void ConstructUserInterface(RectTransform rect)
+    {
+        base.ConstructUserInterface(rect);
+
+        //disable interaction
+        if (textInputfield != null)
+        {
+            textInputfield.interactable = false;
+        }
+
+        //add input field for file path
+        filePathInputfield = Util.AddInputField(rect, "File Path");
+        filePathInputfield.text = filePath;
+        filePathInputfield.onEndEdit.AddListener((value) =>
+        {
+            filePath = value;
+            Construct(); //reload the SRT file
+        });
+
+        //add a button to reload the SRT file
+        reloadButton = Util.AddButton(rect, "Reload SRT File");
+        reloadButton.onClick.AddListener(() =>
+        {
+            Construct(); //reload the SRT file
+        });
+
+        subtitlePercentageToggle = Util.AddToggle(rect, "Generate Subtitle Percentage Channel");
+        subtitlePercentageToggle.isOn = generateSubtitlePercentage;
+        subtitlePercentageToggle.onValueChanged.AddListener((value) =>
+        {
+            generateSubtitlePercentage = value;
+        });
+
+        subtitlePercentChannelInputfield = Util.AddInputField(rect, "Subtitle Percentage Channel");
+        subtitlePercentChannelInputfield.text = subtitlePercentChannel.ToString();
+        subtitlePercentChannelInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+        subtitlePercentChannelInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int newChannel))
+            {
+                subtitlePercentChannel = newChannel;
+            }
+            else
+            {
+                Debug.LogError($"Invalid channel value: {value}");
+            }
+        });
     }
 }

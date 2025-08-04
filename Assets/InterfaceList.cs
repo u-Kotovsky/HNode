@@ -93,26 +93,33 @@ public class InterfaceList : MonoBehaviour
             layoutRect.SetHeight(40f);
 
             //add a button
-            Util.AddButton(layoutRect, "Delete").onClick.AddListener(() =>
+            var delbut = Util.AddButton(layoutRect, "Delete");
+            delbut.onClick.AddListener(() =>
             {
                 del?.Invoke(copy);
             });
+            //center the text in it
+            delbut.GetComponentInChildren<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
 
-            Util.AddButton(layoutRect, "Move Up").onClick.AddListener(() =>
+            var upbut = Util.AddButton(layoutRect, "Move Up");
+            upbut.onClick.AddListener(() =>
             {
                 if (copy > 0)
                 {
                     swap?.Invoke(copy, copy - 1);
                 }
             });
+            upbut.GetComponentInChildren<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
 
-            Util.AddButton(layoutRect, "Move Down").onClick.AddListener(() =>
+            var downbut = Util.AddButton(layoutRect, "Move Down");
+            downbut.onClick.AddListener(() =>
             {
                 if (copy < possibleUserInterfaces.Count - 1)
                 {
                     swap?.Invoke(copy, copy + 1);
                 }
             });
+            downbut.GetComponentInChildren<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
         }
 
         //clear dropdown

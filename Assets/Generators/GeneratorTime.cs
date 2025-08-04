@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class Time : Text
@@ -15,6 +16,8 @@ public class Time : Text
         base.GenerateDMX(ref dmxData);
     }
 
+    private protected TMP_InputField formatInputfield;
+
     public override void ConstructUserInterface(RectTransform rect)
     {
         base.ConstructUserInterface(rect);
@@ -24,5 +27,12 @@ public class Time : Text
         {
             textInputfield.interactable = false;
         }
+
+        formatInputfield = Util.AddInputField(rect, "Format");
+        formatInputfield.text = format;
+        formatInputfield.onEndEdit.AddListener((value) =>
+        {
+            format = value;
+        });
     }
 }
