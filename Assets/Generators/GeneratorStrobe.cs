@@ -14,7 +14,7 @@ public class Strobe : IDMXGenerator
     public void Deconstruct() { }
     public void GenerateDMX(ref List<byte> dmxData)
     {
-        dmxData.EnsureCapacity(channel);
+        dmxData.EnsureCapacity(channel + 1);
 
         //use system time to determine if we are on or off
         var time = DateTime.Now.Millisecond;

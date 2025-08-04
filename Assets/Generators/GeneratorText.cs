@@ -137,18 +137,6 @@ public class Text : IDMXGenerator
     private protected Toggle lengthLimitToggle;
     public virtual void ConstructUserInterface(RectTransform rect)
     {
-        //throw new NotImplementedException();
-        //setup vertical layout
-        var layoutGroup = rect.gameObject.AddComponent<VerticalLayoutGroup>();
-        layoutGroup.childScaleHeight = true;
-        layoutGroup.childControlHeight = false;
-        layoutGroup.childControlWidth = true;
-        layoutGroup.childForceExpandWidth = true;
-        layoutGroup.childForceExpandHeight = false;
-
-        //recalculate children
-        layoutGroup.CalculateLayoutInputVertical();
-
         //new object for the input field
         textInputfield = Util.AddInputField(rect, "Text");
         textInputfield.text = text;

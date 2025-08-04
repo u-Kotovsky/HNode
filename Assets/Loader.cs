@@ -57,7 +57,7 @@ public class Loader : MonoBehaviour
         }
 
         //find the VRSL one
-            VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
+        VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
 
         Debug.Log($"Loaded {serializers.Count} serializers");
 
@@ -177,6 +177,8 @@ public class Loader : MonoBehaviour
 
         //build it
         ymldeserializer = deserializer.Build();
+
+        SetupUI();
     }
 
     void Update()
@@ -366,7 +368,7 @@ public class Loader : MonoBehaviour
         {
             //cursed but just try to init with all of them, filter on the interfacelist side
             //interfaceList.Initialize(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
-            interfaceList.Initialize<IDMXGenerator>(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList(), (index) =>
+            interfaceList.Initialize<IDMXGenerator>(showconf.Generators, generators, (index) =>
             {
                 //when called, remove the type from the show configuration
                 var generator = showconf.Generators[index];
@@ -382,6 +384,15 @@ public class Loader : MonoBehaviour
                 var temp = showconf.Generators[index1];
                 showconf.Generators[index1] = showconf.Generators[index2];
                 showconf.Generators[index2] = temp;
+
+                //setup UI again to refresh everything
+                SetupUI();
+            }, (type) =>
+            {
+                //add a new generator of the type
+                var generator = (IDMXGenerator)Activator.CreateInstance(type);
+                generator.Construct();
+                showconf.Generators.Add(generator);
 
                 //setup UI again to refresh everything
                 SetupUI();
