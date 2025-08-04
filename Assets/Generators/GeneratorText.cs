@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using static Unity.Collections.Unicode;
 
@@ -99,7 +100,7 @@ public class Text : IDMXGenerator
             }
             text = cleaned;
         }
-        
+
         //trim to max characters if the control is present
         if (limitLength && text.Length > maxCharacters)
         {
@@ -125,6 +126,28 @@ public class Text : IDMXGenerator
         for (int i = channelStart; i < channelStart + textBytes.Length; i++)
         {
             dmxData[i] = textBytes[i - channelStart];
+        }
+    }
+
+    private TextMeshProUGUI tex;
+    public void ConstructUserInterface(RectTransform rect)
+    {
+        //throw new NotImplementedException();
+        //place some goofy ahh stuff in the rect
+        tex = rect.gameObject.AddComponent<TextMeshProUGUI>();
+        tex.text = text;
+    }
+
+    public void DeconstructUserInterface()
+    {
+        //throw new NotImplementedException();
+    }
+
+    public void UpdateUserInterface()
+    {
+        if (tex != null)
+        {
+            tex.text = text;
         }
     }
 }

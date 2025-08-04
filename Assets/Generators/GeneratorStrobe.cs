@@ -31,4 +31,19 @@ public class Strobe : IDMXGenerator
             dmxData[channel] = valueOff;
         }
     }
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+        //throw new NotImplementedException();
+    }
+
+    public void DeconstructUserInterface()
+    {
+        //throw new NotImplementedException();
+    }
+
+    public void UpdateUserInterface()
+    {
+        
+    }
 }

@@ -22,6 +22,7 @@ public class Loader : MonoBehaviour
     //dmx generator source
     List<IDMXGenerator> generators;
     List<IExporter> exporters;
+    List<InterfaceList> interfaceLists;
     public TMP_Dropdown serializerDropdown;
     public TMP_Dropdown deserializerDropdown;
     public TMP_InputField transcodeUniverseInput;
@@ -48,8 +49,15 @@ public class Loader : MonoBehaviour
         generators = GetAllInterfaceImplementations<IDMXGenerator>();
         exporters = GetAllInterfaceImplementations<IExporter>();
 
+        //startup all interface lists
+        interfaceLists = FindObjectsByType<InterfaceList>(FindObjectsInactive.Include, FindObjectsSortMode.None).ToList();
+        foreach (var interfaceList in interfaceLists)
+        {
+            interfaceList.Startup();
+        }
+
         //find the VRSL one
-        VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
+            VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
 
         Debug.Log($"Loaded {serializers.Count} serializers");
 
@@ -171,6 +179,16 @@ public class Loader : MonoBehaviour
         ymldeserializer = deserializer.Build();
     }
 
+    void Update()
+    {
+        foreach (var interfaceList in interfaceLists)
+        {
+            //cursed but just try to init with all of them, filter on the interfacelist side
+            //interfaceList.Initialize(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
+            interfaceList.UpdateInterface(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList());
+        }
+    }
+
     private List<T> GetAllInterfaceImplementations<T>()
     {
         var type = typeof(T);
@@ -285,11 +303,13 @@ public class Loader : MonoBehaviour
         //deconstruct all generators before we lose references to them
         foreach (var generator in showconf.Generators)
         {
+            generator.DeconstructUserInterface();
             generator.Deconstruct();
         }
 
         foreach (var exporter in showconf.Exporters)
         {
+            //exporter.DeconstructUserInterface();
             exporter.Deconstruct();
         }
 
@@ -332,6 +352,14 @@ public class Loader : MonoBehaviour
         artNetReceiver.ChangePort(showconf.ArtNetPort);
 
         SetFramerate(showconf.TargetFramerate);
+
+        //get all InterfaceList and initialize them
+        foreach (var interfaceList in interfaceLists)
+        {
+            //cursed but just try to init with all of them, filter on the interfacelist side
+            //interfaceList.Initialize(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
+            interfaceList.Initialize(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList());
+        }
     }
 
     private static void SetFramerate(int targetFramerate)

@@ -143,7 +143,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             }
 
             //send data for all drones
-                const int perUpdate = 10; //how many drones to process per update
+            const int perUpdate = 10; //how many drones to process per update
             int currentCount = 0;
             foreach (Drone d in drones.Values)
             {
@@ -525,7 +525,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         Debug.Log($"Unhandled message: {messageId}");
                         break;
                 }
-                }
+            }
 
             await UniTask.Delay(1);
         }
@@ -687,7 +687,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
 
         DateTime GetFromGps(int weeknumber, double seconds)
         {
-            DateTime datum = new DateTime(1980,1,6,0,0,0);
+            DateTime datum = new DateTime(1980, 1, 6, 0, 0, 0);
             DateTime week = datum.AddDays(weeknumber * 7);
             DateTime time = week.AddSeconds(seconds);
             //subtract leap seconds
@@ -1570,5 +1570,20 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 }
             }
         }
+    }
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+        //throw new NotImplementedException();
+    }
+
+    public void DeconstructUserInterface()
+    {
+        //throw new NotImplementedException();
+    }
+    
+    public void UpdateUserInterface()
+    {
+        
     }
 }
