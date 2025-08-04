@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class Strobe : IDMXGenerator
@@ -32,9 +33,71 @@ public class Strobe : IDMXGenerator
         }
     }
 
+    private protected TMP_InputField channelInputfield;
+    private protected TMP_InputField valueOnInputfield;
+    private protected TMP_InputField valueOffInputfield;
+    private protected TMP_InputField frequencyInputfield;
     public void ConstructUserInterface(RectTransform rect)
     {
-        //throw new NotImplementedException();
+        channelInputfield = Util.AddInputField(rect, "Channel");
+        channelInputfield.text = channel.ToString();
+        channelInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+        channelInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int newChannel))
+            {
+                channel = newChannel;
+            }
+            else
+            {
+                Debug.LogWarning("Invalid channel input, must be an integer.");
+            }
+        });
+
+        valueOnInputfield = Util.AddInputField(rect, "Value On");
+        valueOnInputfield.text = valueOn.ToString();
+        valueOnInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+        valueOnInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (byte.TryParse(value, out byte newValue))
+            {
+                valueOn = newValue;
+            }
+            else
+            {
+                Debug.LogWarning("Invalid value for 'On', must be a byte.");
+            }
+        });
+
+        valueOffInputfield = Util.AddInputField(rect, "Value Off");
+        valueOffInputfield.text = valueOff.ToString();
+        valueOffInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+        valueOffInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (byte.TryParse(value, out byte newValue))
+            {
+                valueOff = newValue;
+            }
+            else
+            {
+                Debug.LogWarning("Invalid value for 'Off', must be a byte.");
+            }
+        });
+
+        frequencyInputfield = Util.AddInputField(rect, "Frequency (Hz)");
+        frequencyInputfield.text = frequency.ToString();
+        frequencyInputfield.contentType = TMP_InputField.ContentType.DecimalNumber;
+        frequencyInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (float.TryParse(value, out float newFrequency) && newFrequency > 0)
+            {
+                frequency = newFrequency;
+            }
+            else
+            {
+                Debug.LogWarning("Invalid frequency input, must be a positive number.");
+            }
+        });
     }
 
     public void DeconstructUserInterface()
