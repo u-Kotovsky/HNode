@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Composing;
 using Melanchall.DryWetMidi.Core;
@@ -49,7 +51,7 @@ public class MIDIDMX : IExporter
     }
 
     const int maxChannels = 16384;
-    public int channelsPerUpdate = 100; //KEEP THIS AT 100 until VRC fixes their buffers :)
+    public int channelsPerUpdate = 100 /* 1024 / 8 */; //KEEP THIS AT 100 until VRC fixes their buffers :)
     public int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
 
     //changed this back to an int array since it was throwing out of bounds on a list for no obvious reason
@@ -83,27 +85,22 @@ public class MIDIDMX : IExporter
     /// </summary>
     /// <param name="device">String name of device to connect to.</param>
     /// <returns>True if connected, false on any failure.</returns>
-    public bool MidiConnectDevice(string device)
+    public void MidiConnectDevice(string device)
     {
         //This is really only useful if you're changing devices
         //Reconnecting to the same device you're already connected to throws an exception on windows
         if (midiOutput != null)
         {
+            UnityEngine.Debug.Log("Dispose");
             midiOutput.Dispose();
             midiOutput = null;
+            //force GC call
+            GC.Collect();
         }
-        
+
         //commented out to let exceptions through
-        // try
-        // {
         midiOutput = OutputDevice.GetByName(device);
-            return true;
-        // }
-        // catch
-        // {
-        //     UnityEngine.Debug.Log("Failed to connect");
-        //     return false;
-        // }
+        midiOutput.PrepareForEventsSending();
     }
 
     /// <summary>
@@ -178,9 +175,9 @@ public class MIDIDMX : IExporter
             float midiTimeout = (float)(Stopwatch.GetTimestamp() - midiLastUpdate) / (float)Stopwatch.Frequency;
             if (midiTimeout > 1)
             {
-                Reset();
-
                 midiLastUpdate = Stopwatch.GetTimestamp();
+
+                Reset();
             }
         }
     }
@@ -190,9 +187,9 @@ public class MIDIDMX : IExporter
     /// </summary>
     public void Construct()
     {
-        UnityEngine.Debug.Log("Connect: "+midiDevice);
+        UnityEngine.Debug.Log("Connect: " + midiDevice);
 
-        //Repeatedly attempting to connect to a MIDI device will make the win32 api treat it as in use and prohibit access.
+        midiLastUpdate = Stopwatch.GetTimestamp();
         MidiConnectDevice(midiDevice);
 
         Reset();
@@ -217,8 +214,9 @@ public class MIDIDMX : IExporter
         midiUpdates = 0;
         midiScanPosition = 0;
         midiCatchup = 0;
-        
+
         findVRCLog();
+
         ChangeBanks(0);
         midiKnock();
         midiWatchdog();
