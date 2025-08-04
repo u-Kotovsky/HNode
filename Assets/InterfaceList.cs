@@ -66,6 +66,7 @@ public class InterfaceList : MonoBehaviour
             RectTransform layoutRect = layoutObject.AddComponent<RectTransform>();
             layoutObject.transform.SetParent(rectTransform, false);
             HorizontalLayoutGroup layoutGroup = layoutObject.AddComponent<HorizontalLayoutGroup>();
+            layoutRect.SetHeight(40f);
 
             //add a button
             Util.AddButton(layoutRect, "Delete").onClick.AddListener(() =>
