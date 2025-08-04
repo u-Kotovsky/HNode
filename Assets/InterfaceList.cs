@@ -50,6 +50,11 @@ public class InterfaceList : MonoBehaviour
             //get the rect transform
             RectTransform rectTransform = newObject.AddComponent<RectTransform>();
 
+            //add text
+            var tex = Util.AddText(rectTransform, possibleUserInterfaces[i].GetType().Name);
+            //add image
+            tex.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 40f);
+
             //construct the user interface
             possibleUserInterfaces[i].ConstructUserInterface(rectTransform);
 
