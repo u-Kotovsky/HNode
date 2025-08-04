@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InterfaceList : MonoBehaviour
 {
@@ -60,13 +61,19 @@ public class InterfaceList : MonoBehaviour
             //needed because I gets hoisted once, this makes a hoist per iteration
             int copy = i;
 
+            //setup a horizontal layout group
+            GameObject layoutObject = new GameObject("HorizontalLayout");
+            RectTransform layoutRect = layoutObject.AddComponent<RectTransform>();
+            layoutObject.transform.SetParent(rectTransform, false);
+            HorizontalLayoutGroup layoutGroup = layoutObject.AddComponent<HorizontalLayoutGroup>();
+
             //add a button
-            Util.AddButton(rectTransform, "Delete").onClick.AddListener(() =>
+            Util.AddButton(layoutRect, "Delete").onClick.AddListener(() =>
             {
                 del?.Invoke(copy);
             });
 
-            Util.AddButton(rectTransform, "Move Up").onClick.AddListener(() =>
+            Util.AddButton(layoutRect, "Move Up").onClick.AddListener(() =>
             {
                 if (copy > 0)
                 {
@@ -74,7 +81,7 @@ public class InterfaceList : MonoBehaviour
                 }
             });
 
-            Util.AddButton(rectTransform, "Move Down").onClick.AddListener(() =>
+            Util.AddButton(layoutRect, "Move Down").onClick.AddListener(() =>
             {
                 if (copy < possibleUserInterfaces.Count - 1)
                 {
