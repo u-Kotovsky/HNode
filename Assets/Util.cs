@@ -45,6 +45,22 @@ public static class Util
         rect.offsetMax = Vector2.zero;
     }
 
+    internal static TextMeshProUGUI AddText(RectTransform rect, string text = "")
+    {
+        GameObject textObject = new GameObject("Text");
+        textObject.transform.SetParent(rect, false);
+        var textComponent = textObject.AddComponent<TextMeshProUGUI>();
+        SetRectCenterStretch((RectTransform)textObject.transform);
+        textComponent.text = text;
+        textComponent.color = Color.white; //default color
+        return textComponent;
+    }
+
+    internal static Toggle AddToggle(RectTransform rect)
+    {
+        
+    }
+
     internal static TMP_InputField AddInputField(RectTransform rect)
     {
         GameObject inputFieldObject = new GameObject("TextInputField");
@@ -54,6 +70,9 @@ public static class Util
         //add image
         var img = inputFieldObject.AddComponent<Image>();
         inputfield.targetGraphic = img;
+
+        //set the height of the input field
+        ((RectTransform)inputFieldObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 40);
 
         //sub object text area
         GameObject textAreaObject = new GameObject("TextArea");
