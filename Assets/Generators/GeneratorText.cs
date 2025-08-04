@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using static Unity.Collections.Unicode;
 
 public class Text : IDMXGenerator
@@ -129,13 +130,67 @@ public class Text : IDMXGenerator
         }
     }
 
-    private TextMeshProUGUI tex;
-    public void ConstructUserInterface(RectTransform rect)
+    private protected TMP_InputField textInputfield;
+    private protected TMP_InputField channelInputfield;
+    private protected TMP_InputField limitInputfield;
+    public virtual void ConstructUserInterface(RectTransform rect)
     {
         //throw new NotImplementedException();
-        //place some goofy ahh stuff in the rect
-        tex = rect.gameObject.AddComponent<TextMeshProUGUI>();
-        tex.text = text;
+        //setup vertical layout
+        var layoutGroup = rect.gameObject.AddComponent<VerticalLayoutGroup>();
+        layoutGroup.childScaleHeight = true;
+        layoutGroup.childControlHeight = false;
+        layoutGroup.childControlWidth = true;
+        layoutGroup.childForceExpandWidth = true;
+        layoutGroup.childForceExpandHeight = false;
+
+        //recalculate children
+        layoutGroup.CalculateLayoutInputVertical();
+
+        //new object for the input field
+        textInputfield = Util.AddInputField(rect);
+        textInputfield.text = text;
+
+        //watch for text update
+        textInputfield.onEndEdit.AddListener((value) =>
+        {
+            text = value;
+        });
+
+        channelInputfield = Util.AddInputField(rect);
+        channelInputfield.text = channelStart.ToString();
+        //limit to numbers
+        channelInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+
+        //watch for channel update
+        channelInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int newChannel))
+            {
+                channelStart = newChannel;
+            }
+            else
+            {
+                Debug.LogError($"Invalid channel value: {value}");
+            }
+        });
+
+        limitInputfield = Util.AddInputField(rect);
+        limitInputfield.text = maxCharacters.ToString();
+        limitInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+
+
+        limitInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int newLimit))
+            {
+                maxCharacters = newLimit;
+            }
+            else
+            {
+                Debug.LogError($"Invalid limit value: {limitInputfield.text}");
+            }
+        });
     }
 
     public void DeconstructUserInterface()
@@ -145,9 +200,9 @@ public class Text : IDMXGenerator
 
     public void UpdateUserInterface()
     {
-        if (tex != null)
+        if (textInputfield != null)
         {
-            tex.text = text;
+            textInputfield.text = text;
         }
     }
 }

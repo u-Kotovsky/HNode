@@ -14,4 +14,15 @@ public class Time : Text
         //call base now that we have filled the text
         base.GenerateDMX(ref dmxData);
     }
+
+    public override void ConstructUserInterface(RectTransform rect)
+    {
+        base.ConstructUserInterface(rect);
+
+        //disable interaction
+        if (textInputfield != null)
+        {
+            textInputfield.interactable = false;
+        }
+    }
 }
