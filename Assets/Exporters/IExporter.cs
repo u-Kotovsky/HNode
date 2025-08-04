@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IExporter
+public interface IExporter : IConstructable
 {
     /// <summary>
     /// Serializes a channel from a raw byte representation
@@ -31,11 +31,4 @@ public interface IExporter
     /// <param name="pixels"></param>
     /// <param name="channelValues"></param>
     void CompleteFrame(ref List<byte> channelValues);
-
-    /// <summary>
-    /// Called to initialize the exporter
-    /// </summary>
-    void Construct();
-    
-    void Deconstruct();
 }

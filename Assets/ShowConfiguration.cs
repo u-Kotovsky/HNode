@@ -6,10 +6,10 @@ using static UVRemapper;
 public class ShowConfiguration
 {
     //these are both saved as part of a show configuration, and as part of player prefs
-    public IDMXSerializer Serializer { get; set; }
-    public IDMXSerializer Deserializer { get; set; }
-    public List<IDMXGenerator> Generators { get; set; }
-    public List<IExporter> Exporters { get; set; }
+    public IDMXSerializer Serializer;
+    public IDMXSerializer Deserializer;
+    public List<IDMXGenerator> Generators;
+    public List<IExporter> Exporters;
     public bool Transcode { get; set; }
     public int TranscodeUniverseCount { get; set; } = 3;
     public int SerializeUniverseCount { get; set; } = int.MaxValue; //this is the maximum number of universes that can be used for serializing.

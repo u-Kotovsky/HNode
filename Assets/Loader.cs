@@ -313,6 +313,9 @@ public class Loader : MonoBehaviour
             exporter.Deconstruct();
         }
 
+        showconf.Serializer.Deconstruct();
+        showconf.Deserializer.Deconstruct();
+
         showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
 
         //invalidate the dropdowns and toggles
@@ -353,12 +356,36 @@ public class Loader : MonoBehaviour
 
         SetFramerate(showconf.TargetFramerate);
 
+        SetupUI();
+    }
+
+    private void SetupUI()
+    {
         //get all InterfaceList and initialize them
         foreach (var interfaceList in interfaceLists)
         {
             //cursed but just try to init with all of them, filter on the interfacelist side
             //interfaceList.Initialize(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
-            interfaceList.Initialize(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList());
+            interfaceList.Initialize<IDMXGenerator>(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList(), (index) =>
+            {
+                //when called, remove the type from the show configuration
+                var generator = showconf.Generators[index];
+                generator.DeconstructUserInterface();
+                generator.Deconstruct();
+                showconf.Generators.RemoveAt(index);
+
+                //setup UI again to refresh everything
+                SetupUI();
+            }, (index1, index2) =>
+            {
+                //swap the two generators in the list
+                var temp = showconf.Generators[index1];
+                showconf.Generators[index1] = showconf.Generators[index2];
+                showconf.Generators[index2] = temp;
+
+                //setup UI again to refresh everything
+                SetupUI();
+            });
         }
     }
 

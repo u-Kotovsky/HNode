@@ -12,6 +12,7 @@ public class BinaryStageFlight : IDMXSerializer
     const int CRCBits = 4;
 
     public void Construct() { }
+    public void Deconstruct() { }
     public void InitFrame() { }
     public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight)
     {

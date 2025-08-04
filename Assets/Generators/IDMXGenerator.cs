@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IDMXGenerator : IUserInterface<IDMXGenerator>
+public interface IDMXGenerator : IUserInterface<IDMXGenerator>, IConstructable
 {
     void GenerateDMX(ref List<byte> dmxData);
-    void Construct();
-    void Deconstruct();
 }

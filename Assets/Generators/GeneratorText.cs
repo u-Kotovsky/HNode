@@ -133,6 +133,8 @@ public class Text : IDMXGenerator
     private protected TMP_InputField textInputfield;
     private protected TMP_InputField channelInputfield;
     private protected TMP_InputField limitInputfield;
+    private protected Toggle unicodeToggle;
+    private protected Toggle lengthLimitToggle;
     public virtual void ConstructUserInterface(RectTransform rect)
     {
         //throw new NotImplementedException();
@@ -148,7 +150,7 @@ public class Text : IDMXGenerator
         layoutGroup.CalculateLayoutInputVertical();
 
         //new object for the input field
-        textInputfield = Util.AddInputField(rect);
+        textInputfield = Util.AddInputField(rect, "Text");
         textInputfield.text = text;
 
         //watch for text update
@@ -157,7 +159,7 @@ public class Text : IDMXGenerator
             text = value;
         });
 
-        channelInputfield = Util.AddInputField(rect);
+        channelInputfield = Util.AddInputField(rect, "Channel Start");
         channelInputfield.text = channelStart.ToString();
         //limit to numbers
         channelInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
@@ -175,7 +177,21 @@ public class Text : IDMXGenerator
             }
         });
 
-        limitInputfield = Util.AddInputField(rect);
+        unicodeToggle = Util.AddToggle(rect, "Unicode");
+        unicodeToggle.isOn = unicode;
+        unicodeToggle.onValueChanged.AddListener((value) =>
+        {
+            unicode = value;
+        });
+
+        lengthLimitToggle = Util.AddToggle(rect, "Limit Length");
+        lengthLimitToggle.isOn = limitLength;
+        lengthLimitToggle.onValueChanged.AddListener((value) =>
+        {
+            limitLength = value;
+        });
+
+        limitInputfield = Util.AddInputField(rect, "Length Limit");
         limitInputfield.text = maxCharacters.ToString();
         limitInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
 
@@ -202,7 +218,10 @@ public class Text : IDMXGenerator
     {
         if (textInputfield != null)
         {
-            textInputfield.text = text;
+            if (!textInputfield.isFocused)
+            {
+                textInputfield.text = text;
+            }
         }
     }
 }

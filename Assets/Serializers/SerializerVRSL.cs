@@ -18,6 +18,7 @@ public class VRSL : IDMXSerializer
     public bool InputGamma = true;
     public OutputConfigs outputConfig = OutputConfigs.HorizontalTop;
     public void Construct() { }
+    public void Deconstruct() { }
     public void InitFrame() { }
     public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight) { }
 

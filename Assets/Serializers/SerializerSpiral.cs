@@ -12,6 +12,7 @@ public class Spiral : IDMXSerializer
     List<Vector2Int> visited = new List<Vector2Int>();
 
     public void Construct() { }
+    public void Deconstruct() { }
     public void InitFrame()
     {
         x = 0;

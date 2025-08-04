@@ -9,6 +9,7 @@ public class Binary : IDMXSerializer
     const int blocksPerCol = 52; // channels per column
 
     public void Construct() { }
+    public void Deconstruct() { }
     public void InitFrame() { }
     public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight) { }
 

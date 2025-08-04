@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IDMXSerializer
+public interface IDMXSerializer : IConstructable
 {
     /// <summary>
     /// Serializes a channel from a raw byte representation, to a output video stream.
@@ -36,9 +36,4 @@ public interface IDMXSerializer
     /// <param name="pixels"></param>
     /// <param name="channelValues"></param>
     void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight);
-
-    /// <summary>
-    /// Called to initialize the serializer
-    /// </summary>
-    void Construct();
 }

@@ -31,6 +31,8 @@ public class FuralitySomna : IDMXSerializer
             _mergedChannels.Add(valu, mergedChannels[channel]);
         }
     }
+    public void Deconstruct() { }
+    
     public void InitFrame()
     {
         cumulativeOFfset = 0;
