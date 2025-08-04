@@ -52,8 +52,7 @@ public class InterfaceList : MonoBehaviour
 
             //add text
             var tex = Util.AddText(rectTransform, possibleUserInterfaces[i].GetType().Name);
-            //add image
-            tex.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 40f);
+            tex.rectTransform.SetHeight(50f);
 
             //construct the user interface
             possibleUserInterfaces[i].ConstructUserInterface(rectTransform);

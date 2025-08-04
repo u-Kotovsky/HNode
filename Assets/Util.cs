@@ -41,6 +41,11 @@ public static class Util
         rt.offsetMin = new Vector2(rt.offsetMin.x, bottom);
     }
 
+    public static void SetHeight(this RectTransform rt, float height)
+    {
+        rt.sizeDelta = new Vector2(rt.sizeDelta.x, height);
+    }
+
     public static void SetPadding(this RectTransform rt, float left, float right, float top, float bottom)
     {
         rt.SetLeft(left);
