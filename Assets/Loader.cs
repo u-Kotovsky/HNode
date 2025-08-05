@@ -11,9 +11,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using static ChannelRemapper;
 using static TextureWriter;
-using static UVRemapper;
 
 public class Loader : MonoBehaviour
 {

@@ -18,10 +18,6 @@ public class TextureWriter : MonoBehaviour
     public const int TextureHeight = 1080;
     public SpoutSender spoutSender;
 
-    public ChannelRemapper channelRemapper;
-    public UVRemapper uvRemapper;
-    //public static Loader Loader;
-
     private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
     public TextMeshProUGUI frameTime;
     public Material mat;
@@ -86,9 +82,6 @@ public class TextureWriter : MonoBehaviour
         }
         Profiler.EndSample();
 
-        //remap channels
-        channelRemapper.RemapChannels(ref mergedDmxValues);
-
         Loader.showconf.Serializer.InitFrame();
         foreach (var exporter in Loader.showconf.Exporters)
         {
@@ -129,7 +122,6 @@ public class TextureWriter : MonoBehaviour
         texture.SetPixels32(pixels);
         texture.Apply();
         Profiler.EndSample();
-        uvRemapper.RemapUVs(ref texture);
 
         timer.Stop();
 

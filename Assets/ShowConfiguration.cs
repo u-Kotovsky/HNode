@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using YamlDotNet.Serialization;
-using static ChannelRemapper;
-using static UVRemapper;
 
 public class ShowConfiguration
 {
@@ -19,11 +17,6 @@ public class ShowConfiguration
     public int TranscodeUniverseCount { get; set; } = 3;
     [YamlMember(Description = "The maximum number of universes that will be serialized. This usually doesnt need to be changed")]
     public int SerializeUniverseCount { get; set; } = int.MaxValue; //this is the maximum number of universes that can be used for serializing.
-
-    [YamlMember(Description = "Channel remappings to apply after all generators have run. This allows you to copy or move channel data around.")]
-    public List<ChannelMapping> mappingsChannels { get; set; }
-    [YamlMember(Description = "UV remappings to apply after textures have been generated.")]
-    public List<UVMapping> mappingsUV { get; set; }
     [YamlMember(Description = "A list of channels to mask out. These channels will be forced to transparent")]
     public List<DMXChannel> maskedChannels { get; set; }
     /// <summary>
@@ -47,8 +40,6 @@ public class ShowConfiguration
     //initializer
     public ShowConfiguration()
     {
-        mappingsChannels = new List<ChannelMapping>();
-        mappingsUV = new List<UVMapping>();
         maskedChannels = new List<DMXChannel>();
         Generators = new List<IDMXGenerator>();
         Exporters = new List<IExporter>();
