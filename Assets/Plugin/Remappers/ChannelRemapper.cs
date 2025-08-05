@@ -59,9 +59,9 @@ public class ChannelRemapper : MonoBehaviour
 
     public struct ChannelMapping
     {
-        public int SourceChannelStart { get; set; }
+        public DMXChannel SourceChannelStart { get; set; }
         public int SourceChannelLength { get; set; }
-        public int TargetChannel { get; set; }
+        public DMXChannel TargetChannel { get; set; }
 
         public ChannelMapping(int sourceChannelStart, int targetChannel, int sourceChannelLength = 1)
         {

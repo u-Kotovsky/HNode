@@ -208,60 +208,12 @@ public class Loader : MonoBehaviour
     {
         var yaml = ymlserializer.Serialize(showconf);
 
-        #region Example ShowConfiguration
-        //make a new debugging showconf for a helper comment at the top of the file
-        var debugShowconf = new ShowConfiguration()
-        {
-            Serializer = new FuralitySomna()
-            {
-                mergedChannels = new Dictionary<DMXChannel, ColorChannel>()
-                {
-                    {"7", ColorChannel.Red},
-                    {"8", ColorChannel.Green},
-                    {"9", ColorChannel.Blue},
-                    {"7 + 13", ColorChannel.Red},
-                    {"8 + 13", ColorChannel.Green},
-                    {"9 + 13", ColorChannel.Blue},
-                    {"7 + (13 * 2)", ColorChannel.Red},
-                    {"8 + (13 * 2)", ColorChannel.Green},
-                    {"9 + (13 * 2)", ColorChannel.Blue},
-                }
-            },
-            Deserializer = new VRSL(),
-            Generators = new List<IDMXGenerator>()
-            {
-                new Text()
-                {
-                    text = "Hello World",
-                    channelStart = 0
-                },
-                new Time(),
-                new LRC()
-            },
-            Transcode = showconf.Transcode,
-            mappingsChannels = new List<ChannelMapping>()
-            {
-                new ChannelMapping(0, 255, 1),
-                new ChannelMapping(0, 255, 10),
-            },
-            mappingsUV = new List<UVMapping>()
-            {
-                new UVMapping(0, 0, 100, 100, 500, 500),
-                new UVMapping(100, 100, 200, 200, 500, 500),
-            },
-            maskedChannels = new List<int>()
-            {
-                0, 1, 2
-            }
-        };
+        yaml = @"# All channel values can be represented in 2 ways
+# Either as a global integer, so 0 upwards like an array
+# As a direct Universe.Channel mapping, so Universe 3 channel 5 is 3.5
+# Alongside this, Equations are usable. So (3 * 2).(5 * 5) works
 
-        var debugyaml = ymlserializer.Serialize(debugShowconf);
-        //comment it by adding "# " to the start of each line
-        var commentedDebugYaml = string.Join("\n", debugyaml.Split('\n').Select(line => "# " + line));
-        commentedDebugYaml = "# Example ShowConfiguration:\n" + commentedDebugYaml + "\n# End Example\n\n";
-
-        yaml = commentedDebugYaml + "\n\n\n" + yaml;
-        #endregion
+" + yaml;
 
         //open save file dialog
         var extensionList = new[] {

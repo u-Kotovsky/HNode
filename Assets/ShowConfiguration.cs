@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using YamlDotNet.Serialization;
 using static ChannelRemapper;
 using static UVRemapper;
 
@@ -10,21 +11,30 @@ public class ShowConfiguration
     public IDMXSerializer Deserializer;
     public List<IDMXGenerator> Generators;
     public List<IExporter> Exporters;
+
+
+    [YamlMember(Description = "Whether to enable transcoding from the deserializer to the serializer. This is useful for converting between different pixel mapping formats.")]
     public bool Transcode { get; set; }
+    [YamlMember(Description = "The number of universes to do transcoding for. This is useful for limiting the amount of data being processed if you know you only need a certain number of universes.")]
     public int TranscodeUniverseCount { get; set; } = 3;
+    [YamlMember(Description = "The maximum number of universes that will be serialized. This usually doesnt need to be changed")]
     public int SerializeUniverseCount { get; set; } = int.MaxValue; //this is the maximum number of universes that can be used for serializing.
 
-    //these features are specifically limited to show configurations since it would be a utter pita to define these via UI alone
+    [YamlMember(Description = "Channel remappings to apply after all generators have run. This allows you to copy or move channel data around.")]
     public List<ChannelMapping> mappingsChannels { get; set; }
+    [YamlMember(Description = "UV remappings to apply after textures have been generated.")]
     public List<UVMapping> mappingsUV { get; set; }
-    public List<int> maskedChannels { get; set; }
+    [YamlMember(Description = "A list of channels to mask out. These channels will be forced to transparent")]
+    public List<DMXChannel> maskedChannels { get; set; }
     /// <summary>
     /// If true, the mask will be inverted, meaning that the channels that channels set in <see cref="maskedChannels"/> will be the only ones visible.
     /// </summary>
+    [YamlMember(Description = "If true, the mask will be inverted, making the channels that are set in the maskedChannels list the only ones visible.")]
     public bool invertMask { get; set; }
     /// <summary>
     /// If true, the mask will automatically be applied to channels that are set to zero.
     /// </summary>
+    [YamlMember(Description = "If true, the mask will automatically be applied to channels that are set to zero, making them transparent.")]
     public bool autoMaskOnZero { get; set; }
 
     //public string ArtnetIP { get; set; } = "127.0.0.1"; //disabled for now as this is not natively supported by the library yet?
@@ -39,7 +49,7 @@ public class ShowConfiguration
     {
         mappingsChannels = new List<ChannelMapping>();
         mappingsUV = new List<UVMapping>();
-        maskedChannels = new List<int>();
+        maskedChannels = new List<DMXChannel>();
         Generators = new List<IDMXGenerator>();
         Exporters = new List<IExporter>();
     }

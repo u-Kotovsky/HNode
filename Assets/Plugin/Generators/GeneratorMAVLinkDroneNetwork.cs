@@ -10,6 +10,7 @@ using System.Threading;
 using CrcSharp;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using YamlDotNet.Serialization;
 using static MAVLink;
 
 public class MAVLinkDroneNetwork : IDMXGenerator
@@ -20,14 +21,22 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     private IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Loopback, 14550);
     private MavlinkParse parse;
 
+    [YamlMember(Description = "How many drones to initialize on this network")]
     public EquationNumber droneCount = 254;
+    [YamlMember(Description = "What UDP port to use for this network. These can NOT overlap with other networks")]
     public EquationNumber networkPort = 14550;
     public DMXChannel channelStart = 0;
+    [YamlMember(Description = "The Bottom Left corner of the grid in degrees, Longitude (X)")]
     public float gridLon = 0;//x
+    [YamlMember(Description = "The Bottom Left corner of the grid in degrees, Latitude (Y)")]
     public float gridLat = 0;//y
+    [YamlMember(Description = "How many drones to place in a single row of the grid, along the Longitude (X) axis")]
     public EquationNumber gridLonCount = 1;
+    [YamlMember(Description = "Horizontal spacing between drones in degrees, Longitude (X) axis")]
     public float gridSpacingLon = 0.0001f; //spacing in degrees
+    [YamlMember(Description = "Vertical spacing between drones in degrees, Latitude (Y) axis")]
     public float gridSpacingLat = 0.0001f; //spacing in degrees
+    [YamlMember(Description = "The initial altitude of the drones in meters")]
     public float initialAltitude = 0f;
     private List<UniTask> tasks = new List<UniTask>();
     private CancellationTokenSource cancellationTokenSource = new();
