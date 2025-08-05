@@ -23,9 +23,9 @@ public class ChannelRemapper : MonoBehaviour
         foreach (var mapping in mappings)
         {
             // Find the maximum target channel to ensure the list is large enough
-            if (mapping.TargetChannel + mapping.SourceChannelLength > maximumNewChannel)
+            if (mapping.TargetChannel + (int)mapping.SourceChannelLength > maximumNewChannel)
             {
-                maximumNewChannel = mapping.TargetChannel + mapping.SourceChannelLength;
+                maximumNewChannel = mapping.TargetChannel + (int)mapping.SourceChannelLength;
             }
         }
 
@@ -60,14 +60,14 @@ public class ChannelRemapper : MonoBehaviour
     public struct ChannelMapping
     {
         public DMXChannel SourceChannelStart { get; set; }
-        public int SourceChannelLength { get; set; }
+        public EquationNumber SourceChannelLength { get; set; }
         public DMXChannel TargetChannel { get; set; }
 
-        public ChannelMapping(int sourceChannelStart, int targetChannel, int sourceChannelLength = 1)
+        public ChannelMapping(DMXChannel sourceChannelStart, DMXChannel targetChannel, EquationNumber? sourceChannelLength = null)
         {
             SourceChannelStart = sourceChannelStart;
             TargetChannel = targetChannel;
-            SourceChannelLength = sourceChannelLength;
+            SourceChannelLength = sourceChannelLength ?? 1; // Default to 1 if not specified
         }
     }
 }

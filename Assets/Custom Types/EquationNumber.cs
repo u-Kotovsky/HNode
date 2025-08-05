@@ -49,6 +49,12 @@ public struct EquationNumber : IYamlConvertible
         return equationNumber._equation;
     }
 
+    //add operator
+    public static EquationNumber operator +(EquationNumber a, EquationNumber b)
+    {
+        return new EquationNumber { _value = a._value + b._value, _equation = $"{a._equation} + {b._equation}" };
+    }
+
     //tostring
     public override string ToString()
     {

@@ -49,6 +49,12 @@ public struct DMXChannel : IYamlConvertible
         return $"{universe}.{channelInUniverse}";
     }
 
+    //addition operator
+    public static DMXChannel operator +(DMXChannel a, DMXChannel b)
+    {
+        return new DMXChannel(a.globalChannel + b.globalChannel);
+    }
+
     public override string ToString()
     {
         return (string)this;
