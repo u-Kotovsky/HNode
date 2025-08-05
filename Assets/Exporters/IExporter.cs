@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IExporter : IConstructable
+public interface IExporter : IUserInterface<IExporter>, IConstructable
 {
     /// <summary>
     /// Serializes a channel from a raw byte representation

@@ -32,12 +32,6 @@ public class InterfaceList : MonoBehaviour
 
     public void Initialize<T>(List<T> activeTypes, List<T> allTypes, Action<int> del, Action<int, int> swap, Action<Type> add) where T : class
     {
-        //clear out children
-        foreach (Transform child in transform)
-        {
-            Destroy(child.gameObject);
-        }
-
         //check types
         if (typeof(T) != @interface)
         {
@@ -45,7 +39,13 @@ public class InterfaceList : MonoBehaviour
             return;
         }
 
-        var possibleUserInterfaces = activeTypes.OfType<IUserInterface<IDMXGenerator>>().ToList();
+        //clear out children
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        var possibleUserInterfaces = activeTypes.OfType<IUserInterface<T>>().ToList();
 
         //make new objects for each
         for (int i = 0; i < possibleUserInterfaces.Count; i++)
@@ -136,6 +136,7 @@ public class InterfaceList : MonoBehaviour
         addButton.onClick.RemoveAllListeners();
         addButton.onClick.AddListener(() =>
         {
+            Debug.Log($"Adding new interface of type: {@interface.Name}");
             //get the selected index
             int index = dropdown.value;
 

@@ -11,7 +11,9 @@ using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.Multimedia;
 using Melanchall.DryWetMidi.Standards;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 // Requires MIDIDMX installed in a world
 // https://github.com/micksam7/VRC-MIDIDMX
@@ -99,8 +101,15 @@ public class MIDIDMX : IExporter
         }
 
         //commented out to let exceptions through
-        midiOutput = OutputDevice.GetByName(device);
-        midiOutput.PrepareForEventsSending();
+        try
+        {
+            midiOutput = OutputDevice.GetByName(device);
+            midiOutput.PrepareForEventsSending();
+        }
+        catch
+        {
+
+        }
     }
 
     /// <summary>
@@ -392,5 +401,92 @@ public class MIDIDMX : IExporter
 
         //forward to the end to wait on it
         logStream.Position = logStream.Length - 1;
+    }
+
+
+    private protected Toggle useEditorLogToggle;
+    private protected TMP_InputField channelLimitInputfield;
+    private protected TMP_InputField midiDeviceField;
+    private protected TMP_InputField channelsPerUpdateInputfield;
+    private protected TMP_InputField idleScanChannelsInputfield;
+    public void ConstructUserInterface(RectTransform rect)
+    {
+        useEditorLogToggle = Util.AddToggle(rect, "Use Editor Log");
+        useEditorLogToggle.isOn = useEditorLog;
+        useEditorLogToggle.onValueChanged.AddListener((value) =>
+        {
+            useEditorLog = value;
+        });
+
+        channelLimitInputfield = Util.AddInputField(rect, "Channel Limit");
+        channelLimitInputfield.text = channelLimit.ToString();
+        channelLimitInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+        channelLimitInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int newLimit))
+            {
+                channelLimit = newLimit;
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("Invalid channel limit input, must be an integer.");
+            }
+        });
+
+        midiDeviceField = Util.AddInputField(rect, "MIDI Device");
+        midiDeviceField.text = midiDevice;
+        midiDeviceField.onEndEdit.AddListener((value) =>
+        {
+            midiDevice = value;
+            MidiConnectDevice(midiDevice);
+        });
+
+        channelsPerUpdateInputfield = Util.AddInputField(rect, "Channels Per Update");
+        channelsPerUpdateInputfield.text = channelsPerUpdate.ToString();
+        channelsPerUpdateInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+        channelsPerUpdateInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int newChannels))
+            {
+                channelsPerUpdate = newChannels;
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("Invalid channels per update input, must be an integer.");
+            }
+        });
+
+        idleScanChannelsInputfield = Util.AddInputField(rect, "Idle Scan Channels");
+        idleScanChannelsInputfield.text = idleScanChannels.ToString();
+        idleScanChannelsInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
+        idleScanChannelsInputfield.onEndEdit.AddListener((value) =>
+        {
+            if (int.TryParse(value, out int newIdleScan))
+            {
+                idleScanChannels = newIdleScan;
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("Invalid idle scan channels input, must be an integer.");
+            }
+        });
+
+        //button to force reconnect
+        var reconnectButton = Util.AddButton(rect, "Reconnect MIDI Device");
+        reconnectButton.onClick.AddListener(() =>
+        {
+            UnityEngine.Debug.Log("Reconnecting MIDI Device...");
+            MidiConnectDevice(midiDevice);
+        });
+    }
+
+    public void DeconstructUserInterface()
+    {
+        //throw new NotImplementedException();
+    }
+
+    public void UpdateUserInterface()
+    {
+        //throw new NotImplementedException();
     }
 }

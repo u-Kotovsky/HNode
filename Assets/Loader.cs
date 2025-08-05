@@ -311,7 +311,7 @@ public class Loader : MonoBehaviour
 
         foreach (var exporter in showconf.Exporters)
         {
-            //exporter.DeconstructUserInterface();
+            exporter.DeconstructUserInterface();
             exporter.Deconstruct();
         }
 
@@ -367,8 +367,36 @@ public class Loader : MonoBehaviour
         foreach (var interfaceList in interfaceLists)
         {
             //cursed but just try to init with all of them, filter on the interfacelist side
-            //interfaceList.Initialize(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
-            interfaceList.Initialize<IDMXGenerator>(showconf.Generators, generators, (index) =>
+            interfaceList.Initialize(showconf.Exporters, exporters, (index) =>
+            {
+                //when called, remove the type from the show configuration
+                var exporter = showconf.Exporters[index];
+                exporter.DeconstructUserInterface();
+                exporter.Deconstruct();
+                showconf.Exporters.RemoveAt(index);
+
+                //setup UI again to refresh everything
+                SetupUI();
+            }, (index1, index2) =>
+            {
+                //swap the two exporters in the list
+                var temp = showconf.Exporters[index1];
+                showconf.Exporters[index1] = showconf.Exporters[index2];
+                showconf.Exporters[index2] = temp;
+
+                //setup UI again to refresh everything
+                SetupUI();
+            }, (type) =>
+            {
+                //add a new exporter of the type
+                var exporter = (IExporter)Activator.CreateInstance(type);
+                exporter.Construct();
+                showconf.Exporters.Add(exporter);
+
+                //setup UI again to refresh everything
+                SetupUI();
+            });
+            interfaceList.Initialize(showconf.Generators, generators, (index) =>
             {
                 //when called, remove the type from the show configuration
                 var generator = showconf.Generators[index];
