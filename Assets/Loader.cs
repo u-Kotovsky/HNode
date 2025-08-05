@@ -319,64 +319,51 @@ public class Loader : MonoBehaviour
         foreach (var interfaceList in interfaceLists)
         {
             //cursed but just try to init with all of them, filter on the interfacelist side
-            interfaceList.Initialize(showconf.Exporters, exporters, (index) =>
-            {
-                //when called, remove the type from the show configuration
-                var exporter = showconf.Exporters[index];
-                exporter.DeconstructUserInterface();
-                exporter.Deconstruct();
-                showconf.Exporters.RemoveAt(index);
+            interfaceList.Initialize(showconf.Exporters, exporters, Delete(showconf.Exporters), Swap(showconf.Exporters), Add(showconf.Exporters));
+            interfaceList.Initialize(showconf.Generators, generators, Delete(showconf.Generators), Swap(showconf.Generators), Add(showconf.Generators));
+        }
 
-                //setup UI again to refresh everything
-                SetupUI();
-            }, (index1, index2) =>
-            {
-                //swap the two exporters in the list
-                var temp = showconf.Exporters[index1];
-                showconf.Exporters[index1] = showconf.Exporters[index2];
-                showconf.Exporters[index2] = temp;
-
-                //setup UI again to refresh everything
-                SetupUI();
-            }, (type) =>
-            {
-                //add a new exporter of the type
-                var exporter = (IExporter)Activator.CreateInstance(type);
-                exporter.Construct();
-                showconf.Exporters.Add(exporter);
-
-                //setup UI again to refresh everything
-                SetupUI();
-            });
-            interfaceList.Initialize(showconf.Generators, generators, (index) =>
-            {
-                //when called, remove the type from the show configuration
-                var generator = showconf.Generators[index];
-                generator.DeconstructUserInterface();
-                generator.Deconstruct();
-                showconf.Generators.RemoveAt(index);
-
-                //setup UI again to refresh everything
-                SetupUI();
-            }, (index1, index2) =>
-            {
-                //swap the two generators in the list
-                var temp = showconf.Generators[index1];
-                showconf.Generators[index1] = showconf.Generators[index2];
-                showconf.Generators[index2] = temp;
-
-                //setup UI again to refresh everything
-                SetupUI();
-            }, (type) =>
+        Action<Type> Add<T>(List<T> list) where T : IConstructable
+        {
+            return (type) =>
             {
                 //add a new generator of the type
-                var generator = (IDMXGenerator)Activator.CreateInstance(type);
+                var generator = (T)Activator.CreateInstance(type);
                 generator.Construct();
-                showconf.Generators.Add(generator);
+                //do NOT construct the user interface here, it will be done in the InterfaceList itself
+                list.Add(generator);
 
                 //setup UI again to refresh everything
                 SetupUI();
-            });
+            };
+        }
+
+        Action<int, int> Swap<T>(List<T> list) where T : IConstructable
+        {
+            return (index1, index2) =>
+            {
+                //swap the two items in the list
+                //funny intellisense tuple trick
+                (list[index2], list[index1]) = (list[index1], list[index2]);
+
+                //setup UI again to refresh everything
+                SetupUI();
+            };
+        }
+
+        Action<int> Delete<T>(List<T> list) where T : class, IConstructable, IUserInterface<T>
+        {
+            return (index) =>
+            {
+                //when called, remove the type from the show configuration
+                var item = list[index];
+                item.DeconstructUserInterface();
+                item.Deconstruct();
+                list.RemoveAt(index);
+
+                //setup UI again to refresh everything
+                SetupUI();
+            };
         }
     }
 

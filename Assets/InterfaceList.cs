@@ -30,7 +30,7 @@ public class InterfaceList : MonoBehaviour
         }
     }
 
-    public void Initialize<T>(List<T> activeTypes, List<T> allTypes, Action<int> del, Action<int, int> swap, Action<Type> add) where T : class
+    public void Initialize<T>(List<T> activeTypes, List<T> allTypes, Action<int> deleteAction, Action<int, int> swapAction, Action<Type> addAction) where T : class
     {
         //check types
         if (typeof(T) != @interface)
@@ -96,7 +96,7 @@ public class InterfaceList : MonoBehaviour
             var delbut = Util.AddButton(layoutRect, "Delete");
             delbut.onClick.AddListener(() =>
             {
-                del?.Invoke(copy);
+                deleteAction?.Invoke(copy);
             });
             //center the text in it
             delbut.GetComponentInChildren<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
@@ -106,7 +106,7 @@ public class InterfaceList : MonoBehaviour
             {
                 if (copy > 0)
                 {
-                    swap?.Invoke(copy, copy - 1);
+                    swapAction?.Invoke(copy, copy - 1);
                 }
             });
             upbut.GetComponentInChildren<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
@@ -116,7 +116,7 @@ public class InterfaceList : MonoBehaviour
             {
                 if (copy < possibleUserInterfaces.Count - 1)
                 {
-                    swap?.Invoke(copy, copy + 1);
+                    swapAction?.Invoke(copy, copy + 1);
                 }
             });
             downbut.GetComponentInChildren<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
@@ -148,7 +148,7 @@ public class InterfaceList : MonoBehaviour
             }
 
             //call the add action with the type
-            add?.Invoke(allTypes[index].GetType());
+            addAction?.Invoke(allTypes[index].GetType());
         });
     }
 
