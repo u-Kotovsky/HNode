@@ -10,7 +10,7 @@ public class SRT : Text
     //file path to SRT file
     public string filePath = "";
     public bool generateSubtitlePercentage = false;
-    public int subtitlePercentChannel = 0;
+    public DMXChannel subtitlePercentChannel = 0;
 
     public Mode mode = Mode.OnConfigLoad;
     private TimeSpan timeAtLoad = TimeSpan.Zero;

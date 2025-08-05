@@ -20,12 +20,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     private IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Loopback, 14550);
     private MavlinkParse parse;
 
-    public int droneCount = 254;
-    public int networkPort = 14550;
-    public int channelStart = 0;
+    public EquationNumber droneCount = 254;
+    public EquationNumber networkPort = 14550;
+    public DMXChannel channelStart = 0;
     public float gridLon = 0;//x
     public float gridLat = 0;//y
-    public int gridLonCount = 1;
+    public EquationNumber gridLonCount = 1;
     public float gridSpacingLon = 0.0001f; //spacing in degrees
     public float gridSpacingLat = 0.0001f; //spacing in degrees
     public float initialAltitude = 0f;

@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class Strobe : IDMXGenerator
 {
-    public int channel = 0;
+    public DMXChannel channel = 0;
     public byte valueOn = 255;
     public byte valueOff = 0;
     public float frequency = 1.0f; //in Hz

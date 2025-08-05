@@ -24,7 +24,7 @@ public class Text : IDMXGenerator
     /// <summary>
     /// The maximum length of the text. Any additional channels that would be written will be ignored if <see cref="limitLength"/> is true.
     /// </summary>
-    public int maxCharacters = 32;
+    public EquationNumber maxCharacters = 32;
 
     public virtual void Construct() { }
     public virtual void Deconstruct() { }

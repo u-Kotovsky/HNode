@@ -12,7 +12,7 @@ public class LRC : Text
     /// <summary>
     /// When this channel changes value, the next lyric event will be triggered
     /// </summary>
-    public int triggerChannel = 0;
+    public DMXChannel triggerChannel = 0;
     private byte lastTriggerValue = 0;
     private TimeSpan timeAtLoad = TimeSpan.Zero;
 
