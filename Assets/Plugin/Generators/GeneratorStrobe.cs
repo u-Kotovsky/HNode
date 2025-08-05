@@ -41,7 +41,6 @@ public class Strobe : IDMXGenerator
     {
         channelInputfield = Util.AddInputField(rect, "Channel");
         channelInputfield.text = channel.ToString();
-        channelInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
         channelInputfield.onEndEdit.AddListener((value) =>
         {
             if (int.TryParse(value, out int newChannel))
