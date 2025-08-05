@@ -214,7 +214,7 @@ public class Loader : MonoBehaviour
         {
             Serializer = new FuralitySomna()
             {
-                mergedChannels = new Dictionary<string, ColorChannel>()
+                mergedChannels = new Dictionary<DMXChannel, ColorChannel>()
                 {
                     {"7", ColorChannel.Red},
                     {"8", ColorChannel.Green},

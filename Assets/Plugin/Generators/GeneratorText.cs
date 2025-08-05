@@ -12,7 +12,7 @@ public class Text : IDMXGenerator
     /// <summary>
     /// The channel to start writing the text to. The text will be written starting at this channel and continuing until the text is fully written or <see cref="maxCharacters"/> is reached if <see cref="limitLength"/> is true.
     /// </summary>
-    public int channelStart = 0;
+    public DMXChannel channelStart = 0;
     /// <summary>
     /// If true, the text will be encoded as UTF-16 (Unicode). If false, the text will be encoded as UTF-8.
     /// </summary>
@@ -149,20 +149,11 @@ public class Text : IDMXGenerator
 
         channelInputfield = Util.AddInputField(rect, "Channel Start");
         channelInputfield.text = channelStart.ToString();
-        //limit to numbers
-        channelInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
 
         //watch for channel update
         channelInputfield.onEndEdit.AddListener((value) =>
         {
-            if (int.TryParse(value, out int newChannel))
-            {
-                channelStart = newChannel;
-            }
-            else
-            {
-                Debug.LogError($"Invalid channel value: {value}");
-            }
+            channelStart = value;
         });
 
         unicodeToggle = Util.AddToggle(rect, "Unicode");
