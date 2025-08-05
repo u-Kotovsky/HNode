@@ -151,7 +151,7 @@ public static class Util
         var checkmarkImage = checkmarkObject.AddComponent<Image>();
 
         SetRectCenterStretch((RectTransform)checkmarkObject.transform);
-        ((RectTransform)checkmarkObject.transform).SetPadding(10f, 10f, 10f, 10f);
+        ((RectTransform)checkmarkObject.transform).SetPadding(5f, 5f, 5f, 5f);
 
         toggle.graphic = checkmarkImage;
 
