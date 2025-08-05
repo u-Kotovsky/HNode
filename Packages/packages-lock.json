@@ -14,6 +14,13 @@
       "dependencies": {},
       "hash": "f789083c31250c83082da9b29be0c976152d699b"
     },
+    "com.lexonegit.unity-twitch-chat": {
+      "version": "https://github.com/lexonegit/Unity-Twitch-Chat.git?path=/Unity-Twitch-Chat/Assets/Package",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "0c3e6e2950c760e542abdab75d18ff788b83881e"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
