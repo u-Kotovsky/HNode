@@ -14,8 +14,8 @@ public class VRSL : IDMXSerializer
     }
     const int blockSize = 16; // 10x10 pixels per channel block
     const int blocksPerCol = 13; // channels per column
-    public bool OutputGamma = true;
-    public bool InputGamma = true;
+    public bool GammaCorrection = true;
+    public bool RGBGridMode = true; //TODO: Make this default false after finished testing
     public OutputConfigs outputConfig = OutputConfigs.HorizontalTop;
     public void Construct() { }
     public void Deconstruct() { }
@@ -58,18 +58,44 @@ public class VRSL : IDMXSerializer
             default:
                 throw new ArgumentOutOfRangeException(nameof(outputConfig), outputConfig, null);
         }
-        
+
 
         //convert the x y to pixel index
         //return 4x4 area
         var color = new Color(
-            channelValue/255f,
-            channelValue/255f,
-            channelValue/255f,
+            channelValue / 255f,
+            channelValue / 255f,
+            channelValue / 255f,
             Util.GetBlockAlpha(channelValue)
         );
-        if (OutputGamma) { color = color.linear; } //lol WTF VRSL, you output in a converted color space instead of native linear???????
-        TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
+        if (GammaCorrection) { color = color.linear; } //lol WTF VRSL, you output in a converted color space instead of native linear???????
+        if (RGBGridMode)
+        {
+            byte value = 0;
+            TextureWriter.ColorChannel cchannel;
+            switch (GetUniverseWrap(channel))
+            {
+                case 0:
+                    value = ((Color32)color).r;
+                    cchannel = TextureWriter.ColorChannel.Red;
+                    break;
+                case 1:
+                    value = ((Color32)color).g;
+                    cchannel = TextureWriter.ColorChannel.Green;
+                    break;
+                case 2:
+                    value = ((Color32)color).b;
+                    cchannel = TextureWriter.ColorChannel.Blue;
+                    break;
+                default:
+                    return;
+            }
+            TextureWriter.MixColorBlock(ref pixels, x, y, value, cchannel, blockSize);
+        }
+        else
+        {
+            TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
+        }
     }
 
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight)
@@ -82,21 +108,58 @@ public class VRSL : IDMXSerializer
 
         // Get the color block from the texture
         Color color = TextureReader.GetColor(tex, x + universeOffset, y);
-        if (InputGamma) { color = color.gamma; } //TODO: test this NEEDS MORE TESTING, seems like this actually should be off by default?????
+        if (GammaCorrection) { color = color.gamma; } //TODO: test this NEEDS MORE TESTING, seems like this actually should be off by default?????
 
         // Convert the color block to a channel value
-        channelValue = ((Color32)color).g;
+        if (RGBGridMode)
+        {
+            switch (GetUniverseWrap(channel))
+            {
+                case 0:
+                    channelValue = ((Color32)color).r;
+                    break;
+                case 1:
+                    channelValue = ((Color32)color).g;
+                    break;
+                case 2:
+                    channelValue = ((Color32)color).b;
+                    break;
+                default:
+                    return; // Not a valid RGB channel
+            }
+        }
+        else
+        {
+            channelValue = ((Color32)color).g;
+        }
     }
 
-    private static void GetPositionData(int channel, out int x, out int y, out int universeOffset)
+    private void GetPositionData(int channel, out int x, out int y, out int universeOffset)
     {
         int universe = channel / 512; // Assuming 512 channels per universe
         int channelInUniverse = channel % 512; // Channel within the universe
+
+        //if rgb grid, make every 3 universes appear as the first 3
+        if (RGBGridMode)
+        {
+            universe = universe % 3; // Limit to 3 channels for RGB grid
+        }
 
         x = (channelInUniverse / blocksPerCol) * blockSize;
         y = (channelInUniverse % blocksPerCol) * blockSize;
 
         //stupid universe bullshit in VRSL
         universeOffset = universe * (512 / blocksPerCol * blockSize) + (universe * blockSize);
+    }
+    
+    /// <summary>
+    /// Returns what current universe set of 3 this channel is in
+    /// </summary>
+    /// <param name="channel"></param>
+    /// <returns></returns>
+    private int GetUniverseWrap(int channel)
+    {
+        int universe = channel / 512; // Assuming 512 channels per universe
+        return universe / 3; // Return the universe set of 3 (0, 1, or 2)
     }
 }
