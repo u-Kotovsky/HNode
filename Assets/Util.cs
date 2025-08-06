@@ -117,6 +117,18 @@ public static class Util
         return button;
     }
 
+    internal static Toggle WithValue(this Toggle toggle, bool value)
+    {
+        toggle.isOn = value;
+        return toggle;
+    }
+
+    internal static Toggle WithCallback(this Toggle toggle, UnityEngine.Events.UnityAction<bool> callback)
+    {
+        toggle.onValueChanged.AddListener(callback);
+        return toggle;
+    }
+
     internal static Toggle AddToggle(RectTransform rect, string title)
     {
         GameObject toggleObject = new GameObject("Toggle");
@@ -156,6 +168,33 @@ public static class Util
         toggle.graphic = checkmarkImage;
 
         return toggle;
+    }
+
+    internal static TMP_InputField WithContentType(this TMP_InputField field, TMP_InputField.ContentType contentType)
+    {
+        field.contentType = contentType;
+        return field;
+    }
+
+    internal static TMP_InputField WithPlaceholder(this TMP_InputField field, string placeholderText)
+    {
+        if (field.placeholder is TextMeshProUGUI placeholder)
+        {
+            placeholder.text = placeholderText;
+        }
+        return field;
+    }
+
+    internal static TMP_InputField WithText(this TMP_InputField field, string text)
+    {
+        field.text = text;
+        return field;
+    }
+
+    internal static TMP_InputField WithCallback(this TMP_InputField field, UnityEngine.Events.UnityAction<string> callback)
+    {
+        field.onEndEdit.AddListener(callback);
+        return field;
     }
 
     internal static TMP_InputField AddInputField(RectTransform rect, string title)

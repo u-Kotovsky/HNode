@@ -138,54 +138,26 @@ public class Text : IDMXGenerator
     public virtual void ConstructUserInterface(RectTransform rect)
     {
         //new object for the input field
-        textInputfield = Util.AddInputField(rect, "Text");
-        textInputfield.text = text;
+        textInputfield = Util.AddInputField(rect, "Text")
+            .WithText(text)
+            .WithCallback((value) => { text = value; });
 
-        //watch for text update
-        textInputfield.onEndEdit.AddListener((value) =>
-        {
-            text = value;
-        });
+        channelInputfield = Util.AddInputField(rect, "Channel Start")
+            .WithText(channelStart)
+            .WithCallback((value) => { channelStart = value; });
 
-        channelInputfield = Util.AddInputField(rect, "Channel Start");
-        channelInputfield.text = channelStart.ToString();
+        unicodeToggle = Util.AddToggle(rect, "Unicode")
+            .WithValue(unicode)
+            .WithCallback((value) => { unicode = value; });
 
-        //watch for channel update
-        channelInputfield.onEndEdit.AddListener((value) =>
-        {
-            channelStart = value;
-        });
+        lengthLimitToggle = Util.AddToggle(rect, "Limit Length")
+            .WithValue(limitLength)
+            .WithCallback((value) => { limitLength = value; });
 
-        unicodeToggle = Util.AddToggle(rect, "Unicode");
-        unicodeToggle.isOn = unicode;
-        unicodeToggle.onValueChanged.AddListener((value) =>
-        {
-            unicode = value;
-        });
-
-        lengthLimitToggle = Util.AddToggle(rect, "Limit Length");
-        lengthLimitToggle.isOn = limitLength;
-        lengthLimitToggle.onValueChanged.AddListener((value) =>
-        {
-            limitLength = value;
-        });
-
-        limitInputfield = Util.AddInputField(rect, "Length Limit");
-        limitInputfield.text = maxCharacters.ToString();
-        limitInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
-
-
-        limitInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (int.TryParse(value, out int newLimit))
-            {
-                maxCharacters = newLimit;
-            }
-            else
-            {
-                Debug.LogError($"Invalid limit value: {limitInputfield.text}");
-            }
-        });
+        limitInputfield = Util.AddInputField(rect, "Length Limit")
+            .WithText(maxCharacters.ToString())
+            .WithCallback((value) => { maxCharacters = value; })
+            .WithContentType(TMP_InputField.ContentType.IntegerNumber);
     }
 
     public void DeconstructUserInterface()

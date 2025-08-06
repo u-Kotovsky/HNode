@@ -66,24 +66,12 @@ public class TwitchChat : Text
     {
         base.ConstructUserInterface(rect);
 
-        ChannelNameInputField = Util.AddInputField(rect, "Channel");
-        ChannelNameInputField.text = ChannelName;
-        ChannelNameInputField.onValueChanged.AddListener((value) =>
-        {
-            ChannelName = value;
-            if (irc != null)
-            {
-                irc.channel = ChannelName;
-            }
-        });
+        ChannelNameInputField = Util.AddInputField(rect, "Channel")
+            .WithText(ChannelName)
+            .WithCallback((value) => { ChannelName = value; irc.channel = value; });
 
-        ChatMessagesInputField = Util.AddInputField(rect, "Max Messages");
-        ChatMessagesInputField.text = chatMessages;
-        ChatMessagesInputField.onValueChanged.AddListener((value) =>
-        {
-            chatMessages = value;
-            
-            buf = new CircularBuffer<Chatter>(chatMessages);
-        });
+        ChatMessagesInputField = Util.AddInputField(rect, "Max Messages")
+            .WithText(chatMessages)
+            .WithCallback((value) => { chatMessages = value; buf = new CircularBuffer<Chatter>(chatMessages); });
     }
 }

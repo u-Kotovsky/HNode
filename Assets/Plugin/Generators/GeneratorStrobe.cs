@@ -39,64 +39,42 @@ public class Strobe : IDMXGenerator
     private protected TMP_InputField frequencyInputfield;
     public void ConstructUserInterface(RectTransform rect)
     {
-        channelInputfield = Util.AddInputField(rect, "Channel");
-        channelInputfield.text = channel.ToString();
-        channelInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (int.TryParse(value, out int newChannel))
-            {
-                channel = newChannel;
-            }
-            else
-            {
-                Debug.LogWarning("Invalid channel input, must be an integer.");
-            }
-        });
+        channelInputfield = Util.AddInputField(rect, "Channel")
+            .WithText(channel)
+            .WithCallback((value) => { channel = value; });
 
-        valueOnInputfield = Util.AddInputField(rect, "Value On");
-        valueOnInputfield.text = valueOn.ToString();
-        valueOnInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
-        valueOnInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (byte.TryParse(value, out byte newValue))
-            {
-                valueOn = newValue;
-            }
-            else
-            {
-                Debug.LogWarning("Invalid value for 'On', must be a byte.");
-            }
-        });
+        valueOnInputfield = Util.AddInputField(rect, "Value On")
+            .WithText(valueOn.ToString())
+            .WithCallback((value) =>
+                {
+                    if (byte.TryParse(value, out byte newValue)) { valueOn = newValue; }
+                    else { Debug.LogWarning("Invalid value for 'On', must be a byte."); }
+                })
+            .WithContentType(TMP_InputField.ContentType.IntegerNumber);
 
-        valueOffInputfield = Util.AddInputField(rect, "Value Off");
-        valueOffInputfield.text = valueOff.ToString();
-        valueOffInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
-        valueOffInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (byte.TryParse(value, out byte newValue))
-            {
-                valueOff = newValue;
-            }
-            else
-            {
-                Debug.LogWarning("Invalid value for 'Off', must be a byte.");
-            }
-        });
+        valueOffInputfield = Util.AddInputField(rect, "Value Off")
+            .WithText(valueOff.ToString())
+            .WithCallback((value) =>
+                {
+                    if (byte.TryParse(value, out byte newValue)) { valueOff = newValue; }
+                    else { Debug.LogWarning("Invalid value for 'Off', must be a byte."); }
+                })
+            .WithContentType(TMP_InputField.ContentType.IntegerNumber);
 
-        frequencyInputfield = Util.AddInputField(rect, "Frequency (Hz)");
-        frequencyInputfield.text = frequency.ToString();
-        frequencyInputfield.contentType = TMP_InputField.ContentType.DecimalNumber;
-        frequencyInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (float.TryParse(value, out float newFrequency) && newFrequency > 0)
-            {
-                frequency = newFrequency;
-            }
-            else
-            {
-                Debug.LogWarning("Invalid frequency input, must be a positive number.");
-            }
-        });
+        frequencyInputfield = Util.AddInputField(rect, "Frequency (Hz)")
+            .WithText(frequency.ToString())
+            .WithCallback((value) =>
+                {
+                    if (float.TryParse(value, out float newFrequency) && newFrequency > 0)
+                    {
+                        frequency = newFrequency;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Invalid frequency input, must be a positive number.");
+                    }
+                })
+            .WithContentType(TMP_InputField.ContentType.DecimalNumber);
     }
 
     public void DeconstructUserInterface()
@@ -106,6 +84,6 @@ public class Strobe : IDMXGenerator
 
     public void UpdateUserInterface()
     {
-        
+
     }
 }

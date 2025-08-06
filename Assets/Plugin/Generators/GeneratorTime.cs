@@ -28,11 +28,8 @@ public class Time : Text
             textInputfield.interactable = false;
         }
 
-        formatInputfield = Util.AddInputField(rect, "Format");
-        formatInputfield.text = format;
-        formatInputfield.onEndEdit.AddListener((value) =>
-        {
-            format = value;
-        });
+        formatInputfield = Util.AddInputField(rect, "Format")
+            .WithText(format)
+            .WithCallback((value) => { format = value; });
     }
 }

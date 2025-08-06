@@ -25,7 +25,7 @@ using UnityEngine.UI;
 public class MIDIDMX : IExporter
 {
     public bool useEditorLog = false;
-    public int channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
+    public EquationNumber channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
     public string midiDevice = "loopMIDI Port"; //Default to no device selected
 
     public enum Status : int
@@ -53,8 +53,8 @@ public class MIDIDMX : IExporter
     }
 
     const int maxChannels = 16384;
-    public int channelsPerUpdate = 100 /* 1024 / 8 */; //KEEP THIS AT 100 until VRC fixes their buffers :)
-    public int idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
+    public EquationNumber channelsPerUpdate = 100 /* 1024 / 8 */; //KEEP THIS AT 100 until VRC fixes their buffers :)
+    public EquationNumber idleScanChannels = 10; //How many channels to send at a time during idle scans. Keep this low so we have bandwidth for actively changing channels.
 
     //changed this back to an int array since it was throwing out of bounds on a list for no obvious reason
     //change it back if you feel like debugging.
@@ -411,65 +411,25 @@ public class MIDIDMX : IExporter
     private protected TMP_InputField idleScanChannelsInputfield;
     public void ConstructUserInterface(RectTransform rect)
     {
-        useEditorLogToggle = Util.AddToggle(rect, "Use Editor Log");
-        useEditorLogToggle.isOn = useEditorLog;
-        useEditorLogToggle.onValueChanged.AddListener((value) =>
-        {
-            useEditorLog = value;
-        });
+        useEditorLogToggle = Util.AddToggle(rect, "Use Editor Log")
+            .WithValue(useEditorLog)
+            .WithCallback((value) => { useEditorLog = value; });
 
-        channelLimitInputfield = Util.AddInputField(rect, "Channel Limit");
-        channelLimitInputfield.text = channelLimit.ToString();
-        channelLimitInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
-        channelLimitInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (int.TryParse(value, out int newLimit))
-            {
-                channelLimit = newLimit;
-            }
-            else
-            {
-                UnityEngine.Debug.LogWarning("Invalid channel limit input, must be an integer.");
-            }
-        });
+        channelLimitInputfield = Util.AddInputField(rect, "Channel Limit")
+            .WithText(channelLimit)
+            .WithCallback((value) => { channelLimit = value; });
 
-        midiDeviceField = Util.AddInputField(rect, "MIDI Device");
-        midiDeviceField.text = midiDevice;
-        midiDeviceField.onEndEdit.AddListener((value) =>
-        {
-            midiDevice = value;
-            MidiConnectDevice(midiDevice);
-        });
+        midiDeviceField = Util.AddInputField(rect, "MIDI Device")
+            .WithText(midiDevice)
+            .WithCallback((value) => { midiDevice = value; });
 
-        channelsPerUpdateInputfield = Util.AddInputField(rect, "Channels Per Update");
-        channelsPerUpdateInputfield.text = channelsPerUpdate.ToString();
-        channelsPerUpdateInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
-        channelsPerUpdateInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (int.TryParse(value, out int newChannels))
-            {
-                channelsPerUpdate = newChannels;
-            }
-            else
-            {
-                UnityEngine.Debug.LogWarning("Invalid channels per update input, must be an integer.");
-            }
-        });
+        channelsPerUpdateInputfield = Util.AddInputField(rect, "Channels Per Update")
+            .WithText(channelsPerUpdate)
+            .WithCallback((value) => { channelsPerUpdate = value; });
 
-        idleScanChannelsInputfield = Util.AddInputField(rect, "Idle Scan Channels");
-        idleScanChannelsInputfield.text = idleScanChannels.ToString();
-        idleScanChannelsInputfield.contentType = TMP_InputField.ContentType.IntegerNumber;
-        idleScanChannelsInputfield.onEndEdit.AddListener((value) =>
-        {
-            if (int.TryParse(value, out int newIdleScan))
-            {
-                idleScanChannels = newIdleScan;
-            }
-            else
-            {
-                UnityEngine.Debug.LogWarning("Invalid idle scan channels input, must be an integer.");
-            }
-        });
+        idleScanChannelsInputfield = Util.AddInputField(rect, "Idle Scan Channels")
+            .WithText(idleScanChannels)
+            .WithCallback((value) => { idleScanChannels = value; });
 
         //button to force reconnect
         var reconnectButton = Util.AddButton(rect, "Reconnect MIDI Device");
