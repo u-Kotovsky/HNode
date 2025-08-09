@@ -17,7 +17,7 @@ public class StaticValue : IDMXGenerator
 
     public virtual void GenerateDMX(ref List<byte> dmxData)
     {
-        dmxData.EnsureCapacity(channelStart + (channelEnd - channelStart));
+        dmxData.EnsureCapacity(channelStart + (channelEnd - channelStart) + 1);
 
         //we need to write to the dmx data list directly
         for (int i = channelStart; i < channelEnd + 1; i++)
