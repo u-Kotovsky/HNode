@@ -15,7 +15,7 @@ public class VRSL : IDMXSerializer
     const int blockSize = 16; // 10x10 pixels per channel block
     const int blocksPerCol = 13; // channels per column
     public bool GammaCorrection = true;
-    public bool RGBGridMode = true; //TODO: Make this default false after finished testing
+    public bool RGBGridMode = false;
     public OutputConfigs outputConfig = OutputConfigs.HorizontalTop;
     public void Construct() { }
     public void Deconstruct() { }

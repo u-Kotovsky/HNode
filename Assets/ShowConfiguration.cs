@@ -17,8 +17,8 @@ public class ShowConfiguration
     public int TranscodeUniverseCount { get; set; } = 3;
     [YamlMember(Description = "The maximum number of universes that will be serialized. This usually doesnt need to be changed")]
     public int SerializeUniverseCount { get; set; } = int.MaxValue; //this is the maximum number of universes that can be used for serializing.
-    [YamlMember(Description = "A list of channels to mask out. These channels will be forced to transparent")]
-    public List<DMXChannel> maskedChannels { get; set; }
+    [YamlMember(Description = "A list of channels to mask out. These channels will be forced to transparent. Define a start and end channel for each mask.")]
+    public List<DMXChannelRange> maskedChannels { get; set; }
     /// <summary>
     /// If true, the mask will be inverted, meaning that the channels that channels set in <see cref="maskedChannels"/> will be the only ones visible.
     /// </summary>
@@ -40,7 +40,7 @@ public class ShowConfiguration
     //initializer
     public ShowConfiguration()
     {
-        maskedChannels = new List<DMXChannel>();
+        maskedChannels = new List<DMXChannelRange>();
         Generators = new List<IDMXGenerator>();
         Exporters = new List<IExporter>();
     }

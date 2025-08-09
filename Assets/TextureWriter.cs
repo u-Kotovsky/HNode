@@ -92,8 +92,24 @@ public class TextureWriter : MonoBehaviour
         var ChannelsToSerialize = Math.Min((long)Loader.showconf.SerializeUniverseCount * 512, mergedDmxValues.Count);
         for (int i = 0; i < ChannelsToSerialize; i++)
         {
+            //check if between any masked channel sets
+            bool isMasked = false;
+            foreach (var channel in Loader.showconf.maskedChannels)
+            {
+                if (channel.Contains(i))
+                {
+                    isMasked = true;
+                    break;
+                }
+            }
+
+            if (Loader.showconf.invertMask)
+            {
+                isMasked = !isMasked;
+            }
+
             //skip the channel if its masked
-            if (Loader.showconf.maskedChannels.Contains(i) ^ Loader.showconf.invertMask)
+            if (isMasked)
             {
                 continue;
             }
