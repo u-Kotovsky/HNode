@@ -125,56 +125,9 @@ public class Loader : MonoBehaviour
         saveButton.onClick.AddListener(SaveShowConfiguration);
         loadButton.onClick.AddListener(LoadShowConfiguration);
 
-        //serialize to a yml string
-        var serializer = new SerializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance);
-
-        foreach (var serializerType in serializers)
-        {
-            //needed to tag each serializer type
-            serializer.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
-        }
-
-        foreach (var generatorType in generators)
-        {
-            //needed to tag each generator type
-            serializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
-        }
-
-        foreach (var exporterType in exporters)
-        {
-            //needed to tag each exporter type
-            serializer.WithTagMapping("!" + exporterType.GetType().Name, exporterType.GetType());
-        }
-
-        //build it
-        ymlserializer = serializer.Build();
-
-
-        //load from a yml string
-        var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance);
-
-        foreach (var serializerType in serializers)
-        {
-            //needed to tag each serializer type
-            deserializer.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
-        }
-
-        foreach (var generatorType in generators)
-        {
-            //needed to tag each generator type
-            deserializer.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
-        }
-
-        foreach (var exporterType in exporters)
-        {
-            //needed to tag each exporter type
-            deserializer.WithTagMapping("!" + exporterType.GetType().Name, exporterType.GetType());
-        }
-
-        //build it
-        ymldeserializer = deserializer.Build();
+        //setup yml serializer and deserializer
+        ymlserializer = SetupBuilder<SerializerBuilder>().Build();
+        ymldeserializer = SetupBuilder<DeserializerBuilder>().Build();
 
         SetupUI();
     }
@@ -187,6 +140,32 @@ public class Loader : MonoBehaviour
             //interfaceList.Initialize(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
             interfaceList.UpdateInterface(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList());
         }
+    }
+
+    private T SetupBuilder<T>() where T : BuilderSkeleton<T>, new()
+    {
+        var builder = new T()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance);
+
+        foreach (var serializerType in serializers)
+        {
+            //needed to tag each serializer type
+            builder.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
+        }
+
+        foreach (var generatorType in generators)
+        {
+            //needed to tag each generator type
+            builder.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
+        }
+
+        foreach (var exporterType in exporters)
+        {
+            //needed to tag each exporter type
+            builder.WithTagMapping("!" + exporterType.GetType().Name, exporterType.GetType());
+        }
+
+        return builder;
     }
 
     private List<T> GetAllInterfaceImplementations<T>()
