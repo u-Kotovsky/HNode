@@ -15,18 +15,12 @@ using static TextureWriter;
 
 public class Loader : MonoBehaviour
 {
-    List<IDMXSerializer> serializers;
+    public static List<IDMXSerializer> serializers;
 
     //dmx generator source
-    List<IDMXGenerator> generators;
-    List<IExporter> exporters;
+    public static List<IDMXGenerator> generators;
+    public static List<IExporter> exporters;
     List<InterfaceList> interfaceLists;
-    public TMP_Dropdown serializerDropdown;
-    public TMP_Dropdown deserializerDropdown;
-    public TMP_InputField transcodeUniverseInput;
-    public Button saveButton;
-    public Button loadButton;
-    public Toggle transcodeToggle;
     public SpoutReceiver spoutReceiver;
     public SpoutSender spoutSender;
     public ArtNetReceiver artNetReceiver;
@@ -35,13 +29,10 @@ public class Loader : MonoBehaviour
 
     IDeserializer ymldeserializer;
     ISerializer ymlserializer;
+    public UIController uiController;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //showconf.mappingsChannels.Add(new ChannelRemapper.ChannelMapping(0, 50, 10));
-        //showconf.mappingsUV.Add(new UVRemapper.UVMapping(0, 0, 100, 100, 500, 500));
-
         //load in all the serializers
         serializers = GetAllInterfaceImplementations<IDMXSerializer>();
         generators = GetAllInterfaceImplementations<IDMXGenerator>();
@@ -59,30 +50,6 @@ public class Loader : MonoBehaviour
 
         Debug.Log($"Loaded {serializers.Count} serializers");
 
-        //populate the dropdown
-        serializerDropdown.ClearOptions();
-        deserializerDropdown.ClearOptions();
-        List<string> options = new List<string>();
-        foreach (var typei in serializers)
-        {
-            options.Add(typei.GetType().Name);
-        }
-
-        serializerDropdown.AddOptions(options);
-        deserializerDropdown.AddOptions(options);
-
-        serializerDropdown.onValueChanged.AddListener((s) =>
-        {
-            showconf.Serializer = serializers[s];
-            Debug.Log($"Selected serializer: {showconf.Serializer.GetType().Name}");
-        });
-
-        deserializerDropdown.onValueChanged.AddListener((s) =>
-        {
-            showconf.Deserializer = serializers[s];
-            Debug.Log($"Selected deserializer: {showconf.Deserializer.GetType().Name}");
-        });
-
         //default the serializers to VRSL and have transcode off
         showconf.Serializer = vrsl;
         showconf.Deserializer = vrsl;
@@ -93,52 +60,25 @@ public class Loader : MonoBehaviour
         //setup framerate
         SetFramerate(showconf.TargetFramerate);
 
-        //TODO: REMOVE THIS LATER AFTER TESTING
-        /* showconf.Generators.Add(new Text()
-        {
-            text = "Hello World",
-            channelStart = 50
-        }); */
+        uiController.OnSave += SaveShowConfiguration;
+        uiController.OnLoad += LoadShowConfiguration;
 
         //select the first serializer by default
-        InvalidateDropdownsAndToggles();
-
-        //setup callback
-        transcodeToggle.onValueChanged.AddListener((value) =>
-        {
-            showconf.Transcode = value;
-        });
-
-        transcodeUniverseInput.onValueChanged.AddListener((value) =>
-        {
-            if (int.TryParse(value, out int universeCount))
-            {
-                showconf.TranscodeUniverseCount = universeCount;
-            }
-            else
-            {
-                Debug.LogWarning($"Invalid universe count: {value}");
-            }
-        });
-
-        //setup save load buttons
-        saveButton.onClick.AddListener(SaveShowConfiguration);
-        loadButton.onClick.AddListener(LoadShowConfiguration);
+        uiController.InvalidateUIState();
 
         //setup yml serializer and deserializer
         ymlserializer = SetupBuilder<SerializerBuilder>().Build();
         ymldeserializer = SetupBuilder<DeserializerBuilder>().Build();
 
-        SetupUI();
+        SetupDynamicUI();
     }
 
     void Update()
     {
         foreach (var interfaceList in interfaceLists)
         {
-            //cursed but just try to init with all of them, filter on the interfacelist side
-            //interfaceList.Initialize(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
             interfaceList.UpdateInterface(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList());
+            interfaceList.UpdateInterface(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
         }
     }
 
@@ -244,7 +184,7 @@ public class Loader : MonoBehaviour
         showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
 
         //invalidate the dropdowns and toggles
-        InvalidateDropdownsAndToggles();
+        uiController.InvalidateUIState();
 
         //start coroutine
         //this is stupid dumb shit but this YML library is being weird and this fixes the issue
@@ -281,10 +221,11 @@ public class Loader : MonoBehaviour
 
         SetFramerate(showconf.TargetFramerate);
 
-        SetupUI();
+        SetupDynamicUI();
     }
 
-    private void SetupUI()
+    //TODO: Should probably be moved to UIController but eh
+    private void SetupDynamicUI()
     {
         //get all InterfaceList and initialize them
         foreach (var interfaceList in interfaceLists)
@@ -305,7 +246,7 @@ public class Loader : MonoBehaviour
                 list.Add(generator);
 
                 //setup UI again to refresh everything
-                SetupUI();
+                SetupDynamicUI();
             };
         }
 
@@ -318,7 +259,7 @@ public class Loader : MonoBehaviour
                 (list[index2], list[index1]) = (list[index1], list[index2]);
 
                 //setup UI again to refresh everything
-                SetupUI();
+                SetupDynamicUI();
             };
         }
 
@@ -333,7 +274,7 @@ public class Loader : MonoBehaviour
                 list.RemoveAt(index);
 
                 //setup UI again to refresh everything
-                SetupUI();
+                SetupDynamicUI();
             };
         }
     }
@@ -349,42 +290,5 @@ public class Loader : MonoBehaviour
         //setup target framerate
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = targetFramerate;
-    }
-
-    private void InvalidateDropdownsAndToggles()
-    {
-        //invalidate the dropdowns and toggles to match the loaded showconf
-        if (showconf.Serializer != null)
-        {
-            int serializerIndex = serializerDropdown.options.FindIndex(o => o.text == showconf.Serializer.GetType().Name);
-            if (serializerIndex >= 0)
-            {
-                serializerDropdown.value = serializerIndex;
-                //serializerDropdown.RefreshShownValue();
-                Debug.Log($"Loaded serializer: {showconf.Serializer.GetType().Name}");
-            }
-            else
-            {
-                Debug.LogWarning($"Loaded serializer {showconf.Serializer.GetType().Name} not found in dropdown options.");
-            }
-        }
-
-        if (showconf.Deserializer != null)
-        {
-            int deserializerIndex = deserializerDropdown.options.FindIndex(o => o.text == showconf.Deserializer.GetType().Name);
-            if (deserializerIndex >= 0)
-            {
-                deserializerDropdown.value = deserializerIndex;
-                //deserializerDropdown.RefreshShownValue();
-                Debug.Log($"Loaded deserializer: {showconf.Deserializer.GetType().Name}");
-            }
-            else
-            {
-                Debug.LogWarning($"Loaded deserializer {showconf.Deserializer.GetType().Name} not found in dropdown options.");
-            }
-        }
-
-        transcodeToggle.isOn = showconf.Transcode;
-        transcodeUniverseInput.text = showconf.TranscodeUniverseCount.ToString();
     }
 }
