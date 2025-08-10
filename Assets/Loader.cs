@@ -147,25 +147,19 @@ public class Loader : MonoBehaviour
         var builder = new T()
             .WithNamingConvention(CamelCaseNamingConvention.Instance);
 
-        foreach (var serializerType in serializers)
-        {
-            //needed to tag each serializer type
-            builder.WithTagMapping("!" + serializerType.GetType().Name, serializerType.GetType());
-        }
-
-        foreach (var generatorType in generators)
-        {
-            //needed to tag each generator type
-            builder.WithTagMapping("!" + generatorType.GetType().Name, generatorType.GetType());
-        }
-
-        foreach (var exporterType in exporters)
-        {
-            //needed to tag each exporter type
-            builder.WithTagMapping("!" + exporterType.GetType().Name, exporterType.GetType());
-        }
+        AddInterfaceListMapping(builder, serializers);
+        AddInterfaceListMapping(builder, generators);
+        AddInterfaceListMapping(builder, exporters);
 
         return builder;
+    }
+
+    private void AddInterfaceListMapping<T, T2>(T builder, List<T2> list) where T : BuilderSkeleton<T>
+    {
+        foreach (var item in list)
+        {
+            builder.WithTagMapping("!" + item.GetType().Name, item.GetType());
+        }
     }
 
     private List<T> GetAllInterfaceImplementations<T>()
