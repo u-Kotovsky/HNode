@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Util;
 
 public class VRSL : IDMXSerializer
 {
@@ -161,5 +162,32 @@ public class VRSL : IDMXSerializer
     {
         int universe = channel / 512; // Assuming 512 channels per universe
         return universe / 3; // Return the universe set of 3 (0, 1, or 2)
+    }
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+        AddToggle(rect, "Gamma Correction")
+            .WithValue(GammaCorrection)
+            .WithCallback((isOn) =>
+            {
+                GammaCorrection = isOn;
+            });
+
+        AddToggle(rect, "RGB Grid Mode")
+            .WithValue(RGBGridMode)
+            .WithCallback((isOn) =>
+            {
+                RGBGridMode = isOn;
+            });
+    }
+
+    public void DeconstructUserInterface()
+    {
+
+    }
+
+    public void UpdateUserInterface()
+    {
+
     }
 }

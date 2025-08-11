@@ -10,12 +10,12 @@ public class FuralitySomna : IDMXSerializer
     const int blockSize = 16; // 10x10 pixels per channel block
     const int blocksPerCol = 13; // channels per column
     public Dictionary<DMXChannel, ColorChannel> mergedChannels = new Dictionary<DMXChannel, ColorChannel>();
-    
+
     int cumulativeOFfset = 0;
 
     public void Construct() { }
     public void Deconstruct() { }
-    
+
     public void InitFrame()
     {
         cumulativeOFfset = 0;
@@ -54,4 +54,19 @@ public class FuralitySomna : IDMXSerializer
     }
 
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+
+    }
+
+    public void DeconstructUserInterface()
+    {
+
+    }
+
+    public void UpdateUserInterface()
+    {
+
+    }
 }

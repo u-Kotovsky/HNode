@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Util;
 
 public class UIController : MonoBehaviour
 {
@@ -15,24 +16,29 @@ public class UIController : MonoBehaviour
     public Action OnLoad;
     public Button LoadButton;
 
+    public RectTransform maskedChannelsDynamicRect;
+
 
     #region Serializer Settings
-    public TMP_Dropdown serializerDropdown;
+    public RectTransform serializerStaticSettingsRect;
     public RectTransform serializerDynamicSettingsRect;
-    public TMP_InputField serializeUniverseCountField;
-    public RectTransform maskedChannelsDynamicRect;
-    public Toggle invertMaskToggle;
-    public Toggle autoMaskOnZeroToggle;
-    public TMP_InputField spoutOutputNameField;
-    public TMP_InputField artNetPortField;
+
+    public TMP_Dropdown serializerDropdown;
+    private TMP_InputField serializeUniverseCountField;
+    private Toggle invertMaskToggle;
+    private Toggle autoMaskOnZeroToggle;
+    private TMP_InputField spoutOutputNameField;
+    private TMP_InputField artNetPortField;
     #endregion
 
     #region Deserializer Settings
-    public TMP_Dropdown deserializerDropdown;
     public RectTransform deserializerDynamicSettingsRect;
-    public Toggle transcodeToggle;
-    public TMP_InputField transcodeUniverseCountField;
-    public TMP_InputField spoutInputNameField;
+    public RectTransform deserializerStaticSettingsRect;
+
+    public TMP_Dropdown deserializerDropdown;
+    private Toggle transcodeToggle;
+    private TMP_InputField transcodeUniverseCountField;
+    private TMP_InputField spoutInputNameField;
     #endregion
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -52,23 +58,142 @@ public class UIController : MonoBehaviour
         //add listeners to save and load buttons
         SaveButton.onClick.AddListener(() => OnSave?.Invoke());
         LoadButton.onClick.AddListener(() => OnLoad?.Invoke());
+
+        serializerDropdown.onValueChanged.AddListener((index) =>
+        {
+            Loader.showconf.Serializer = Loader.serializers[index];
+            Loader.ReloadShowConf();
+            InvalidateUIState();
+        });
+
+        serializeUniverseCountField = AddInputField(serializerStaticSettingsRect, "Serialize Universe Count")
+            .WithText(Loader.showconf.SerializeUniverseCount.ToString())
+            .WithCallback((value) =>
+            {
+                if (int.TryParse(value, out int intValue))
+                {
+                    Loader.showconf.SerializeUniverseCount = intValue;
+                    Loader.ReloadShowConf();
+                    InvalidateUIState();
+                }
+            });
+
+        invertMaskToggle = AddToggle(serializerStaticSettingsRect, "Invert Mask")
+            .WithValue(Loader.showconf.invertMask)
+            .WithCallback((isOn) =>
+            {
+                Loader.showconf.invertMask = isOn;
+                Loader.ReloadShowConf();
+                InvalidateUIState();
+            });
+
+        autoMaskOnZeroToggle = AddToggle(serializerStaticSettingsRect, "Auto Mask On Zero")
+            .WithValue(Loader.showconf.autoMaskOnZero)
+            .WithCallback((isOn) =>
+            {
+                Loader.showconf.autoMaskOnZero = isOn;
+                Loader.ReloadShowConf();
+                InvalidateUIState();
+            });
+
+        spoutOutputNameField = AddInputField(serializerStaticSettingsRect, "Spout Output Name")
+            .WithText(Loader.showconf.SpoutOutputName)
+            .WithCallback((value) =>
+            {
+                Loader.showconf.SpoutOutputName = value;
+                Loader.ReloadShowConf();
+                InvalidateUIState();
+            });
+
+        artNetPortField = AddInputField(serializerStaticSettingsRect, "ArtNet Port")
+            .WithText(Loader.showconf.ArtNetPort.ToString())
+            .WithContentType(TMP_InputField.ContentType.IntegerNumber)
+            .WithCallback((value) =>
+            {
+                if (int.TryParse(value, out int intValue))
+                {
+                    Loader.showconf.ArtNetPort = intValue;
+                    Loader.ReloadShowConf();
+                    InvalidateUIState();
+                }
+            });
+
+        deserializerDropdown.onValueChanged.AddListener((index) =>
+        {
+            Loader.showconf.Deserializer = Loader.serializers[index];
+            Loader.ReloadShowConf();
+            InvalidateUIState();
+        });
+
+        transcodeToggle = AddToggle(deserializerStaticSettingsRect, "Transcode")
+            .WithValue(Loader.showconf.Transcode)
+            .WithCallback((isOn) =>
+            {
+                Loader.showconf.Transcode = isOn;
+                Loader.ReloadShowConf();
+                InvalidateUIState();
+            });
+
+        transcodeUniverseCountField = AddInputField(deserializerStaticSettingsRect, "Transcode Universe Count")
+            .WithText(Loader.showconf.TranscodeUniverseCount.ToString())
+            .WithContentType(TMP_InputField.ContentType.IntegerNumber)
+            .WithCallback((value) =>
+            {
+                if (int.TryParse(value, out int intValue))
+                {
+                    Loader.showconf.TranscodeUniverseCount = intValue;
+                    Loader.ReloadShowConf();
+                    InvalidateUIState();
+                }
+            });
+
+        spoutInputNameField = AddInputField(deserializerStaticSettingsRect, "Spout Input Name")
+            .WithText(Loader.showconf.SpoutInputName)
+            .WithCallback((value) =>
+            {
+                Loader.showconf.SpoutInputName = value;
+                Loader.ReloadShowConf();
+                InvalidateUIState();
+            });
     }
 
     public void InvalidateUIState()
     {
         //serializer setup
         RebuildDropdown(serializerDropdown, Loader.serializers.Select(x => x.GetType().Name).ToList(), Loader.showconf.Serializer?.GetType().Name ?? string.Empty);
-        serializeUniverseCountField.text = Loader.showconf.SerializeUniverseCount.ToString();
-        invertMaskToggle.isOn = Loader.showconf.invertMask;
-        autoMaskOnZeroToggle.isOn = Loader.showconf.autoMaskOnZero;
-        spoutOutputNameField.text = Loader.showconf.SpoutOutputName;
-        artNetPortField.text = Loader.showconf.ArtNetPort.ToString();
+        serializeUniverseCountField.WithText(Loader.showconf.SerializeUniverseCount.ToString());
+        invertMaskToggle.WithValue(Loader.showconf.invertMask);
+        autoMaskOnZeroToggle.WithValue(Loader.showconf.autoMaskOnZero);
+        spoutOutputNameField.WithText(Loader.showconf.SpoutOutputName);
+        artNetPortField.WithText(Loader.showconf.ArtNetPort.ToString());
+
+        Loader.showconf.Serializer.DeconstructUserInterface();
+
+        //destroy the dynamic area
+        foreach (Transform child in serializerDynamicSettingsRect)
+        {
+            Destroy(child.gameObject);
+        }
+
+        //rebuild the dynamic area
+        Loader.showconf.Serializer.ConstructUserInterface(serializerDynamicSettingsRect);
 
         //deserializer setup
         RebuildDropdown(deserializerDropdown, Loader.serializers.Select(x => x.GetType().Name).ToList(), Loader.showconf.Deserializer?.GetType().Name ?? string.Empty);
-        transcodeToggle.isOn = Loader.showconf.Transcode;
-        transcodeUniverseCountField.text = Loader.showconf.TranscodeUniverseCount.ToString();
-        spoutInputNameField.text = Loader.showconf.SpoutInputName;
+        transcodeToggle.WithValue(Loader.showconf.Transcode);
+        transcodeUniverseCountField.WithText(Loader.showconf.TranscodeUniverseCount.ToString());
+        spoutInputNameField.WithText(Loader.showconf.SpoutInputName);
+
+        Loader.showconf.Deserializer.DeconstructUserInterface();
+
+        //destroy the dynamic area
+        foreach (Transform child in deserializerDynamicSettingsRect)
+        {
+            Destroy(child.gameObject);
+        }
+
+        //rebuild the dynamic area
+        Loader.showconf.Deserializer.ConstructUserInterface(deserializerDynamicSettingsRect);
     }
 
     private void RebuildDropdown(TMP_Dropdown dropdown, List<string> options, string search)
@@ -78,7 +203,7 @@ public class UIController : MonoBehaviour
 
         //search for the option
         int index = options.FindIndex(x => x.Contains(search, StringComparison.OrdinalIgnoreCase));
-        dropdown.value = index >= 0 ? index : 0;
+        dropdown.SetValueWithoutNotify(index >= 0 ? index : 0);
 
         dropdown.RefreshShownValue();
     }
@@ -107,6 +232,6 @@ public class UIController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }

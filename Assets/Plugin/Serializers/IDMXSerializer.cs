@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static Util;
 
-public interface IDMXSerializer : IConstructable
+public interface IDMXSerializer : IUserInterface<IDMXGenerator>, IConstructable
 {
     /// <summary>
     /// Serializes a channel from a raw byte representation, to a output video stream.

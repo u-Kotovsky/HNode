@@ -44,6 +44,21 @@ public class ColorBinary : IDMXSerializer
             TextureWriter.MakeColorBlock(ref pixels, x, y, color, blockSize);
         }
     }
-    
+
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+
+    }
+
+    public void DeconstructUserInterface()
+    {
+
+    }
+
+    public void UpdateUserInterface()
+    {
+
+    }
 }

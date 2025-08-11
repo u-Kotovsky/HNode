@@ -147,4 +147,19 @@ public class BinaryStageFlight : IDMXSerializer
         }
         return (byte)(crc << CRCBits); // put crc on the left and pad 0s
     }
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+
+    }
+
+    public void DeconstructUserInterface()
+    {
+
+    }
+
+    public void UpdateUserInterface()
+    {
+
+    }
 }

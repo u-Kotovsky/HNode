@@ -20,10 +20,10 @@ public class Loader : MonoBehaviour
     //dmx generator source
     public static List<IDMXGenerator> generators;
     public static List<IExporter> exporters;
-    List<InterfaceList> interfaceLists;
-    public SpoutReceiver spoutReceiver;
-    public SpoutSender spoutSender;
-    public ArtNetReceiver artNetReceiver;
+    private static List<InterfaceList> interfaceLists;
+    public static SpoutReceiver spoutReceiver;
+    public static SpoutSender spoutSender;
+    public static ArtNetReceiver artNetReceiver;
 
     public static ShowConfiguration showconf = new ShowConfiguration();
 
@@ -33,6 +33,10 @@ public class Loader : MonoBehaviour
 
     void Start()
     {
+        spoutReceiver = FindObjectOfType<SpoutReceiver>();
+        spoutSender = FindObjectOfType<SpoutSender>();
+        artNetReceiver = FindObjectOfType<ArtNetReceiver>();
+
         //load in all the serializers
         serializers = GetAllInterfaceImplementations<IDMXSerializer>();
         generators = GetAllInterfaceImplementations<IDMXGenerator>();
@@ -45,14 +49,11 @@ public class Loader : MonoBehaviour
             interfaceList.Startup();
         }
 
-        //find the VRSL one
-        VRSL vrsl = serializers.OfType<VRSL>().FirstOrDefault();
-
         Debug.Log($"Loaded {serializers.Count} serializers");
 
         //default the serializers to VRSL and have transcode off
-        showconf.Serializer = vrsl;
-        showconf.Deserializer = vrsl;
+        showconf.Serializer = new VRSL();
+        showconf.Deserializer = new VRSL();
         //showconf.Transcode = false;
         showconf.TranscodeUniverseCount = 3;
         showconf.SerializeUniverseCount = int.MaxValue;
@@ -165,6 +166,20 @@ public class Loader : MonoBehaviour
             return;
         }
 
+        UnloadShowConf();
+
+        showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
+
+        //invalidate the dropdowns and toggles
+        uiController.InvalidateUIState();
+
+        //start coroutine
+        //this is stupid dumb shit but this YML library is being weird and this fixes the issue
+        StartCoroutine(DeferredLoad(content));
+    }
+
+    public static void UnloadShowConf()
+    {
         //deconstruct all generators before we lose references to them
         foreach (var generator in showconf.Generators)
         {
@@ -180,15 +195,6 @@ public class Loader : MonoBehaviour
 
         showconf.Serializer.Deconstruct();
         showconf.Deserializer.Deconstruct();
-
-        showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
-
-        //invalidate the dropdowns and toggles
-        uiController.InvalidateUIState();
-
-        //start coroutine
-        //this is stupid dumb shit but this YML library is being weird and this fixes the issue
-        StartCoroutine(DeferredLoad(content));
     }
 
     IEnumerator DeferredLoad(string content)
@@ -199,6 +205,17 @@ public class Loader : MonoBehaviour
         //yayyyyy double load to fix dumb race condition bullshit
         showconf = ymldeserializer.Deserialize<ShowConfiguration>(content);
 
+        LoadShowConf();
+    }
+
+    public static void ReloadShowConf()
+    {
+        UnloadShowConf();
+        LoadShowConf();
+    }
+
+    public static void LoadShowConf()
+    {
         //run initialization on all generators
         foreach (var generator in showconf.Generators)
         {
@@ -225,7 +242,7 @@ public class Loader : MonoBehaviour
     }
 
     //TODO: Should probably be moved to UIController but eh
-    private void SetupDynamicUI()
+    private static void SetupDynamicUI()
     {
         //get all InterfaceList and initialize them
         foreach (var interfaceList in interfaceLists)

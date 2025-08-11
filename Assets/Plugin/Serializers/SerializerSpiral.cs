@@ -84,6 +84,21 @@ public class Spiral : IDMXSerializer
                 break;
         }
     }
-    
+
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight) => throw new NotImplementedException();
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+
+    }
+
+    public void DeconstructUserInterface()
+    {
+
+    }
+
+    public void UpdateUserInterface()
+    {
+
+    }
 }

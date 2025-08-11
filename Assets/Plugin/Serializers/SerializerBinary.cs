@@ -74,4 +74,19 @@ public class Binary : IDMXSerializer
         bits.CopyTo(bytes, 0);
         return bytes[0];
     }
+
+    public void ConstructUserInterface(RectTransform rect)
+    {
+
+    }
+
+    public void DeconstructUserInterface()
+    {
+
+    }
+
+    public void UpdateUserInterface()
+    {
+
+    }
 }
