@@ -179,6 +179,16 @@ public class VRSL : IDMXSerializer
             {
                 RGBGridMode = isOn;
             });
+
+        var text = AddText(rect, "Output Config: " + outputConfig.ToString());
+
+        //do a button to cycle through the output configs
+        AddButton(rect, "Cycle Output Config")
+            .WithCallback(() =>
+            {
+                outputConfig = (OutputConfigs)(((int)outputConfig + 1) % Enum.GetNames(typeof(OutputConfigs)).Length);
+                text.text = "Output Config: " + outputConfig.ToString();
+            });
     }
 
     public void DeconstructUserInterface()

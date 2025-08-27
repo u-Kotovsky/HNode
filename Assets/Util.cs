@@ -91,6 +91,8 @@ public static class Util
         textComponent.text = text;
         textComponent.color = Color.white; //default color
         textComponent.fontSize = FONTSIZE;
+        //set size
+        SetHeight((RectTransform)textObject.transform, ELEMENTHEIGHT);
 
         return textComponent;
     }
@@ -114,6 +116,22 @@ public static class Util
 
         SetRectCenterStretch((RectTransform)textObject.transform);
 
+        return button;
+    }
+
+    internal static Button WithText(this Button button, string text)
+    {
+        var textComponent = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (textComponent != null)
+        {
+            textComponent.text = text;
+        }
+        return button;
+    }
+
+    internal static Button WithCallback(this Button button, UnityEngine.Events.UnityAction callback)
+    {
+        button.onClick.AddListener(callback);
         return button;
     }
 
