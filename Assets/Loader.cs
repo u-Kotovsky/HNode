@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ArtNet;
 using Klak.Spout;
+using Plugin.Receivers;
 using SFB;
 using TMPro;
 using UnityEditor;
@@ -24,6 +25,7 @@ public class Loader : MonoBehaviour
     public static SpoutReceiver spoutReceiver;
     public static SpoutSender spoutSender;
     public static ArtNetReceiver artNetReceiver;
+    public static WebSocketReceiver webSocketReceiver;
 
     public static ShowConfiguration showconf = new ShowConfiguration();
 
@@ -36,6 +38,7 @@ public class Loader : MonoBehaviour
         spoutReceiver = FindObjectOfType<SpoutReceiver>();
         spoutSender = FindObjectOfType<SpoutSender>();
         artNetReceiver = FindObjectOfType<ArtNetReceiver>();
+        webSocketReceiver = FindObjectOfType<WebSocketReceiver>();
 
         //load in all the serializers
         serializers = GetAllInterfaceImplementations<IDMXSerializer>();
@@ -235,6 +238,7 @@ public class Loader : MonoBehaviour
         spoutReceiver.sourceName = showconf.SpoutInputName;
 
         artNetReceiver.ChangePort(showconf.ArtNetPort);
+        webSocketReceiver.ChangeUrl(showconf.WebSocketUrl);
 
         SetFramerate(showconf.TargetFramerate);
 

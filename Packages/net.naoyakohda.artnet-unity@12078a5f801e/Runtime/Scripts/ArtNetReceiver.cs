@@ -62,7 +62,7 @@ namespace ArtNet
             UdpReceiver.StopReceive();
         }
 
-        private void OnReceivedPacket(byte[] receiveBuffer, int length, EndPoint remoteEp)
+        public void OnReceivedPacket(byte[] receiveBuffer, int length, EndPoint remoteEp)
         {
             var packet = ArtNetPacket.Create(receiveBuffer);
             if (packet == null) return;

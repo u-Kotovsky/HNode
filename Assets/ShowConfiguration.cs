@@ -36,6 +36,7 @@ public class ShowConfiguration
     public string SpoutOutputName { get; set; } = "HNode Output";
     public int ArtNetPort { get; set; } = 6454;
     public int TargetFramerate { get; set; } = 60;
+    public string WebSocketUrl { get; set; } = "ws://127.0.0.1:4546/dmx512";
 
     //initializer
     public ShowConfiguration()

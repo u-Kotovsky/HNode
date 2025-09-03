@@ -21,6 +21,13 @@
       "dependencies": {},
       "hash": "0c3e6e2950c760e542abdab75d18ff788b83881e"
     },
+    "com.mikeschweitzer.websocket": {
+      "version": "https://github.com/mikerochip/unity-websocket.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "a1ea37daaa8f89b379a7c15b4eb75c3722cc499e"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
