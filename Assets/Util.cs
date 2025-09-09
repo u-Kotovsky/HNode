@@ -21,6 +21,25 @@ public static class Util
         return 255;
     }
 
+    /// <summary>
+    /// Writes the contents of <paramref name="sourceList"/> into <paramref name="destinationList"/> starting at <paramref name="position"/>.
+    /// If <paramref name="destinationList"/> is not large enough to hold the contents of <paramref name="sourceList"/> at <paramref name="position"/>, it will be expanded.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="destinationList"></param>
+    /// <param name="sourceList"></param>
+    /// <param name="position"></param>
+    public static void WriteToListAtPosition<T>(this List<T> destinationList, List<T> sourceList, int position)
+    {
+        destinationList.EnsureCapacity(position + sourceList.Count);
+
+        //we need to write to the dmx data list directly
+        for (int i = position; i < position + sourceList.Count; i++)
+        {
+            destinationList[i] = sourceList[i - position];
+        }
+    }
+
     public static void SetLeft(this RectTransform rt, float left)
     {
         rt.offsetMin = new Vector2(left, rt.offsetMin.y);
@@ -92,7 +111,7 @@ public static class Util
         textComponent.color = Color.white; //default color
         textComponent.fontSize = FONTSIZE;
         //set size
-        SetHeight((RectTransform)textObject.transform, ELEMENTHEIGHT);
+        //SetHeight((RectTransform)textObject.transform, ELEMENTHEIGHT);
 
         return textComponent;
     }

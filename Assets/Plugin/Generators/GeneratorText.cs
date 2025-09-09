@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -121,13 +122,7 @@ public class Text : IDMXGenerator
             textBytes = System.Text.Encoding.UTF8.GetBytes(text);
         }
 
-        dmxData.EnsureCapacity(channelStart + textBytes.Length);
-
-        //we need to write to the dmx data list directly
-        for (int i = channelStart; i < channelStart + textBytes.Length; i++)
-        {
-            dmxData[i] = textBytes[i - channelStart];
-        }
+        dmxData.WriteToListAtPosition(textBytes.ToList(), channelStart);
     }
 
     private protected TMP_InputField textInputfield;
