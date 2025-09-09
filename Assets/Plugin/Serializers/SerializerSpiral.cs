@@ -13,7 +13,7 @@ public class Spiral : IDMXSerializer
 
     public void Construct() { }
     public void Deconstruct() { }
-    public void InitFrame()
+    public void InitFrame(ref List<byte> channelValues)
     {
         x = 0;
         y = 0;

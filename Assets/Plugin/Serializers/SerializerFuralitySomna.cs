@@ -16,7 +16,7 @@ public class FuralitySomna : IDMXSerializer
     public void Construct() { }
     public void Deconstruct() { }
 
-    public void InitFrame()
+    public void InitFrame(ref List<byte> channelValues)
     {
         cumulativeOFfset = 0;
     }

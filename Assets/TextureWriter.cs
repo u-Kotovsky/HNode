@@ -82,10 +82,10 @@ public class TextureWriter : MonoBehaviour
         }
         Profiler.EndSample();
 
-        Loader.showconf.Serializer.InitFrame();
+        Loader.showconf.Serializer.InitFrame(ref mergedDmxValues);
         foreach (var exporter in Loader.showconf.Exporters)
         {
-            exporter.InitFrame();
+            exporter.InitFrame(ref mergedDmxValues);
         }
 
         Profiler.BeginSample("Serializer Loop");

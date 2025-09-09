@@ -142,7 +142,7 @@ public class MIDIDMX : IExporter
 
     public void SerializeChannel(byte channelValue, int channel) { }
 
-    public void InitFrame() { }
+    public void InitFrame(ref List<byte> channelValues) { }
 
     public void CompleteFrame(ref List<byte> channelValues)
     {

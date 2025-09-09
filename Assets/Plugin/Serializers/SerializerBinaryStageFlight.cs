@@ -13,7 +13,7 @@ public class BinaryStageFlight : IDMXSerializer
 
     public void Construct() { }
     public void Deconstruct() { }
-    public void InitFrame() { }
+    public void InitFrame(ref List<byte> channelValues) { }
     public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight)
     {
         //figure out the lowest pixel it wouldve drawn before

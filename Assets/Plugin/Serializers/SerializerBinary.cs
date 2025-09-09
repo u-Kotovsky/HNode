@@ -10,7 +10,7 @@ public class Binary : IDMXSerializer
 
     public void Construct() { }
     public void Deconstruct() { }
-    public void InitFrame() { }
+    public void InitFrame(ref List<byte> channelValues) { }
     public void CompleteFrame(ref Color32[] pixels, ref List<byte> channelValues, int textureWidth, int textureHeight) { }
 
     public void SerializeChannel(ref Color32[] pixels, byte channelValue, int channel, int textureWidth, int textureHeight)

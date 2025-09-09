@@ -28,7 +28,7 @@ public interface IDMXSerializer : IUserInterface<IDMXGenerator>, IConstructable
     /// <summary>
     /// Called at the start of each frame to reset any state.
     /// </summary>
-    void InitFrame();
+    void InitFrame(ref List<byte> channelValues);
 
     /// <summary>
     /// Called after all channels have been serialized for the current frame.
