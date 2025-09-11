@@ -38,6 +38,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
     public float gridSpacingLat = 0.0001f; //spacing in degrees
     [YamlMember(Description = "The initial altitude of the drones in meters")]
     public float initialAltitude = 0f;
+    public bool pyroFeature = false;
     private List<UniTask> tasks = new List<UniTask>();
     private CancellationTokenSource cancellationTokenSource = new();
     public void Construct()
@@ -132,6 +133,12 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             droneValues.Add(color.r);
             droneValues.Add(color.g);
             droneValues.Add(color.b);
+
+            //if pyro is enabled, get the index and insert it too
+            if (pyroFeature)
+            {
+                droneValues.Add((byte)d.GetPyroIndex());
+            }
 
             //set the data
             dmxData.SetRange(channelStart + ((d.uid - 1) * droneValues.Count), droneValues.Count, droneValues.ToArray());
@@ -667,6 +674,15 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             return Color.black;
         }
 
+        public int GetPyroIndex()
+        {
+            if (showFile != null)
+            {
+                return showFile.GetPyroAtRealTime(DateTime.Now);
+            }
+            return 0;
+        }
+
         private double measure(float lat1, float lon1, float lat2, float lon2)
         {
             // generally used geo measurement function
@@ -941,6 +957,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             public int LightProgramPointer = 0;
             public List<Trajectory> TrajectoryProgram = new();
             public int TrajectoryProgramPointer = 0;
+            public List<PyroEvent> PyroProgram = new();
+            public int PyroProgramPointer = 0;
             const int PointerLookahead = 5;
 
             public DateTime showStartTime = DateTime.UtcNow + TimeSpan.FromDays(2); //assume way into the future
@@ -1054,6 +1072,22 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             TrajectoryProgramPointer = 0;
                         }
                         break;
+                    case BlockType.EVENT_LIST:
+                        //TODO: This is a extremely not accurate section of this API, as to be accurate would need another license that isnt worth paying for
+                        //TLDR, this will ONLY work with our custom version of the skybrush server code lol. Maybe find someone with a proper license in the future or rework this API
+                        while (blockData.Count > 0)
+                        {
+                            //we ONLY expect pyro data at the moment, so there isnt anything identifying what a event is
+                            //each pyro event has a varint millisecond trigger time, and a varint for the index selection
+                            PyroProgram.Add(new PyroEvent(ref blockData));
+                        }
+
+                        /* //test print all the information
+                        foreach (var pyro in PyroProgram)
+                        {
+                            Debug.Log($"Event at {pyro.eventTime}, Index {pyro.pyroIndex}");
+                        } */
+                        break;
                     default:
                         Debug.LogWarning($"Unhandled block type: {blockType}");
                         break;
@@ -1104,6 +1138,48 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 //get the time inside the bezier curve
                 float t = (float)((time - tevent.startTime) / tevent.duration);
                 return tevent.evaluate(t);
+            }
+
+            public int GetPyroAtRealTime(DateTime time)
+            {
+                //convert the time to a timespan since the show start time
+                TimeSpan elapsed = time - showStartTime;
+                return GetPyroAtTime(elapsed);
+            }
+
+            public int GetPyroAtTime(TimeSpan time)
+            {
+                //if this is before the first event, return 0
+                if (time < PyroProgram.First().startTime)
+                {
+                    return 0;
+                }
+
+                //if its after, return black too
+                if (time > PyroProgram.Last().endTime)
+                {
+                    //Debug.Log($"Early exit at end of light prog, {time}   {LightProgram.Last().endTime}");
+                    return 0;
+                }
+
+                //check if we are not in a pyro event now
+                if (!PyroProgram[PyroProgramPointer].InsideEvent(time))
+                {
+                    //look ahead at the next 5 and see if we are in one of them
+                    for (int i = PyroProgramPointer + 1; i < PyroProgram.Count && i < PyroProgramPointer + PointerLookahead; i++)
+                    {
+                        if (PyroProgram[i].InsideEvent(time))
+                        {
+                            //we are in this pyro event, set the pointer to that
+                            PyroProgramPointer = i;
+                            break;
+                        }
+                    }
+                }
+
+                PyroEvent eve = PyroProgram[PyroProgramPointer];
+
+                return eve.pyroIndex;
             }
 
             public Color32 GetColorAtRealTime(DateTime time)
@@ -1375,10 +1451,36 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 }
             }
 
+            public class PyroEvent
+            {
+                public readonly TimeSpan startTime;
+                public readonly int pyroIndex;
+                public readonly TimeSpan duration;
+                public readonly TimeSpan endTime;
+                public const int millisecondsPerFiring = 1000;
+
+                public PyroEvent(ref Queue<byte> data)
+                {
+                    startTime = TimeSpan.FromMilliseconds(GetVarInt(ref data));
+                    pyroIndex = GetVarInt(ref data);
+
+                    //setup the other read only values
+                    duration = TimeSpan.FromMilliseconds(millisecondsPerFiring);
+                    endTime = startTime + duration;
+                }
+
+                //inside check
+                public bool InsideEvent(TimeSpan time)
+                {
+                    //check if the time is inside the event
+                    return time >= startTime && time < endTime;
+                }
+            }
+
             public class LightEvent
             {
-                public TimeSpan duration;
-                public Color32 color;
+                public readonly TimeSpan duration;
+                public readonly Color32 color;
                 public Color32 previousEventColor = new Color32(0, 0, 0, 255); //default to black as the previous color
                 public bool setsColor => opcode switch
                 {
@@ -1392,7 +1494,7 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     Opcode.FADE_TO_WHITE => true,
                     _ => false,
                 };
-                public Opcode opcode;
+                public readonly Opcode opcode;
                 public byte? counter = null;
                 public int? address = null;
                 public TimeSpan startTime = new TimeSpan(-50);
@@ -1411,7 +1513,8 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                 public LightEvent(ref Queue<byte> data)
                 {
                     //pop the first byte to get the opcode
-                    opcode = (Opcode)data.DequeueChunk(1).First();
+                    var opcoderaw = data.DequeueChunk(1).First();
+                    opcode = (Opcode)opcoderaw;
                     //Debug.Log($"Opcode: {opcode}");
 
                     //assign duration as 0
@@ -1513,29 +1616,16 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                         case Opcode.JUMP:
                             address = GetVarInt(ref data);
                             break;
+                        //ignore a setpyro opcode
+                        case Opcode.SET_PYRO:
+                        case Opcode.SET_PYRO_ALL:
+                            tempByte = data.DequeueChunk(1).First(); //just ignore the argument byte
+                            break;
                         default:
-                            throw new NotImplementedException($"Unhandled opcode: {opcode}");
+                            throw new NotImplementedException($"Unhandled opcode: {opcode} OR {opcoderaw.ToString("X2")}, trace of the next few bytes: {string.Join(" ", data.Take(10).Select(b => b.ToString("X2")))}");
                     }
 
                     //Debug.Log($"Light Event: Opcode: {opcode}, Duration: {duration}, Color: {color}, Counter: {counter}, Address: {address}");
-                }
-
-                private static int GetVarInt(ref Queue<byte> data)
-                {
-                    //duration is encoded in varint format
-                    //MSB is 1 if the integer continues to the next byte, 0 if it is the last byte
-                    //duration is encoded as number of frames at 50 FPS, so each value is 20ms
-                    int val = 0;
-                    int shift = 0;
-                    byte b;
-                    do
-                    {
-                        b = data.DequeueChunk(1).First();
-                        val |= (b & 0x7F) << shift;
-                        shift += 7;
-                    } while ((b & 0x80) != 0);
-
-                    return val;
                 }
 
                 public bool InsideEvent(TimeSpan time)
@@ -1577,6 +1667,24 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                     SET_PYRO_ALL = 21, //ignored for now TODO: Implement for pyro control
                     NUMBER_OF_COMMANDS, //automatic assignment to match the number of commands
                 }
+            }
+            
+            private static int GetVarInt(ref Queue<byte> data)
+            {
+                //duration is encoded in varint format
+                //MSB is 1 if the integer continues to the next byte, 0 if it is the last byte
+                //duration is encoded as number of frames at 50 FPS, so each value is 20ms
+                int val = 0;
+                int shift = 0;
+                byte b;
+                do
+                {
+                    b = data.DequeueChunk(1).First();
+                    val |= (b & 0x7F) << shift;
+                    shift += 7;
+                } while ((b & 0x80) != 0);
+
+                return val;
             }
         }
     }
