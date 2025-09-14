@@ -537,6 +537,20 @@ public class MAVLinkDroneNetwork : IDMXGenerator
                             d.SendFTPMessage(sendMessage.Value, message.sysid, message.compid);
                         }
                         break;
+                    case MAVLINK_MSG_ID.LED_CONTROL:
+                        var ledControl = (mavlink_led_control_t)message.data;
+
+                        found = drones.TryGetValue(ledControl.target_system, out d);
+
+                        if (!found)
+                        {
+                            Debug.LogError($"Invalid system target: {ledControl.target_system}");
+                            continue;
+                        }
+
+                        //add to the flashing list
+                        d.SetFlashing();
+                        break;
                     default:
                         Debug.Log($"Unhandled message: {messageId}");
                         break;
@@ -610,6 +624,9 @@ public class MAVLinkDroneNetwork : IDMXGenerator
         private Vector3 latlongaltposition = Vector3.zero;
 
         private Vector3 showOrigin = Vector3.zero;
+        private TimeSpan flashStartTime = TimeSpan.Zero;
+        private TimeSpan flashEndTime = TimeSpan.Zero;
+        private TimeSpan flashInterval = TimeSpan.FromSeconds(0.5f);
         private Vector3 Position
         {
             get
@@ -664,8 +681,21 @@ public class MAVLinkDroneNetwork : IDMXGenerator
             return Position;
         }
 
+        public void SetFlashing()
+        {
+            //start a timer for 2 seconds flashing the LED
+            flashStartTime = DateTime.Now.TimeOfDay;
+            flashEndTime = flashStartTime + TimeSpan.FromSeconds(2);
+        }
+
         public Color32 GetDroneColor()
         {
+            //determine if we should be flashing
+            if (DateTime.Now.TimeOfDay < flashEndTime && (DateTime.Now.TimeOfDay - flashStartTime).TotalMilliseconds % flashInterval.TotalMilliseconds < (flashInterval.TotalMilliseconds / 2))
+            {
+                return Color.white;
+            }
+
             if (showFile != null)
             {
                 //get color at time
