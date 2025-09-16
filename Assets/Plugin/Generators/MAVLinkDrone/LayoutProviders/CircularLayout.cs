@@ -20,9 +20,9 @@ namespace Generators.MAVLinkDrone
             for (int j = 0; j < drones.Count; j++)
             {
                 //get the drone at the index
-                Drone d = drones[(byte)(j)];
+                Drone d = drones[(byte)(j + 1)];
                 //set the position based on the grid
-                float angle = (360f / drones.Count) * j;
+                float angle = 360f / (drones.Count) * j;
                 //get a direction vector2
                 Vector2 dir = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
                 Vector2 pos = dir * Radius;
