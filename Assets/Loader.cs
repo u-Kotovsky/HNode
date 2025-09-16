@@ -88,19 +88,34 @@ public class Loader : MonoBehaviour
         var builder = new T()
             .WithNamingConvention(CamelCaseNamingConvention.Instance);
 
-        AddInterfaceListMapping(builder, serializers);
-        AddInterfaceListMapping(builder, generators);
-        AddInterfaceListMapping(builder, exporters);
+        //find ALL usages of TagMappedAttribute and add them to the builder
+
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(p => Attribute.IsDefined(p, typeof(TagMappedAttribute)));
+
+        //now, types may just be interfaces
+        //in this case, we need to find all implementations of that interface and add those too, upwards
+        var additionalTypes = new List<Type>();
+        foreach (var type in types)
+        {
+            if (type.IsInterface)
+            {
+                var impls = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(s => s.GetTypes())
+                    .Where(p => type.IsAssignableFrom(p) && !p.IsInterface && !p.IsAbstract);
+                additionalTypes.AddRange(impls);
+            }
+        }
+        //combine them
+        var allTypes = types.Concat(additionalTypes).Distinct().ToList();
+        foreach (var type in allTypes)
+        {
+            Debug.Log("" + type.FullName);
+            builder.WithTagMapping("!" + type.Name, type);
+        }
 
         return builder;
-    }
-
-    private void AddInterfaceListMapping<T, T2>(T builder, List<T2> list) where T : BuilderSkeleton<T>
-    {
-        foreach (var item in list)
-        {
-            builder.WithTagMapping("!" + item.GetType().Name, item.GetType());
-        }
     }
 
     private List<T> GetAllInterfaceImplementations<T>()

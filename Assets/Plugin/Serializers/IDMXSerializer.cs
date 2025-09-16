@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static Util;
 
+[TagMapped]
 public interface IDMXSerializer : IUserInterface<IDMXGenerator>, IConstructable
 {
     /// <summary>

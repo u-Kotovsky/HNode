@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[TagMapped]
 public interface IExporter : IUserInterface<IExporter>, IConstructable
 {
     /// <summary>
