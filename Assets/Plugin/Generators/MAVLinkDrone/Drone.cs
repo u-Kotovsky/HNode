@@ -96,13 +96,13 @@ namespace Generators.MAVLinkDrone
             return Color.black;
         }
 
-        public int GetPyroIndex()
+        public PyroEvent GetPyroEvent()
         {
             if (showFile != null)
             {
                 return showFile.GetPyroAtRealTime(DateTime.Now);
             }
-            return 0;
+            return new PyroEvent();
         }
 
         private double measure(float lat1, float lon1, float lat2, float lon2)

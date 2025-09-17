@@ -98,18 +98,28 @@ namespace Generators.MAVLinkDrone
                 droneValues.AddRange(BitConverter.GetBytes(y).Reverse());
                 droneValues.AddRange(BitConverter.GetBytes(z).Reverse());
 
-                Color32 color = d.GetDroneColor();
-                //Debug.Log($"Drone {d.uid} color: {color.r}, {color.g}, {color.b}");
+                //try to get a pyro event
+                var pyevent = d.GetPyroEvent();
 
-                //append the LED color
-                droneValues.Add(color.r);
-                droneValues.Add(color.g);
-                droneValues.Add(color.b);
-
-                //if pyro is enabled, get the index and insert it too
                 if (pyroFeature)
                 {
-                    droneValues.Add((byte)d.GetPyroIndex());
+                    //pitch is -90 to 90, convert to 0-byte max value
+                    //yaw is -180 to 180, convert to 0-byte max value
+                    //roll is -180 to 180, convert to 0-byte max value
+                    droneValues.Add((byte)(Mathf.InverseLerp(-90, 90, pyevent.pitch) * byte.MaxValue));
+                    droneValues.Add((byte)(Mathf.InverseLerp(-180, 180, pyevent.yaw) * byte.MaxValue));
+                    droneValues.Add((byte)(Mathf.InverseLerp(-180, 180, pyevent.roll) * byte.MaxValue));
+                    droneValues.Add((byte)(pyevent.pyroIndex));
+                }
+                else
+                {
+                    Color32 color = d.GetDroneColor();
+                    //Debug.Log($"Drone {d.uid} color: {color.r}, {color.g}, {color.b}");
+
+                    //append the LED color
+                    droneValues.Add(color.r);
+                    droneValues.Add(color.g);
+                    droneValues.Add(color.b);
                 }
 
                 //set the data

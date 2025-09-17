@@ -21,6 +21,23 @@ namespace Generators.MAVLinkDrone
         public TimeSpan startTime;
         public TimeSpan endTime;
 
+        public Trajectory()
+        {
+            //blank trajectory
+            startTime = TimeSpan.Zero;
+            duration = TimeSpan.FromSeconds(1);
+            endTime = startTime + duration;
+            xControlPoints.Add(0);
+            yControlPoints.Add(0);
+            zControlPoints.Add(0);
+            yawControlPoints.Add(0);
+            lastPosition = new Vector3(0, 0, 0);
+            X_Order = BezierOrder.Constant;
+            Y_Order = BezierOrder.Constant;
+            Z_Order = BezierOrder.Constant;
+            YAW_Order = BezierOrder.Constant;
+        }
+
         public Trajectory(ref Queue<byte> data, Vector3 startPos, float startYaw, byte scale)
         {
             xControlPoints.Add(startPos.x);

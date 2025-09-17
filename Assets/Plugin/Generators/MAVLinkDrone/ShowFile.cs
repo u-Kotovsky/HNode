@@ -41,6 +41,9 @@ namespace Generators.MAVLinkDrone
             int blockSize = BitConverter.ToUInt16(fileData.DequeueChunk(2).ToArray(), 0);
             //Debug.Log($"Block Type: {blockType}, Block Size: {blockSize}");
             Queue<byte> blockData = new(fileData.DequeueChunk(blockSize));
+            //Debug.Log(blockType);
+            //Debug.Log(blockSize);
+            //Debug.Log(blockData);
 
             switch (blockType)
             {
@@ -88,6 +91,15 @@ namespace Generators.MAVLinkDrone
                     } */
                     break;
                 case BlockType.TRAJECTORY:
+                    //if the initial size is only 1, then this is an empty trajectory block
+                    if (blockData.Count == 1)
+                    {
+                        Debug.Log("Empty Trajectory Block");
+                        //set a blank trajectory
+                        TrajectoryProgram.Add(new Trajectory());
+                        break;
+                    }
+
                     //decode the scale/flags, and the start xyz
                     //flags is the first byte
                     byte flags = blockData.DequeueChunk(1).First();
@@ -128,7 +140,7 @@ namespace Generators.MAVLinkDrone
                     }
                     break;
                 case BlockType.EVENT_LIST:
-                    Debug.Log("Parsing Pyro Event List");
+                    //Debug.Log("Parsing Pyro Event List");
                     //TODO: This is a extremely not accurate section of this API, as to be accurate would need another license that isnt worth paying for
                     //TLDR, this will ONLY work with our custom version of the skybrush server code lol. Maybe find someone with a proper license in the future or rework this API
                     while (blockData.Count > 0)
@@ -196,26 +208,32 @@ namespace Generators.MAVLinkDrone
             return tevent.evaluate(t);
         }
 
-        public int GetPyroAtRealTime(DateTime time)
+        public PyroEvent GetPyroAtRealTime(DateTime time)
         {
             //convert the time to a timespan since the show start time
             TimeSpan elapsed = time - showStartTime;
             return GetPyroAtTime(elapsed);
         }
 
-        public int GetPyroAtTime(TimeSpan time)
+        public PyroEvent GetPyroAtTime(TimeSpan time)
         {
+            //if there is no pyro events, return 0
+            if (PyroProgram.Count == 0)
+            {
+                return new PyroEvent();
+            }
+
             //if this is before the first event, return 0
             if (time < PyroProgram.First().startTime)
             {
-                return 0;
+                return new PyroEvent();
             }
 
             //if its after, return black too
             if (time > PyroProgram.Last().endTime)
             {
                 //Debug.Log($"Early exit at end of light prog, {time}   {LightProgram.Last().endTime}");
-                return 0;
+                return new PyroEvent();
             }
 
             //check if we are not in a pyro event now
@@ -235,7 +253,7 @@ namespace Generators.MAVLinkDrone
 
             PyroEvent eve = PyroProgram[PyroProgramPointer];
 
-            return eve.pyroIndex;
+            return eve;
         }
 
         public Color32 GetColorAtRealTime(DateTime time)
