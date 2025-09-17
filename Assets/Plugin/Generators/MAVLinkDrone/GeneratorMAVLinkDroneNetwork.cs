@@ -98,11 +98,11 @@ namespace Generators.MAVLinkDrone
                 droneValues.AddRange(BitConverter.GetBytes(y).Reverse());
                 droneValues.AddRange(BitConverter.GetBytes(z).Reverse());
 
-                //try to get a pyro event
-                var pyevent = d.GetPyroEvent();
 
                 if (pyroFeature)
                 {
+                    //try to get a pyro event
+                    var pyevent = d.GetPyroEvent();
                     //pitch is -90 to 90, convert to 0-byte max value
                     //yaw is -180 to 180, convert to 0-byte max value
                     //roll is -180 to 180, convert to 0-byte max value

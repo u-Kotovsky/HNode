@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Generators.MAVLinkDrone
 {
@@ -12,7 +13,7 @@ namespace Generators.MAVLinkDrone
         public readonly int roll;
         public readonly TimeSpan duration;
         public readonly TimeSpan endTime;
-        public const int millisecondsPerFiring = 1000;
+        public const int millisecondsPerFiring = 300;
 
         //blank pyro event
         public PyroEvent()
@@ -32,9 +33,16 @@ namespace Generators.MAVLinkDrone
             duration = TimeSpan.FromMilliseconds(millisecondsPerFiring);
             endTime = startTime + duration;
 
-            pitch = ShowFile.GetVarInt(ref data);
-            yaw = ShowFile.GetVarInt(ref data);
-            roll = ShowFile.GetVarInt(ref data);
+            //the sign of the angles is stored in the next byte
+            byte signs = data.Dequeue();
+            int pitchSign = (signs & 0b00000100) == 0 ? 1 : -1;
+            int yawSign = (signs & 0b00000010) == 0 ? 1 : -1;
+            int rollSign = (signs & 0b00000001) == 0 ? 1 : -1;
+
+            pitch = ShowFile.GetVarInt(ref data) * pitchSign;
+            yaw = ShowFile.GetVarInt(ref data) * yawSign;
+            roll = ShowFile.GetVarInt(ref data) * rollSign;
+            Debug.Log($"Pyro event: Start {startTime.TotalMilliseconds}ms  Index {pyroIndex}  Pitch {pitch}  Yaw {yaw}  Roll {roll}");
         }
 
         //inside check
