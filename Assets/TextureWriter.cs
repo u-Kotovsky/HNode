@@ -171,10 +171,7 @@ public class TextureWriter : MonoBehaviour
             {
                 int index = PixelToIndex(x + i, y + j);
                 if (index == -1) return;
-                if (index >= 0 && index < pixels.Length)
-                {
-                    pixels[index] = color;
-                }
+                pixels[index] = color;
             }
         }
     }
