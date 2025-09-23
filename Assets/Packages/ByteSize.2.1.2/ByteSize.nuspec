@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>ByteSize</id>
+    <version>2.1.2</version>
+    <title>ByteSize</title>
+    <authors>Omar Khudeira</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>https://github.com/omar/ByteSize</projectUrl>
+    <description>ByteSize is a utility class that makes byte size representation in code easier by removing ambiguity of the value being represented. ByteSize is to bytes what System.TimeSpan is to time.</description>
+    <releaseNotes>- Add strong name support
+
+View all release notes at https://github.com/omar/ByteSize/blob/master/CHANGELOG.md.</releaseNotes>
+    <copyright>Copyright © Omar Khudeira 2013-2022</copyright>
+    <tags>bytes</tags>
+    <repository type="git" url="https://github.com/omar/ByteSize" branch="tags/v2.1.2" commit="28f1bd5aa265c4a436e4091cf85fc7ad76bd5083" />
+    <dependencies>
+      <group targetFramework=".NETFramework4.5">
+        <dependency id="System.ValueTuple" version="4.5.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard1.0">
+        <dependency id="NETStandard.Library" version="1.6.1" exclude="Build,Analyzers" />
+        <dependency id="System.ComponentModel.TypeConverter" version="4.3.0" exclude="Build,Analyzers" />
+        <dependency id="System.ValueTuple" version="4.5.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net5.0" />
+      <group targetFramework=".NETStandard2.0" />
+      <group targetFramework=".NETStandard2.1" />
+    </dependencies>
+  </metadata>
+</package>

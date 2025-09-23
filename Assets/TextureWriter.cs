@@ -8,6 +8,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.UI;
+using ByteSizeLib;
 
 public class TextureWriter : MonoBehaviour
 {
@@ -50,7 +51,7 @@ public class TextureWriter : MonoBehaviour
 
         Profiler.BeginSample("Texture Clear");
         //fill with transparent
-        var color = new Color32(0,0,0,0);
+        var color = new Color32(0, 0, 0, 0);
         Array.Fill(pixels, color);
         Profiler.EndSample();
 
@@ -142,6 +143,11 @@ public class TextureWriter : MonoBehaviour
         timer.Stop();
 
         frameTime.text = $"Serialization Time: {timer.ElapsedMilliseconds} ms";
+        frameTime.text += $"\nDMX Channels: {mergedDmxValues.Count}";
+        //figure out bytes per second
+        var bytesPerSecond = mergedDmxValues.Count / UnityEngine.Time.smoothDeltaTime;
+        var prettyBytes = ByteSize.FromBytes(bytesPerSecond).ToString("0.##");
+        frameTime.text += $"\nData Throughput: {prettyBytes}/s";
     }
 
     public static int PixelToIndex(int x, int y)
