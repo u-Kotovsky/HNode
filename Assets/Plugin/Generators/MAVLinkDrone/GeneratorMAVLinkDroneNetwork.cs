@@ -550,7 +550,26 @@ namespace Generators.MAVLinkDrone
 
         public void ConstructUserInterface(RectTransform rect)
         {
-            //throw new NotImplementedException();
+            //add a button to export all drone positions for the shader static mode
+            //this involves constructing a string of `float3(X, Y, Z),` for each drone
+            //and then copying it to the clipboard
+
+            var button = Util.AddButton(rect, "Copy Drone Positions To Clipboard")
+            .WithCallback(() =>
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (Drone d in drones.Values)
+                {
+                    Vector3 pos = d.GetDronePosition();
+                    sb.AppendLine($"float3({pos.x}, {pos.y}, {pos.z}),");
+                }
+                //remove the last comma
+                if (sb.Length > 0)
+                {
+                    sb.Length -= 1;
+                }
+                GUIUtility.systemCopyBuffer = sb.ToString();
+            });
         }
 
         public void DeconstructUserInterface()
