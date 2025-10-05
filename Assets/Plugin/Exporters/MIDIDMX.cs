@@ -25,7 +25,7 @@ using UnityEngine.UI;
 public class MIDIDMX : IExporter
 {
     public bool useEditorLog = false;
-    public EquationNumber channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
+    //public EquationNumber channelLimit = 2048; //Limits the number of channels we scan through for MIDIDMX, so full range scans are kept to a minimum.
     public string midiDevice = "loopMIDI Port"; //Default to no device selected
 
     public enum Status : int
@@ -152,7 +152,7 @@ public class MIDIDMX : IExporter
             midiUpdates = 0;
             for (int i = midiCatchup; i < channelValues.Count; i++)
             {
-                if ((channelValues[i] != midiData[i] || (i >= midiScanPosition && i < midiScanPosition + idleScanChannels)) && i < channelLimit)
+                if ((channelValues[i] != midiData[i] || (i >= midiScanPosition && i < midiScanPosition + idleScanChannels)) && i < channelValues.Count)
                 {
                     if (midiUpdates >= channelsPerUpdate)
                     {
@@ -171,7 +171,7 @@ public class MIDIDMX : IExporter
             }
 
             midiScanPosition += idleScanChannels;
-            if (midiScanPosition > channelLimit)
+            if (midiScanPosition > channelValues.Count)
             {
                 midiScanPosition = 0;
             }
@@ -407,7 +407,6 @@ public class MIDIDMX : IExporter
 
 
     private protected Toggle useEditorLogToggle;
-    private protected TMP_InputField channelLimitInputfield;
     private protected TMP_InputField midiDeviceField;
     private protected TMP_InputField channelsPerUpdateInputfield;
     private protected TMP_InputField idleScanChannelsInputfield;
@@ -416,10 +415,6 @@ public class MIDIDMX : IExporter
         useEditorLogToggle = Util.AddToggle(rect, "Use Editor Log")
             .WithValue(useEditorLog)
             .WithCallback((value) => { useEditorLog = value; });
-
-        channelLimitInputfield = Util.AddInputField(rect, "Channel Limit")
-            .WithText(channelLimit)
-            .WithCallback((value) => { channelLimit = value; });
 
         midiDeviceField = Util.AddInputField(rect, "MIDI Device")
             .WithText(midiDevice)
