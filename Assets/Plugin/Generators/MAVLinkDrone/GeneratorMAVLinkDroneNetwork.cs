@@ -111,7 +111,7 @@ namespace Generators.MAVLinkDrone
                     //pitch is -90 to 90, convert to 0-byte max value
                     //yaw is -180 to 180, convert to 0-byte max value
                     //roll is -180 to 180, convert to 0-byte max value
-                    droneValues.Add((byte)(Mathf.InverseLerp(-90, 90, pyevent.pitch) * byte.MaxValue));
+                    droneValues.Add((byte)(Mathf.InverseLerp(-180, 180, pyevent.pitch) * byte.MaxValue));
                     droneValues.Add((byte)(Mathf.InverseLerp(-180, 180, pyevent.yaw) * byte.MaxValue));
                     droneValues.Add((byte)(Mathf.InverseLerp(-180, 180, pyevent.roll) * byte.MaxValue));
                     droneValues.Add((byte)(pyevent.pyroIndex));
