@@ -246,9 +246,12 @@ namespace Generators.MAVLinkDrone
                     {
                         //we are in this pyro event, set the pointer to that
                         PyroProgramPointer = i;
-                        break;
+                        return PyroProgram[PyroProgramPointer];
                     }
                 }
+
+                //we got here, arent in ANY event from what we can tell
+                return new PyroEvent();
             }
 
             PyroEvent eve = PyroProgram[PyroProgramPointer];
