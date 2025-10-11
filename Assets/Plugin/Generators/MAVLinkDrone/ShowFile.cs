@@ -13,7 +13,7 @@ namespace Generators.MAVLinkDrone
         public List<Trajectory> TrajectoryProgram = new();
         public int TrajectoryProgramPointer = 0;
         public List<PyroEvent> PyroProgram = new();
-        public int PyroProgramPointer = 0;
+        //public int PyroProgramPointer = 0;
         const int PointerLookahead = 5;
 
         public DateTime showStartTime = DateTime.UtcNow + TimeSpan.FromDays(2); //assume way into the future
@@ -236,25 +236,21 @@ namespace Generators.MAVLinkDrone
                 return new PyroEvent();
             }
 
-            //check if we are not in a pyro event now
-            if (!PyroProgram[PyroProgramPointer].InsideEvent(time))
+            //MORE EXPENSIVE WAY OF DOING IT BUT FUCK IT, PYRO DRONE COUNT IS SMALL
+            //loop through ALL events, find which ones we are in, and then take the one that started MOST recently
+            PyroEvent eve = new PyroEvent();
+            foreach (var peve in PyroProgram)
             {
-                //look ahead at the next 5 and see if we are in one of them
-                for (int i = PyroProgramPointer + 1; i < PyroProgram.Count && i < PyroProgramPointer + PointerLookahead; i++)
+                //check if we are inside this event
+                if (peve.InsideEvent(time))
                 {
-                    if (PyroProgram[i].InsideEvent(time))
+                    //is this the latest event?
+                    if (peve.startTime > eve.startTime)
                     {
-                        //we are in this pyro event, set the pointer to that
-                        PyroProgramPointer = i;
-                        return PyroProgram[PyroProgramPointer];
+                        eve = peve;
                     }
                 }
-
-                //we got here, arent in ANY event from what we can tell
-                return new PyroEvent();
             }
-
-            PyroEvent eve = PyroProgram[PyroProgramPointer];
 
             return eve;
         }
