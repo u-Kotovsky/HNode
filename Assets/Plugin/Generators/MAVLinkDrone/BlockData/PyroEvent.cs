@@ -13,7 +13,7 @@ namespace Generators.MAVLinkDrone
         public readonly int roll;
         public readonly TimeSpan duration;
         public readonly TimeSpan endTime;
-        public const int millisecondsPerFiring = 300;
+        public const int minMillisecondsPerFiring = 300;
 
         //blank pyro event
         public PyroEvent()
@@ -27,11 +27,13 @@ namespace Generators.MAVLinkDrone
         public PyroEvent(ref Queue<byte> data)
         {
             startTime = TimeSpan.FromMilliseconds(ShowFile.GetVarInt(ref data));
-            pyroIndex = ShowFile.GetVarInt(ref data);
+            duration = TimeSpan.FromMilliseconds(ShowFile.GetVarInt(ref data));
+            duration = TimeSpan.FromMilliseconds(Math.Max(duration.TotalMilliseconds, minMillisecondsPerFiring));
 
             //setup the other read only values
-            duration = TimeSpan.FromMilliseconds(millisecondsPerFiring);
             endTime = startTime + duration;
+
+            pyroIndex = ShowFile.GetVarInt(ref data);
 
             //the sign of the angles is stored in the next byte
             byte signs = data.Dequeue();
