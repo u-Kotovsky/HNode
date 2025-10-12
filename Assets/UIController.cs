@@ -29,6 +29,7 @@ public class UIController : MonoBehaviour
     private Toggle autoMaskOnZeroToggle;
     private TMP_InputField spoutOutputNameField;
     private TMP_InputField artNetPortField;
+    private TMP_InputField artNetAddressField;
     #endregion
 
     #region Deserializer Settings
@@ -117,6 +118,15 @@ public class UIController : MonoBehaviour
                     InvalidateUIState();
                 }
             });
+        
+        artNetAddressField = AddInputField(serializerStaticSettingsRect, "ArtNet Address")
+            .WithText(Loader.showconf.ArtNetAddress.ToString())
+            .WithCallback((value) =>
+            {
+                Loader.showconf.ArtNetAddress = value;
+                Loader.ReloadShowConf();
+                InvalidateUIState();
+            });
 
         deserializerDropdown.onValueChanged.AddListener((index) =>
         {
@@ -166,6 +176,7 @@ public class UIController : MonoBehaviour
         autoMaskOnZeroToggle.WithValue(Loader.showconf.autoMaskOnZero);
         spoutOutputNameField.WithText(Loader.showconf.SpoutOutputName);
         artNetPortField.WithText(Loader.showconf.ArtNetPort.ToString());
+        artNetAddressField.WithText(Loader.showconf.ArtNetAddress.ToString());
 
         Loader.showconf.Serializer.DeconstructUserInterface();
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Net;
 using UnityEngine;
 using YamlDotNet.Serialization;
 
@@ -35,6 +36,8 @@ public class ShowConfiguration
     public string SpoutInputName { get; set; } = "HNode Input";
     public string SpoutOutputName { get; set; } = "HNode Output";
     public int ArtNetPort { get; set; } = 6454;
+    [YamlMember(Description = "The address to listen to for artnet information. Set this to 0.0.0.0 to automatically find artnet information across all network interfaces")]
+    public SerializableIPAddress ArtNetAddress { get; set; } = IPAddress.Any;
     public int TargetFramerate { get; set; } = 60;
 
     //initializer

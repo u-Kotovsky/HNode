@@ -250,6 +250,7 @@ public class Loader : MonoBehaviour
         spoutReceiver.sourceName = showconf.SpoutInputName;
 
         artNetReceiver.ChangePort(showconf.ArtNetPort);
+        artNetReceiver.ChangeIPAddress(showconf.ArtNetAddress);
 
         SetFramerate(showconf.TargetFramerate);
 
