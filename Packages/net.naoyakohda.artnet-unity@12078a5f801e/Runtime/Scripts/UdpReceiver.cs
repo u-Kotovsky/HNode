@@ -15,6 +15,7 @@ namespace ArtNet
         private byte[] _receiveBuffer = new byte[1500];
 
         public int Port;
+        public IPAddress Address = IPAddress.Any;
         public bool IsRunning => _task is { IsCanceled: false, IsCompleted: false };
 
         public ReceivedPacketEventHandler OnReceivedPacket = (_, _, _) => { };
@@ -38,6 +39,15 @@ namespace ArtNet
             StartReceive();
         }
 
+        public void ChangeIPAddress(IPAddress address)
+        {
+            if (Address.Equals(address)) return;
+
+            Address = address;
+            StopReceive();
+            StartReceive();
+        }
+
         ~UdpReceiver()
         {
             StopReceive();
@@ -54,7 +64,7 @@ namespace ArtNet
             {
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                _socket.Bind(new IPEndPoint(IPAddress.Any, Port));
+                _socket.Bind(new IPEndPoint(Address, Port));
 
                 _cancellationTokenSource = new CancellationTokenSource();
                 _task = Task.Run(() => UdpTaskAsync(_cancellationTokenSource.Token));

@@ -52,6 +52,12 @@ namespace ArtNet
             UdpReceiver.ChangePort(port);
         }
 
+        public void ChangeIPAddress(IPAddress address)
+        {
+            ArtNetLogger.LogInfo("ArtNetReceiver", $"Changing IP Address from {UdpReceiver.Address} to {address}");
+            UdpReceiver.ChangeIPAddress(address);
+        }
+
         private void OnEnable()
         {
             if (_autoStart) UdpReceiver.StartReceive();
