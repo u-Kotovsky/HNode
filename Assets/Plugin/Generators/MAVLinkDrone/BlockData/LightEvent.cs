@@ -16,6 +16,8 @@ namespace Generators.MAVLinkDrone
             Opcode.SET_COLOR or
             Opcode.SET_COLOR_FROM_CHANNELS or
             Opcode.SET_GRAY or
+            Opcode.SET_BLACK or
+            Opcode.SET_WHITE or
             Opcode.FADE_TO_COLOR or
             Opcode.FADE_TO_COLOR_FROM_CHANNELS or
             Opcode.FADE_TO_GRAY or
