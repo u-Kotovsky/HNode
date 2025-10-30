@@ -40,6 +40,12 @@ public static class Util
         }
     }
 
+    //pretty print list
+    public static string PrettyPrintList<T>(this List<T> list)
+    {
+        return "[" + string.Join(", ", list) + "]";
+    }
+
     public class CoarseFineChannelSet
     {
         public byte coarse;
