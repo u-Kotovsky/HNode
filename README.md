@@ -2,6 +2,15 @@
 <img src="Assets/logo.png" width="256" alt="pixelated H as HNode logo">
 Open source Artnet DMX to video grid node renderer, built in unity 6, created for maximum data standard flexibility
 
+## Features
+- Optional manual change of ArtNet Address/Port
+- Spout2 output as serializer
+- Spout2 input as deserializer
+- Many generators
+- MIDIDMX
+- Nerdy statistics
+- Support for VRSL, Binary Stage Flight [and others](Assets/Plugin/Serializers)
+
 ## Install
 Get recent version of HNode in [releases tab](/releases)
 
