@@ -14,6 +14,7 @@ public class RandomValue : IDMXGenerator
     public EquationNumber minValue = 0;
     public EquationNumber maxValue = 255;
     public EquationNumber updateDelay = 500; // millisecond
+    public System.Random random = new();
     private float timer = 0;
     public bool enableRandom = true;
 
@@ -29,12 +30,7 @@ public class RandomValue : IDMXGenerator
         timer = 0;
         
         dmxData.EnsureCapacity(channelStart + (channelEnd - channelStart) + 1);
-
-        //we need to write to the dmx data list directly
-        for (int i = channelStart; i < channelEnd + 1; i++)
-        {
-            dmxData[i] = (byte)Random.Range(minValue, maxValue);
-        }
+        dmxData.SetRange(channelStart, channelEnd, random.NextBytes());
     }
 
     private protected TMP_InputField channelStartInputfield;
