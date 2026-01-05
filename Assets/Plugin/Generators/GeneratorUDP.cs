@@ -26,7 +26,6 @@ public class UDP : IDMXGenerator
             using (var udpClient = new UdpClient(port))
             {
                 udpClient.Client.ReceiveBufferSize = 1024 * 8;
-                string loggingEvent = "";
                 while (true)
                 {
                     //IPEndPoint object will allow us to read datagrams sent from any source.
