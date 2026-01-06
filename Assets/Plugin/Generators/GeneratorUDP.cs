@@ -16,7 +16,7 @@ public class UDP : IDMXGenerator
     //used to asynchronously manage channel data
     ConcurrentDictionary<int, byte> channelData = new ConcurrentDictionary<int, byte>();
 
-    private int port = 5065;
+    private int port = 7000;
 
     public void Construct()
     {
@@ -25,27 +25,32 @@ public class UDP : IDMXGenerator
         {
             using (var udpClient = new UdpClient(port))
             {
-                udpClient.Client.ReceiveBufferSize = 1024 * 8;
                 while (true)
                 {
                     //IPEndPoint object will allow us to read datagrams sent from any source.
                     var receivedResults = await udpClient.ReceiveAsync();
 
-                    //data is expected in the format "channel:value", e.g. "1:255"
-                    string receivedData = Encoding.UTF8.GetString(receivedResults.Buffer);
-                    //additional encoding is using # for each key value pair
-                    string[] pairs = receivedData.Split('#');
-                    foreach (string pair in pairs)
+                    //data is expected as each channel value combination being a short,byte pair
+                    Queue<byte> dataQueue = new Queue<byte>(receivedResults.Buffer);
+
+                    while (dataQueue.Count > 0)
                     {
-                        string[] parts = pair.Split(':');
-                        if (parts.Length == 2)
-                        {
-                            if (int.TryParse(parts[0], out int channel) && byte.TryParse(parts[1], out byte value))
-                            {
-                                //store the channel and value in the concurrent dictionary
-                                channelData.AddOrUpdate(channel, value, (key, oldValue) => value);
-                            }
-                        }
+                        //read channel
+                        if (dataQueue.Count < 2)
+                            break; //not enough data
+
+                        byte channelHigh = dataQueue.Dequeue();
+                        byte channelLow = dataQueue.Dequeue();
+                        int channel = (channelHigh << 8) | channelLow;
+
+                        //read value
+                        if (dataQueue.Count < 1)
+                            break; //not enough data
+
+                        byte value = dataQueue.Dequeue();
+
+                        //update the channel data
+                        channelData.AddOrUpdate(channel, value, (key, oldValue) => value);
                     }
                 }
             }
