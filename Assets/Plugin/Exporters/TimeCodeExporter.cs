@@ -50,6 +50,7 @@ public class TimeCodeExporter : IExporter
     //this isnt good, theres gotta be a way to unstatic this
     //maybe concurrentdictionary with key as port I guess?
     private static TimeSpan timeCode = TimeSpan.Zero;
+    private static byte frames = 0;
 
     private static void OnEventReceived(object sender, MidiTimeCodeReceivedEventArgs e)
     {
@@ -64,9 +65,9 @@ public class TimeCodeExporter : IExporter
             MidiTimeCodeType.TwentyFour => 24f,
             _ => 30f,//assume 30 I guess, this should never happen
         };
-        float frame_to_ms = 1000f / framerate;
         //convert the timecode to a TimeSpan
-        timeCode = new TimeSpan(0, e.Hours, e.Minutes, e.Seconds, (int)(e.Frames * frame_to_ms));
+        timeCode = new TimeSpan(0, e.Hours, e.Minutes, e.Seconds);
+        frames = (byte)e.Frames;
     }
 
     private static void OnFullFrame(object? sender, MidiEventReceivedEventArgs e)
@@ -101,7 +102,7 @@ public class TimeCodeExporter : IExporter
         var hours = data[4] & 0x1F; // Mask out the top 3 bits
         var minutes = data[5];
         var seconds = data[6];
-        var frames = data[7];
+        var framesData = data[7];
 
         // Debug.Log($"Full Frame Timecode Received: {hours}:{minutes}:{seconds}:{frames}");
 
@@ -113,10 +114,9 @@ public class TimeCodeExporter : IExporter
             0x60 => 29.97f,
             _ => 30f,//assume 30 I guess, this should never happen
         };
-        // Debug.Log(framerate);
-        float frame_to_ms = 1000f / framerate;
         //convert the timecode to a TimeSpan
-        timeCode = new TimeSpan(0, hours, minutes, seconds, (int)(frames * frame_to_ms));
+        timeCode = new TimeSpan(0, hours, minutes, seconds);
+        frames = (byte)framesData;
     }
 
     public void CompleteFrame(ref List<byte> channelValues)
@@ -180,12 +180,15 @@ public class TimeCodeExporter : IExporter
         //send a UDP packet with the timecode data as purely a UTC time since epoch
         int utcMillis = (int)(timeCode.TotalMilliseconds);
 
-        byte[] data = IntToBigEndianBytes(utcMillis);
+        List<byte> data = new List<byte>();
+        data.AddRange(IntToBigEndianBytes(utcMillis));
+        //add frames as the 5th byte
+        data.Add(frames);
 
         // Debug.Log(timeCode);
 
         //try to send
-        udpClient.Send(data, data.Length);
+        udpClient.Send(data.ToArray(), data.Count);
     }
 
     public void SerializeChannel(byte channelValue, int channel)
