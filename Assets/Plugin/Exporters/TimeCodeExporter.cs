@@ -113,7 +113,7 @@ public class TimeCodeExporter : IExporter
             0x60 => 29.97f,
             _ => 30f,//assume 30 I guess, this should never happen
         };
-        Debug.Log(framerate);
+        // Debug.Log(framerate);
         float frame_to_ms = 1000f / framerate;
         //convert the timecode to a TimeSpan
         timeCode = new TimeSpan(0, hours, minutes, seconds, (int)(frames * frame_to_ms));
@@ -182,7 +182,7 @@ public class TimeCodeExporter : IExporter
 
         byte[] data = IntToBigEndianBytes(utcMillis);
 
-        Debug.Log(timeCode);
+        // Debug.Log(timeCode);
 
         //try to send
         udpClient.Send(data, data.Length);
