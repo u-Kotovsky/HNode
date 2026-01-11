@@ -14,6 +14,11 @@ public class RemapOnDemand : IDMXGenerator
     public void Deconstruct() { }
     public void GenerateDMX(ref List<byte> dmxData)
     {
+        //ensure capacity
+        dmxData.EnsureCapacity(RemapToChannelStart + (int)RemapChannelLength);
+        dmxData.EnsureCapacity(RemapFromChannelStart + (int)RemapChannelLength);
+        dmxData.EnsureCapacity(ToggleChannel);
+        
         if (dmxData[ToggleChannel] > ActivationThreshold)
         {
             dmxData.WriteToListAtPosition(dmxData.GetRange(RemapFromChannelStart, RemapChannelLength), RemapToChannelStart);
