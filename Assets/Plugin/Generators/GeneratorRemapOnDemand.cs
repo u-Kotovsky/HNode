@@ -17,7 +17,7 @@ public class RemapOnDemand : IDMXGenerator
         //ensure capacity
         dmxData.EnsureCapacity(RemapToChannelStart + (int)RemapChannelLength);
         dmxData.EnsureCapacity(RemapFromChannelStart + (int)RemapChannelLength);
-        dmxData.EnsureCapacity(ToggleChannel);
+        dmxData.EnsureCapacity(ToggleChannel + 1);
         
         if (dmxData[ToggleChannel] > ActivationThreshold)
         {
