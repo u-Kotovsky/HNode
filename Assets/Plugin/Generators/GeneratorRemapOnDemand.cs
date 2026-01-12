@@ -33,40 +33,25 @@ public class RemapOnDemand : IDMXGenerator
     
     public void ConstructUserInterface(RectTransform rect)
     {
-        toggleChannelInputfield = Util.AddInputField(rect, "Toggle Channel");
-        toggleChannelInputfield.text = ToggleChannel.ToString();
-        toggleChannelInputfield.onEndEdit.AddListener((value) =>
-        {
-            ToggleChannel = value;
-        });
+        toggleChannelInputfield = Util.AddInputField(rect, "Toggle Channel")
+            .WithText(ToggleChannel.ToString())
+            .WithCallback(value => { ToggleChannel = value; });
         
-        remapFromChannelStartInputfield = Util.AddInputField(rect, "Remap From Channel Start");
-        remapFromChannelStartInputfield.text = RemapFromChannelStart.ToString();
-        remapFromChannelStartInputfield.onEndEdit.AddListener((value) =>
-        {
-            RemapFromChannelStart = value;
-        });
+        remapFromChannelStartInputfield = Util.AddInputField(rect, "Remap From Channel Start")
+            .WithText(RemapFromChannelStart.ToString())
+            .WithCallback(value => { RemapFromChannelStart = value; });
         
-        remapToChannelStartInputfield = Util.AddInputField(rect, "Remap To Channel Start");
-        remapToChannelStartInputfield.text = RemapToChannelStart.ToString();
-        remapToChannelStartInputfield.onEndEdit.AddListener((value) =>
-        {
-            RemapToChannelStart = value;
-        });
+        remapToChannelStartInputfield = Util.AddInputField(rect, "Remap To Channel Start")
+            .WithText(RemapToChannelStart.ToString())
+            .WithCallback(value => { RemapToChannelStart = value; });
         
-        remapChannelLengthInputfield = Util.AddInputField(rect, "Remap Channel Length");
-        remapChannelLengthInputfield.text = RemapChannelLength.ToString();
-        remapChannelLengthInputfield.onEndEdit.AddListener((value) =>
-        {
-            RemapChannelLength = value;
-        });
+        remapChannelLengthInputfield = Util.AddInputField(rect, "Remap Channel Length")
+            .WithText(RemapChannelLength.ToString())
+            .WithCallback(value => { RemapChannelLength = value; });
         
-        activationThresholdInputfield = Util.AddInputField(rect, "Activation Threshold");
-        activationThresholdInputfield.text = ActivationThreshold.ToString();
-        activationThresholdInputfield.onEndEdit.AddListener((value) =>
-        {
-            ActivationThreshold = value;
-        });
+        activationThresholdInputfield = Util.AddInputField(rect, "Activation Threshold")
+            .WithText(ActivationThreshold.ToString())
+            .WithCallback(value => { ActivationThreshold = value; });
     }
 
     public void DeconstructUserInterface() { }
