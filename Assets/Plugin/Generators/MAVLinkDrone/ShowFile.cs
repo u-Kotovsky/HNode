@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace Generators.MAVLinkDrone
@@ -52,6 +53,28 @@ namespace Generators.MAVLinkDrone
                     {
                         LightProgram.Add(new LightEvent(ref blockData));
                     }
+
+                    /* //debug, total up all different events used
+                    Dictionary<LightEvent.Opcode, int> eventTypes = new();
+                    foreach (var lightEvent in LightProgram)
+                    {
+                        if (eventTypes.ContainsKey(lightEvent.opcode))
+                        {
+                            eventTypes[lightEvent.opcode]++;
+                        }
+                        else
+                        {
+                            eventTypes[lightEvent.opcode] = 1;
+                        }
+                    }
+
+                    //print it out
+                    Debug.Log("Light Event Types Used:");
+                    foreach (var kvp in eventTypes)
+                    {
+                        Debug.Log($"{kvp.Key}: {kvp.Value}");
+                    } */
+
                     //compute the start and end time for all of the events
                     if (LightProgram.Count > 0)
                     {
@@ -89,6 +112,20 @@ namespace Generators.MAVLinkDrone
                     {
                         Debug.Log($"Light Event: Opcode: {lightProgram.opcode}, Start Time: {lightProgram.startTime}, End Time: {lightProgram.endTime}, Duration: {lightProgram.duration}, Color: {lightProgram.color}, Counter: {lightProgram.counter}, Address: {lightProgram.address}");
                     } */
+
+                    /* //print out the ENTIRE program as a formatted string
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("Full Light Program:");
+                    foreach (var eve in LightProgram)
+                    {
+                        sb.AppendLine($@"{eve.opcode}");
+                        sb.AppendLine($"    Starts: {eve.startTime}, Ends: {eve.endTime}");
+                        sb.AppendLine($"    Duration: {eve.duration}");
+                        sb.AppendLine($"    Counter: {eve.counter}");
+                        sb.AppendLine($"    Sets Color: {eve.setsColor} Is Fade: {eve.IsFade} Previous Color: {eve.previousEventColor}");
+                    }
+                    //print it
+                    Debug.Log(sb.ToString()); */
                     break;
                 case BlockType.TRAJECTORY:
                     //if the initial size is only 1, then this is an empty trajectory block
@@ -301,8 +338,9 @@ namespace Generators.MAVLinkDrone
                 //lerp between the last color and the current color
                 if (startevent.setsColor)
                 {
+                    float t = Mathf.InverseLerp((float)startevent.startTime.TotalMilliseconds, (float)startevent.endTime.TotalMilliseconds, (float)time.TotalMilliseconds);
                     //if the color is set, use it
-                    return Color32.Lerp(startevent.previousEventColor, startevent.color, (float)(time - startevent.startTime).TotalMilliseconds / (float)startevent.duration.TotalMilliseconds);
+                    return Color32.Lerp(startevent.previousEventColor, startevent.color, t);
                 }
             }
 
