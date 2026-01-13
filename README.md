@@ -12,7 +12,7 @@ Open source Artnet DMX to video grid node renderer, built in unity 6, created fo
 - Support for VRSL, Binary Stage Flight [and others](Assets/Plugin/Serializers)
 
 ## Install
-Get recent version of HNode in [releases tab](/releases)
+Get recent version of HNode in [releases tab](https://github.com/Happyrobot33/HNode/releases)
 
 ## Usage
 
