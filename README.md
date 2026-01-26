@@ -16,6 +16,8 @@ Get recent version of HNode in [releases tab](https://github.com/Happyrobot33/HN
 
 ## Usage
 
+There are a few ways you can use HNode to run lights in world:
+
 ### HNode with OBS
 <details>
 <summary>Setting up HNode to work with [OBS Studio](https://github.com/obsproject/obs-studio)</summary>
@@ -89,9 +91,13 @@ Go to your world and put in video player url `rtspt://localhost:8554/(anything y
 ## Troubleshooting
 1. I don't have any options in `Spout2 Capture` `SpoutSenders`
 - You most likely need to restart your PC
+2. Lights don't do anything when I run sequences in Lighting console
+- Make sure you use correct gridnode for your world
+- Check if you have put your gridnode in correct place according to your world
+3. I have lights run in Lighting console but not in HNode
+- Make sure you have ArtNet output set on correct address and port.
 
 ## LICENSES
-
 [HNode](LICENSE)
 
 [VRC-MIDIDMX](https://github.com/micksam7/VRC-MIDIDMX/blob/main/LICENSE)
