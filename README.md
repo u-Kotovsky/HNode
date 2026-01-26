@@ -46,7 +46,7 @@ For an local-test example we'll go with [MediaMTX](https://github.com/bluenviron
 1. Get latest binary for your system from [MediaMTX releases](https://github.com/bluenviron/mediamtx/releases)
 2. Extract it in empty folder, run main file (on Windows it's `mediamtx.exe`)
 3. Go to your OBS Studio settings > Stream
-4. Set Service to Custom, Server: 'rtmp://localhost/'
+4. Set Service to Custom, Server: `rtmp://localhost/`
 - tip: if you want to have a custom text after your base url, you can add any text you want (it needs to be in ASCII format), if you get any errors when you try to stream - you put something bad in there probably.
 5. Go to Output > Streaming
 6. Set things below:
