@@ -20,8 +20,10 @@ There are a few ways you can use HNode to run lights in world:
 
 ### HNode with OBS
 <details>
-<summary>Setting up HNode to work with [OBS Studio](https://github.com/obsproject/obs-studio)</summary>
+<summary>Setting up HNode to work with OBS Studio</summary>
 <br>
+
+OBS Studio is a free-to-use software avaliable at [GitHub](https://github.com/obsproject/obs-studio) or Steam.
 1. You have to get plugin [Spout2 for OBS](https://github.com/Off-World-Live/obs-spout2-plugin)
 2. Add `Spout2 Capture` source
 3. Set field `SpoutSenders` to `HNode Output` or the one you set in HNode application
