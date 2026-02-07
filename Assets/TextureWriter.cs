@@ -15,8 +15,8 @@ public class TextureWriter : MonoBehaviour
     public DmxManager dmxManager;
     public TextureReader reader;
     public Texture2D texture;
-    public const int TextureWidth = 1920;
-    public const int TextureHeight = 1080;
+    public static int TextureWidth = 1920;
+    public static int TextureHeight = 1080;
     public SpoutSender spoutSender;
 
     private System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
@@ -41,6 +41,14 @@ public class TextureWriter : MonoBehaviour
         mat.mainTexture = texture;
 
         pixels = new Color32[TextureWidth * TextureHeight];
+    }
+
+    public void ChangeResolution(Resolution resolution)
+    {
+        texture.Reinitialize(resolution.width, resolution.height);
+        pixels = new Color32[resolution.width * resolution.height];
+        TextureWidth = resolution.width;
+        TextureHeight = resolution.height;
     }
 
     // Update is called once per frame
