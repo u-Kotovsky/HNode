@@ -35,6 +35,8 @@ public class Loader : MonoBehaviour
 
     void Start()
     {
+        //TODO: Make this configurable. This is here because even though its not resizable, unity can get in a fucked state and remember the wrong resolution
+        Screen.SetResolution(1200, 600, false);
         spoutReceiver = FindObjectOfType<SpoutReceiver>();
         spoutSender = FindObjectOfType<SpoutSender>();
         artNetReceiver = FindObjectOfType<ArtNetReceiver>();
