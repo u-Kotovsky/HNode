@@ -59,8 +59,10 @@ public class TextureWriter : MonoBehaviour
 
         Profiler.BeginSample("Texture Clear");
         //fill with transparent
-        var color = new Color32(0, 0, 0, 0);
-        Array.Fill(pixels, color);
+        //var color = new Color32(0, 0, 0, 0);
+        //Array.Fill(pixels, color);
+        //Should be equivlalent, default value of a color32 is still a color32 as 0,0,0,0
+        Array.Clear(pixels, 0, pixels.Length);
         Profiler.EndSample();
 
         Profiler.BeginSample("DMX Merge");
