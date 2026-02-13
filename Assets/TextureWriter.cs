@@ -71,10 +71,11 @@ public class TextureWriter : MonoBehaviour
         {
             mergedDmxValues = reader.dmxData.ToList();
         }
-        else
+        else if (dmxManager.Universes().Length != 0)
         {
-            var universeCount = dmxManager.Universes().Length;
-
+            //we cant take count because un sent universes wont be in the dictionary
+            //extract the max value from the ushort array
+            var universeCount = dmxManager.Universes().Max();
 
             //merge all universes into one byte array
             for (ushort u = 0; u < universeCount; u++)
