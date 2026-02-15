@@ -75,7 +75,7 @@ public class TextureWriter : MonoBehaviour
         {
             //we cant take count because un sent universes wont be in the dictionary
             //extract the max value from the ushort array
-            var universeCount = dmxManager.Universes().Max();
+            var universeCount = dmxManager.Universes().Max() + 1;
 
             //merge all universes into one byte array
             for (ushort u = 0; u < universeCount; u++)
