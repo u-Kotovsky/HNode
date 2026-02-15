@@ -16,8 +16,8 @@ public class TimeCodeExporter : IExporter
     public string midiDevice = "loopMIDI Port"; //Default to no device selected
 
     private InputDevice midiInput;
-    private UdpClient udpClient;
-    private int port = 7001;
+    private List<UdpClient> udpClients = new List<UdpClient>();
+    private int[] ports = new int[] { 7001, 7002, 7003, 7004, 7005 };
 
     public void MidiConnectDevice(string device)
     {
@@ -129,8 +129,14 @@ public class TimeCodeExporter : IExporter
         UnityEngine.Debug.Log("Connect: " + midiDevice);
         MidiConnectDevice(midiDevice);
 
-        udpClient = new UdpClient();
-        udpClient.Connect(IPAddress.Loopback, port);
+        foreach (var port in ports)
+        {
+            UnityEngine.Debug.Log("Connecting to UDP port: " + port);
+
+            var udpClient = new UdpClient();
+            udpClient.Connect(IPAddress.Loopback, port);
+            udpClients.Add(udpClient);
+        }
     }
 
     private protected TMP_InputField midiDeviceField;
@@ -151,7 +157,13 @@ public class TimeCodeExporter : IExporter
     public void Deconstruct()
     {
         midiInput?.Dispose();
-        udpClient?.Close();
+
+        foreach (var udpClient in udpClients)
+        {
+            udpClient?.Close();
+        }
+
+        udpClients.Clear();
     }
 
     public void DeconstructUserInterface()
@@ -188,7 +200,10 @@ public class TimeCodeExporter : IExporter
         // Debug.Log(timeCode);
 
         //try to send
-        udpClient.Send(data.ToArray(), data.Count);
+        foreach (var udpClient in udpClients)
+        {
+            udpClient.Send(data.ToArray(), data.Count);
+        }
     }
 
     public void SerializeChannel(byte channelValue, int channel)
