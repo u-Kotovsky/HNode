@@ -23,6 +23,7 @@ public class TextureWriter : MonoBehaviour
     public TextMeshProUGUI frameTime;
     public Material mat;
     private Color32[] pixels;
+    private List<byte> mergedDmxValues = new List<byte>();
 
     void Start()
     {
@@ -66,7 +67,8 @@ public class TextureWriter : MonoBehaviour
         Profiler.EndSample();
 
         Profiler.BeginSample("DMX Merge");
-        List<byte> mergedDmxValues = new List<byte>();
+        //clear the merged dmx values list
+        mergedDmxValues.Clear();
         if (Loader.showconf.Transcode)
         {
             mergedDmxValues = reader.dmxData.ToList();
@@ -77,9 +79,17 @@ public class TextureWriter : MonoBehaviour
             //extract the max value from the ushort array
             var universeCount = dmxManager.Universes().Max() + 1;
 
+            //setup the uninitialized count in the list now so we dont have to keep resizing it as we add values
+            mergedDmxValues.Capacity = universeCount * 512;
+
             //merge all universes into one byte array
             for (ushort u = 0; u < universeCount; u++)
             {
+                //TODO:
+                //stupid optimization, but dmxManager.DmxValues returns a new 512 byte array if there isnt a universe there
+                //however, this causes GC, so instead just check if the universe exists and if it doesnt just skip doing this action altogether
+                //its a minor optim but is the last major KB level GC happening in our own code every frame
+
                 byte[] dmxValues = dmxManager.DmxValues(u);
                 mergedDmxValues.AddRange(dmxValues);
             }

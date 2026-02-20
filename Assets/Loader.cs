@@ -84,8 +84,8 @@ public class Loader : MonoBehaviour
     {
         foreach (var interfaceList in interfaceLists)
         {
-            interfaceList.UpdateInterface(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>().ToList());
-            interfaceList.UpdateInterface(showconf.Exporters.OfType<IUserInterface<IExporter>>().ToList());
+            interfaceList.UpdateInterface(showconf.Generators.OfType<IUserInterface<IDMXGenerator>>());
+            interfaceList.UpdateInterface(showconf.Exporters.OfType<IUserInterface<IExporter>>());
         }
     }
 
