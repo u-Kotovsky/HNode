@@ -57,14 +57,13 @@ Shader "Custom/DMXPreview"
 
             float4 frag(v2f i) : SV_Target
             {
-                float2 uv = i.uv.xy / i.uv.z;
-                float2 pixel = floor(uv * _ScreenParams.xy);
+                float2 pixel = floor((i.uv.xy / i.uv.z) * _ScreenParams.xy);
 
                 pixel.y += (_BaseMap_TexelSize.w - _ScreenParams.y);
 
                 float4 color = _BaseMap[pixel];
 
-                if (any(uv < 0.0) || any(uv > 1.0))
+                if (any(pixel < 0.0) || any(pixel > _BaseMap_TexelSize.zw))
                     color.a = 0.0;
 
                 return lerp(_ChromaKeyColor, color, color.a);
