@@ -84,3 +84,6 @@ crashlytics-build.properties
 /[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers
 /[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers.meta
 .github/scripts/HNode setup.exe
+
+# JetBrains Rider generated files
+.idea/
