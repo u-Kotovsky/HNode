@@ -63,6 +63,9 @@ Shader "Custom/DMXPreview"
 
                 float4 color = _BaseMap[pixel];
 
+                if (any(pixel < 0.0) || any(pixel > _BaseMap_TexelSize.zw))
+                    color.a = 0.0;
+
                 return lerp(_ChromaKeyColor, color, color.a);
             }
             ENDHLSL
