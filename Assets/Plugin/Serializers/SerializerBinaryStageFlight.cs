@@ -1,15 +1,36 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Profiling;
 
 public class BinaryStageFlight : IDMXSerializer
 {
-    const int blockSize = 4; // 10x10 pixels per channel block
-    const int channelsPerCol = 6;
-    const int blocksPerCol = channelsPerCol * 8; // channels per column
-    const int CRCBits = 4;
+    private int blockSize = 4; // pixels per channel block
+
+    private int channelsPerCol = 6;
+    private int ChannelsPerCol
+    {
+        get => channelsPerCol;
+        set
+        {
+            channelsPerCol = value;
+            blocksPerCol = value * 8;
+        }
+    }
+
+    private int blocksPerCol = 6 * 8; // channels per column
+    private int BlocksPerCol
+    {
+        get => channelsPerCol;
+        set
+        {
+            blocksPerCol = value;
+            channelsPerCol = value / 8;
+        }
+    }
+    private int CRCBits = 4;
 
     public void Construct() { }
     public void Deconstruct() { }
@@ -78,11 +99,6 @@ public class BinaryStageFlight : IDMXSerializer
         }
     }
 
-    private bool GetBitFromByte(byte value, int bitIndex)
-    {
-        return (value & (1 << bitIndex)) != 0;
-    }
-
     public void DeserializeChannel(Texture2D tex, ref byte channelValue, int channel, int textureWidth, int textureHeight)
     {
         //TODO: CRC Check for transcoding
@@ -105,7 +121,13 @@ public class BinaryStageFlight : IDMXSerializer
         channelValue = ConvertToByte(bits);
     }
 
-    private static void GetPositionData(int channel, int i, int textureWidth, out int x, out int y)
+    #region Helpers
+    private bool GetBitFromByte(byte value, int bitIndex)
+    {
+        return (value & (1 << bitIndex)) != 0;
+    }
+    
+    private void GetPositionData(int channel, int i, int textureWidth, out int x, out int y)
     {
         //int newChannel = (channel * 8) + i;
         //encode backwards, endiannes flip
@@ -115,7 +137,7 @@ public class BinaryStageFlight : IDMXSerializer
         CalculateWrapping(x, y, out x, out y, textureWidth);
     }
 
-    private static void CalculateWrapping(int x, int y, out int adjx, out int adjy, int textureWidth)
+    private void CalculateWrapping(int x, int y, out int adjx, out int adjy, int textureWidth)
     {
         int wrap = x / textureWidth;
         adjx = x % textureWidth;
@@ -133,7 +155,7 @@ public class BinaryStageFlight : IDMXSerializer
         return bytes[0];
     }
 
-    public static byte Crc4(params byte[] data)
+    public byte Crc4(params byte[] data)
     {
         uint crc = 0u;
         uint polynomial = 0x03;
@@ -150,19 +172,47 @@ public class BinaryStageFlight : IDMXSerializer
         }
         return (byte)(crc << CRCBits); // put crc on the left and pad 0s
     }
+    #endregion
+
+    #region UserInterface
+    private protected TMP_InputField blockSizeInputfield;
+    private protected TMP_InputField channelPerColInputfield;
+    private protected TMP_InputField blocksPerColInputfield;
+    private protected TMP_InputField CRCBitsInputfield;
 
     public void ConstructUserInterface(RectTransform rect)
     {
-
+        blockSizeInputfield = Util.AddInputField(rect, "Block size")
+            .WithText(blockSize.ToString())
+            .WithCallback(value => { int.TryParse(value, out blockSize); });
+        
+        channelPerColInputfield = Util.AddInputField(rect, "Channels per column")
+            .WithText(channelsPerCol.ToString())
+            .WithCallback(value => 
+            {
+                int.TryParse(value, out var result);
+                ChannelsPerCol = result;
+            });
+        
+        blocksPerColInputfield = Util.AddInputField(rect, "Blocks per column")
+            .WithText(blocksPerCol.ToString())
+            .WithCallback(value =>
+            {
+                int.TryParse(value, out var result);
+                ChannelsPerCol = result;
+            });
+        
+        CRCBitsInputfield = Util.AddInputField(rect, "CRC bits")
+            .WithText(CRCBits.ToString())
+            .WithCallback(value =>
+            {
+                int.TryParse(value, out CRCBits);
+            });
     }
 
-    public void DeconstructUserInterface()
-    {
+    public void DeconstructUserInterface() { }
 
-    }
+    public void UpdateUserInterface() { }
 
-    public void UpdateUserInterface()
-    {
-
-    }
+    #endregion
 }

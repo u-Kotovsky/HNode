@@ -292,6 +292,8 @@ public static class Util
         GameObject layoutObject = new GameObject("InputFieldLayout");
         layoutObject.transform.SetParent(rect, false);
         layoutObject.AddComponent<RectTransform>();
+        
+        var layoutGroup = layoutObject.AddComponent<HorizontalLayoutGroup>();
 
         //set height
         ((RectTransform)layoutObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, ELEMENTHEIGHT);
@@ -309,7 +311,7 @@ public static class Util
         SetRectCenterStretch((RectTransform)inputFieldObject.transform);
 
         //set the height of the input field
-        ((RectTransform)inputFieldObject.transform).SetLeft(TEXTWIDTH);
+        //((RectTransform)inputFieldObject.transform).SetLeft(TEXTWIDTH);
 
         //sub object text area
         GameObject textAreaObject = new GameObject("TextArea");
