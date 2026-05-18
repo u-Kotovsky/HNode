@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-public class BinaryStageFlight : IDMXSerializer
+[TagAlias("BinaryStageFlight")]
+public class MDMX : IDMXSerializer
 {
     const int blockSize = 4; // 10x10 pixels per channel block
     const int channelsPerCol = 6;
