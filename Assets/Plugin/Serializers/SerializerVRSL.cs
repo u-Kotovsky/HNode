@@ -176,6 +176,7 @@ public class VRSL : IDMXSerializer
             });
 
         var text = AddText(rect, "Output Config: " + outputConfig.ToString());
+        Util.SetHeight(text.rectTransform, 30);
 
         //do a button to cycle through the output configs
         AddButton(rect, "Cycle Output Config")
