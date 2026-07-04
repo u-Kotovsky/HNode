@@ -127,6 +127,17 @@ public class Loader : MonoBehaviour
         {
             Debug.Log("" + type.FullName);
             builder.WithTagMapping("!" + type.Name, type);
+
+            // Register any tag aliases for deserialization only (so old configs can be loaded)
+            // Serialization always uses the primary type name
+            if (builder is DeserializerBuilder or StaticDeserializerBuilder)
+            {
+                var aliases = (TagAliasAttribute[])Attribute.GetCustomAttributes(type, typeof(TagAliasAttribute), false);
+                foreach (var alias in aliases)
+                {
+                    builder.WithTagMapping("!" + alias.Alias, type);
+                }
+            }
         }
 
         return builder;
