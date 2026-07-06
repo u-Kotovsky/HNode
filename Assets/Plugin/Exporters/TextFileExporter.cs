@@ -15,6 +15,8 @@ public class TextFileExporter : IExporter
     {
         data = channelValues;
     }
+
+    public void FrameRendered(ref Texture2D texture) {}
     public void Construct() {}
     public void Deconstruct() {}
     public void InitFrame(ref List<byte> channelValues) {}

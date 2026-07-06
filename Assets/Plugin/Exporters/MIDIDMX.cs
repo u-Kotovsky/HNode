@@ -144,6 +144,8 @@ public class MIDIDMX : IExporter
 
     public void InitFrame(ref List<byte> channelValues) { }
 
+    public void FrameRendered(ref Texture2D texture) {}
+
     public void CompleteFrame(ref List<byte> channelValues)
     {
         if (isMidiReady())

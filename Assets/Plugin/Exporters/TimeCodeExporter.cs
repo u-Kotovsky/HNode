@@ -222,6 +222,8 @@ public class TimeCodeExporter : IExporter
         }
     }
 
+    public void FrameRendered(ref Texture2D texture) {}
+
     public void SerializeChannel(byte channelValue, int channel)
     {
         // throw new System.NotImplementedException();

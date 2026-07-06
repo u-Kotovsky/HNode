@@ -161,6 +161,10 @@ public class TextureWriter : MonoBehaviour
         Profiler.BeginSample("Texture Write");
         texture.SetPixels32(pixels);
         texture.Apply();
+        foreach (var exporter in Loader.showconf.Exporters)
+        {
+            exporter.FrameRendered(ref texture);
+        }
         Profiler.EndSample();
 
         timer.Stop();

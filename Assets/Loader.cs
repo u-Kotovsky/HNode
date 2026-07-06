@@ -97,6 +97,12 @@ public class Loader : MonoBehaviour
         }
     }
 
+    void OnApplicationQuit()
+    {
+        //remove all generators and exporters
+        UnloadShowConf();
+    }
+
     private T SetupBuilder<T>() where T : BuilderSkeleton<T>, new()
     {
         var builder = new T()

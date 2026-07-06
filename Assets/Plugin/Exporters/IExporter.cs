@@ -32,4 +32,10 @@ public interface IExporter : IUserInterface<IExporter>, IConstructable
     /// <param name="pixels"></param>
     /// <param name="channelValues"></param>
     void CompleteFrame(ref List<byte> channelValues);
+
+    /// <summary>
+    /// Called after the frame has been rendered to a texture. Can be used to save the texture to disk, send it over the network, etc.
+    /// </summary>
+    /// <param name="texture"></param>
+    void FrameRendered(ref Texture2D texture);
 }
