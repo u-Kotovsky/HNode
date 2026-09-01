@@ -344,4 +344,50 @@ public static class Util
 
         return inputfield;
     }
+    
+    internal static T SetupBuilder<T>() where T : BuilderSkeleton<T>, new()
+    {
+        var builder = new T()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance);
+
+        //find ALL usages of TagMappedAttribute and add them to the builder
+
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(s => s.GetTypes())
+            .Where(p => Attribute.IsDefined(p, typeof(TagMappedAttribute)));
+
+        //now, types may just be interfaces
+        //in this case, we need to find all implementations of that interface and add those too, upwards
+        var additionalTypes = new List<Type>();
+        foreach (var type in types)
+        {
+            if (type.IsInterface)
+            {
+                var impls = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(s => s.GetTypes())
+                    .Where(p => type.IsAssignableFrom(p) && !p.IsInterface && !p.IsAbstract);
+                additionalTypes.AddRange(impls);
+            }
+        }
+        //combine them
+        var allTypes = types.Concat(additionalTypes).Distinct().ToList();
+        foreach (var type in allTypes)
+        {
+            Debug.Log("" + type.FullName);
+            builder.WithTagMapping("!" + type.Name, type);
+
+            // Register any tag aliases for deserialization only (so old configs can be loaded)
+            // Serialization always uses the primary type name
+            if (builder is DeserializerBuilder or StaticDeserializerBuilder)
+            {
+                var aliases = (TagAliasAttribute[])Attribute.GetCustomAttributes(type, typeof(TagAliasAttribute), false);
+                foreach (var alias in aliases)
+                {
+                    builder.WithTagMapping("!" + alias.Alias, type);
+                }
+            }
+        }
+
+        return builder;
+    }
 }
