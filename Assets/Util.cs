@@ -1,7 +1,11 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 public static class Util
 {
@@ -162,10 +166,37 @@ public static class Util
         textComponent.text = text;
         textComponent.color = Color.white; //default color
         textComponent.fontSize = FONTSIZE;
+        textComponent.alignment = TextAlignmentOptions.MidlineLeft;
         //set size
         //SetHeight((RectTransform)textObject.transform, ELEMENTHEIGHT);
 
         return textComponent;
+    }
+
+    internal static RectTransform AddRect(RectTransform rect)
+    {
+        GameObject rectObject = new GameObject("Rect");
+        rectObject.transform.SetParent(rect, false);
+        RectTransform result = rectObject.AddComponent<RectTransform>();
+        
+        return result;
+    }
+
+    internal static HorizontalLayoutGroup WithHorizontalLayoutGroup(this RectTransform rect)
+    {
+        var layoutGroup = rect.gameObject.AddComponent<HorizontalLayoutGroup>();
+        return layoutGroup;
+    }
+    internal static VerticalLayoutGroup WithVerticalLayoutGroup(this RectTransform rect)
+    {
+        var layoutGroup = rect.gameObject.AddComponent<VerticalLayoutGroup>();
+        return layoutGroup;
+    }
+
+    internal static RectTransform SetDefaultVerticalSizeWithCurrentAnchors(this RectTransform rect)
+    {
+        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, ELEMENTHEIGHT);
+        return rect;
     }
 
     internal static Button AddButton(RectTransform rect, string title)
@@ -286,17 +317,24 @@ public static class Util
         return field;
     }
 
-    internal static TMP_InputField AddInputField(RectTransform rect, string title)
+    internal static TMP_InputField AddInputField(RectTransform rect, string title, bool withText = true)
     {
         //setup horizontal layout
         GameObject layoutObject = new GameObject("InputFieldLayout");
         layoutObject.transform.SetParent(rect, false);
-        layoutObject.AddComponent<RectTransform>();
+
+        var layoutRect = (RectTransform)layoutObject
+            .AddComponent<RectTransform>();
+            //.WithHorizontalLayoutGroup().transform;
 
         //set height
-        ((RectTransform)layoutObject.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, ELEMENTHEIGHT);
-
-        var textObj = AddText((RectTransform)layoutObject.transform, title);
+        layoutRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, ELEMENTHEIGHT);
+        
+        TextMeshProUGUI textObj = null;
+        if (withText)
+        {
+            textObj = AddText((RectTransform)layoutObject.transform, title);
+        }
 
         GameObject inputFieldObject = new GameObject("TextInputField");
         inputFieldObject.transform.SetParent(layoutObject.transform, false);
@@ -309,7 +347,7 @@ public static class Util
         SetRectCenterStretch((RectTransform)inputFieldObject.transform);
 
         //set the height of the input field
-        ((RectTransform)inputFieldObject.transform).SetLeft(TEXTWIDTH);
+        if (withText) ((RectTransform)inputFieldObject.transform).SetLeft(TEXTWIDTH);
 
         //sub object text area
         GameObject textAreaObject = new GameObject("TextArea");
@@ -323,6 +361,9 @@ public static class Util
         placeholderTextObject.transform.SetParent(textAreaObject.transform, false);
         var placeholderText = placeholderTextObject.AddComponent<TextMeshProUGUI>();
         placeholderText.fontSize = FONTSIZE;
+        
+        placeholderText.alignment = TextAlignmentOptions.MidlineLeft;
+        
         SetRectCenterStretch((RectTransform)placeholderTextObject.transform);
         placeholderText.text = "Placeholder....";
         //make it gray
@@ -332,6 +373,7 @@ public static class Util
         textObject.transform.SetParent(textAreaObject.transform, false);
         var text = textObject.AddComponent<TextMeshProUGUI>();
         text.fontSize = FONTSIZE;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
         SetRectCenterStretch((RectTransform)textObject.transform);
 
         inputfield.textComponent = text;
